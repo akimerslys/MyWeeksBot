@@ -9,7 +9,7 @@ import asyncio
 
 router = Router(name="stop")
 
-
+# TODO reformat to restart button (with docker)
 @router.message(Command("stop"), IsAdmin(config.ADMINS_ID))
 async def stop_bot(message: Message, bot: Bot):
     await bot.send_message(message.from_user.id, f"Stopping bot...")

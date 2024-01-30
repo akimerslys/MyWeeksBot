@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 from core.config import settings as config
 
+
 users_commands: dict[str, dict[str, str]] = {
     "en": {
         "start": "start",

@@ -35,3 +35,21 @@ def language_keyboard() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
+
+
+def add_keyboard_first() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="🌐 Monday", callback_data="day_mon")],
+        [InlineKeyboardButton(text="🌐 Tuesday", callback_data="day_tue")],
+        [InlineKeyboardButton(text="🌐 Wednesday", callback_data="day_wed")],
+        [InlineKeyboardButton(text="🌐 Thursday", callback_data="day_thu")],
+        [InlineKeyboardButton(text="🌐 Friday", callback_data="day_fri")],
+        [InlineKeyboardButton(text="🌐 Saturday", callback_data="day_sat")],
+        [InlineKeyboardButton(text="🌐 Sunday", callback_data="day_sun")],
+        [InlineKeyboardButton(text="🕔 Add specific date", callback_data="open_calendar")],
+        [InlineKeyboardButton(text="⬅️ Back", callback_data="main_kb")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(3, 3, 1, 1, 1)
+    return keyboard.as_markup(resize_keyboard=True)
+
