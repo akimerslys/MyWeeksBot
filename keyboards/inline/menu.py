@@ -4,13 +4,14 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def main_keyboard() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="📈 MyWeeks", callback_data="myweeks")],
-        [InlineKeyboardButton(text="📊 Statistics", callback_data="statistics")],
+        [InlineKeyboardButton(text="📈 Add Notification", callback_data="add")],
+        [InlineKeyboardButton(text="📊 Remove Notification", callback_data="remove")],
         [InlineKeyboardButton(text="📚 Settings", callback_data="settings_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
+
 
 
 def setting_keyboard() -> InlineKeyboardMarkup:
