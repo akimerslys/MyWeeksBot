@@ -80,10 +80,10 @@ async def nav_cal_handler_date(call: CallbackQuery):
     calendar = SimpleCalendar(
         locale=await get_user_locale(call.from_user), show_alerts=True
     )
-    calendar.set_dates_range(datetime(2024, 1, 1), datetime(2025, 12, 31))
+    calendar.set_dates_range(datetime.today(), datetime(2025, 12, 31))
     await call.message.edit_text(
         "Calendar opened on feb 2023. Please select a date: ",
-        reply_markup=await calendar.start_calendar(year=2023, month=2)
+        reply_markup=await calendar.start_calendar(year=datetime.now().year, month=datetime.now().year)
     )
 
 
@@ -93,7 +93,7 @@ async def process_simple_calendar(call: CallbackQuery, callback_data: CallbackDa
     calendar = SimpleCalendar(
         locale=await get_user_locale(call.from_user), show_alerts=True
     )
-    calendar.set_dates_range(datetime(2024, 1, 29), datetime(2025, 1, 1))
+    calendar.set_dates_range(datetime.now(), datetime(2025, 1, 1))
     selected, date = await calendar.process_selection(call, callback_data)
     if selected:
         await call.message.edit_text(
