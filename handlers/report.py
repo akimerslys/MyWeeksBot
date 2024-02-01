@@ -10,6 +10,7 @@ from core.config import settings
 router = Router(name="report")
 
 
+# TODO add the main menu button, implement report to menu
 @router.message(Command("report"))
 async def start_report(message: Message, bot: Bot, state: FSMContext):
     await state.set_state(Report.text)

@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-def main_keyboard() -> InlineKeyboardMarkup:
+def main_kb() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text="📈 Add Notification", callback_data="add")],
         [InlineKeyboardButton(text="📊 Remove Notification", callback_data="remove")],
@@ -13,8 +13,16 @@ def main_keyboard() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
+def back_main() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="⬅️ Back to Main Menu", callback_data="main_kb")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
 
-def setting_keyboard() -> InlineKeyboardMarkup:
+
+def setting_kb() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text="🌐 Language", callback_data="lang_kb")],
         [InlineKeyboardButton(text="🕔 Timezone", callback_data="timezone_kb")],
@@ -25,7 +33,7 @@ def setting_keyboard() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def language_keyboard() -> InlineKeyboardMarkup:
+def language_kb() -> InlineKeyboardMarkup:
     buttons = [
             [InlineKeyboardButton(text="🇬🇧 English", callback_data="set_lang_en")],
             [InlineKeyboardButton(text="🇺🇦 Українська", callback_data="set_lang_uk")],
@@ -39,17 +47,59 @@ def language_keyboard() -> InlineKeyboardMarkup:
 
 def add_keyboard_first() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🌐 Monday", callback_data="day_mon")],
-        [InlineKeyboardButton(text="🌐 Tuesday", callback_data="day_tue")],
-        [InlineKeyboardButton(text="🌐 Wednesday", callback_data="day_wed")],
-        [InlineKeyboardButton(text="🌐 Thursday", callback_data="day_thu")],
-        [InlineKeyboardButton(text="🌐 Friday", callback_data="day_fri")],
-        [InlineKeyboardButton(text="🌐 Saturday", callback_data="day_sat")],
-        [InlineKeyboardButton(text="🌐 Sunday", callback_data="day_sun")],
-        [InlineKeyboardButton(text="🕔 Add specific date", callback_data="open_calendar")],
+        [InlineKeyboardButton(text="🌐 Monday", callback_data="day_Monday")],
+        [InlineKeyboardButton(text="🌐 Tuesday", callback_data="day_Tuesday")],
+        [InlineKeyboardButton(text="🌐 Wednesday", callback_data="day_Wednesday")],
+        [InlineKeyboardButton(text="🌐 Thursday", callback_data="day_Thursday")],
+        [InlineKeyboardButton(text="🌐 Friday", callback_data="day_Friday")],
+        [InlineKeyboardButton(text="🌐 Saturday", callback_data="day_Saturday")],
+        [InlineKeyboardButton(text="🌐 Today", callback_data="day_Today")],
+        [InlineKeyboardButton(text="🌐 Sunday", callback_data="day_Sunday")],
+        [InlineKeyboardButton(text="🕔 Calendar", callback_data="open_calendar")],
         [InlineKeyboardButton(text="⬅️ Back", callback_data="main_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
-    keyboard.adjust(3, 3, 1, 1, 1)
+    keyboard.adjust(2, 2, 2, 3, 1)
     return keyboard.as_markup(resize_keyboard=True)
 
+
+def hours_kb() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for index in range(0, 24):
+        builder.button(
+            text=f"🕔 {'0' if index<=9 else ''}{index}:",
+            callback_data=f"set_hours_{index}:"
+        )
+    builder.adjust(4, 4, 4, 4, 4, 4, 1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def minute_kb() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for index in range(0, 12):
+        builder.button(
+            text=f"🕔 :{'0' if index<=1 else ''}{index}",
+            callback_data=f"set_minute_{index}"
+        )
+    builder.adjust(4, 4, 4, 4, 4, 4, 1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def add_notif_text_off_kb() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="🕔 Repeatable(Repeat every week) OFF",callback_data="repeatable_on")],
+        [InlineKeyboardButton(text="✅ Complete",callback_data="add_complete")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def add_notif_text_on_kb() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="🕔 Repeatable(Repeat every week) ON",callback_data="repeatable_off")],
+        [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)

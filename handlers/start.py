@@ -1,7 +1,7 @@
 from aiogram import Router, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
-from keyboards.inline.menu import main_keyboard
+from keyboards.inline.menu import main_kb
 
 router = Router(name="start")
 
@@ -12,5 +12,5 @@ async def start_message(message: Message, bot: Bot):
     await bot.send_message(
         message.from_user.id,
         "Please choose an option from the menu below",
-        reply_markup=main_keyboard()
+        reply_markup=main_kb()
     )
