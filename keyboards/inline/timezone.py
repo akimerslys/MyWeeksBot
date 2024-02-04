@@ -2,6 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from datetime import datetime, timedelta, tzinfo, timezone
 
+
 def timezone_simple_keyboard() -> InlineKeyboardMarkup:
     buttons = [
             [InlineKeyboardButton(text="🌐 GMT 0 (London)", callback_data="set_timezone_0")],

@@ -68,7 +68,7 @@ def hours_kb() -> InlineKeyboardMarkup:
     for index in range(0, 24):
         builder.button(
             text=f"🕔 {'0' if index<=9 else ''}{index}:",
-            callback_data=f"set_hours_{index}:"
+            callback_data=f"set_hours_{index}"
         )
     builder.adjust(4, 4, 4, 4, 4, 4, 1)
     return builder.as_markup(resize_keyboard=True)
@@ -79,15 +79,15 @@ def minute_kb() -> InlineKeyboardMarkup:
     for index in range(0, 12):
         builder.button(
             text=f"🕔 :{'0' if index<=1 else ''}{index}",
-            callback_data=f"set_minute_{index}"
+            callback_data=f"set_minute_{'0' if index<=1 else ''}{index*5}"
         )
     builder.adjust(4, 4, 4, 4, 4, 4, 1)
     return builder.as_markup(resize_keyboard=True)
 
 
-def add_notif_text_off_kb() -> InlineKeyboardMarkup:
+def add_notif_repeat_none_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🕔 Repeatable(Repeat every week) OFF",callback_data="repeatable_on")],
+        [InlineKeyboardButton(text="🕔 Do not repeat", callback_data="repeatable_week")],
         [InlineKeyboardButton(text="✅ Complete",callback_data="add_complete")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -95,9 +95,19 @@ def add_notif_text_off_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def add_notif_text_on_kb() -> InlineKeyboardMarkup:
+def add_notif_repeat_week_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🕔 Repeatable(Repeat every week) ON",callback_data="repeatable_off")],
+        [InlineKeyboardButton(text="🕔 Every   Week", callback_data="repeatable_month")],
+        [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def add_notif_repeat_month_kb() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="🕔 Every  Month", callback_data="repeatable_none")],
         [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)

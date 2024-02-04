@@ -7,10 +7,11 @@ class Report(StatesGroup):
 
 class AddNotif(StatesGroup):
     day = State()
+    date = State()
     hours = State()
     minutes = State()
-    date = State()
     text = State()
+    tmp_msg = State()
     repeat = State()
 
 

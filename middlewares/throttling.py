@@ -6,10 +6,10 @@ from aiogram.types import Message
 from cachetools import TTLCache
 
 
-#TODO add callbackquery throttling
+# TODO add callbackquery throttling
 
 class ThrottlingMiddleware(BaseMiddleware):
-    def __init__(self, rate_limit: 0.5) -> None:
+    def __init__(self, rate_limit: 0.5) -> None:    # rate limit can be initiated in the config file
         self.cache = TTLCache(maxsize=10_000, ttl=rate_limit)
 
     async def __call__(
