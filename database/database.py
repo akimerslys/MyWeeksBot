@@ -52,5 +52,5 @@ class TimedBaseModel(BaseModel):
 
 async def on_startup(dispatcher: Dispatcher):
     logger.warning("Connecting to PostgreSQL")
-    await db.set_bind(settings.POSTGRES_URI)
+    await db.set_bind(settings.database_url)
 

@@ -1,5 +1,5 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from datetime import datetime, timedelta, tzinfo, timezone
 
 
@@ -10,10 +10,11 @@ def timezone_simple_keyboard() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="🌐 GMT +2 (Ukraine)", callback_data="set_timezone_2")],
             [InlineKeyboardButton(text="🌐 GMT +3 (Moscow)", callback_data="set_timezone_3")],
             [InlineKeyboardButton(text="🌐 ShowAll timezone", callback_data="show_all")],
+            [InlineKeyboardButton(text="send_timezone", callback_data="send_geo")],
             [InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb")],
         ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
-    keyboard.adjust(1)
+    keyboard.adjust(2, 2, 1, 1, 1)
     return keyboard.as_markup(resize_keyboard=True)
 
 
@@ -26,4 +27,15 @@ def timezone_advanced_keyboard() -> InlineKeyboardMarkup:
         )
     builder.button(text="⬅️ Back", callback_data="timezone_kb")
     builder.adjust(4, 4, 4, 4, 4, 4, 4, 4, 1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def timezone_geo_reply() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    builder.button(
+        text="Send location",
+        request_location=True
+    )
+    builder.button(text="⬅️ Cancel", callback_data="cancel")
+    builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)

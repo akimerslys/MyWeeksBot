@@ -5,6 +5,11 @@ class Report(StatesGroup):
     text = State()
 
 
+class AskLocation(StatesGroup):
+    ask_location = State()
+    callback_id = State()
+
+
 class AddNotif(StatesGroup):
     day = State()
     date = State()

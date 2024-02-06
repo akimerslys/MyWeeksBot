@@ -1,22 +1,24 @@
 from aiogram import Router, F, Bot
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, Location
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard_first, \
     add_notif_repeat_week_kb, add_notif_repeat_none_kb, back_main, hours_kb, minute_kb, add_notif_repeat_month_kb
-from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard
+from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
-from loguru import logger
-from utils.states import AddNotif
-from datetime import datetime
+from utils.states import AddNotif, AskLocation
 
+from loguru import logger
+from datetime import datetime, tzinfo
+from timezonefinder import TimezoneFinder
+import pytz
 
 router = Router(name="menu")
 
 # TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)
-# TODO ADD TIMEZONE TO THE NOTIFICATION
+# TODO ADD TIMEZONE TO THE NOTIFICATIONS
 # TODO ADD TIMEZONE SETTING FOR FIRST USER
-
+# TODO MOVE TIMEZONE SETTING TO ANOTHER FILE (IF NEEDED)
 
 # MAIN
 
@@ -52,6 +54,38 @@ async def choose_timezone(call: CallbackQuery):
 @router.callback_query(F.data.startswith("set_timezone_"))
 async def set_timezone(call: CallbackQuery):
     await call.message.edit_text(f"🕔 Timezone changed to {call.data[13:]}", reply_markup=setting_kb())
+
+
+@router.callback_query(F.data.startswith("send_geo"))
+async def ask_for_location(call: CallbackQuery, bot: Bot, state: FSMContext):
+    print(call.id)
+    geo_msg = await bot.send_message(
+        call.message.chat.id,
+        f"Send your location\n<b>WE DONT SAVE YOUR LOCATION</b>",
+        reply_markup=timezone_geo_reply()
+    )
+    await state.set_state(AskLocation.ask_location)
+    await state.update_data(ask_location=geo_msg.message_id)
+    await state.update_data(callback_id=call.id)
+
+
+@router.message((F.location) & (AskLocation.ask_location))
+async def handle_location(message: Message, bot: Bot, state: FSMContext):
+    try:
+        timezone_str = TimezoneFinder().timezone_at(lng=message.location.latitude, lat=message.location.longitude)
+        data = await state.get_data()
+
+        # TODO ANSWER FUNCTION
+
+        await bot.delete_messages(
+            message.from_user.id,
+            [data.get('ask_location'), message.message_id]
+        )
+        await state.clear()
+
+    except Exception as e:
+        logger.error(f"Error processing location: {e}")
+        await message.answer("Произошла ошибка при обработке локации. Попробуйте еще раз.")
 
 
 @router.callback_query(F.data == "show_all")
@@ -132,8 +166,8 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
         await bot.send_message(
             message.from_user.id,
             f"📅 Date: {data.get('date')}\n"
-            f"⏰ Time: {data['hours']}:{data['minutes']}\n"
-            f"📝 Text: {data['text']}",
+            f"⏰ Time: {data.get('hours')}:{data.get('minutes')}\n"
+            f"📝 Text: {data.get('text')}",
             reply_markup=add_notif_repeat_none_kb()
         )
     else:
@@ -161,6 +195,7 @@ async def add_notification_text_off(call: CallbackQuery):
 @router.callback_query(F.data == "repeatable_none")
 async def add_notification_text_off(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_none_kb())
+
 
 @router.callback_query(F.data == "add_complete")
 async def add_notification_finish(call: CallbackQuery, state: FSMContext):

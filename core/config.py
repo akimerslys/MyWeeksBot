@@ -14,9 +14,14 @@ class DBSettings(EnvBaseSettings):
     DB_HOST: str
     DB_USER: str
     DB_PASSWORD: str
+    DB_PORT: str
     DB_NAME: str
 
-    POSTGRES_URI: str = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    @property
+    def database_url(self):
+        if self.DB_PASS:
+            return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql+asyncpg://{self.DB_USER}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
 class Settings(BotSettings, DBSettings):
