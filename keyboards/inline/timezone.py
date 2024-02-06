@@ -36,6 +36,6 @@ def timezone_geo_reply() -> ReplyKeyboardMarkup:
         text="Send location",
         request_location=True
     )
-    builder.button(text="⬅️ Cancel", callback_data="cancel")
+    builder.button(text="⬅️ Cancel")
     builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
