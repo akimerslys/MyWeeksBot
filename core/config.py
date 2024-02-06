@@ -10,11 +10,16 @@ class BotSettings(EnvBaseSettings):
     ADMINS_ID: list
 
 
-#class DBSettings(EnvBaseSettings):
- #   DB_HOST: str
+class DBSettings(EnvBaseSettings):
+    DB_HOST: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_NAME: str
+
+    POSTGRES_URI: str = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 
-class Settings(BotSettings):
+class Settings(BotSettings, DBSettings):
     DEBUG: bool = False
 
 

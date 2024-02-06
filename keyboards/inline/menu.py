@@ -67,7 +67,7 @@ def hours_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for index in range(0, 24):
         builder.button(
-            text=f"🕔 {'0' if index<=9 else ''}{index}:",
+            text=f"{'0' if index<=9 else ''}{index}:",
             callback_data=f"set_hours_{index}"
         )
     builder.adjust(4, 4, 4, 4, 4, 4, 1)
@@ -78,7 +78,7 @@ def minute_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for index in range(0, 12):
         builder.button(
-            text=f"🕔 :{'0' if index<=1 else ''}{index}",
+            text=f"{'0' if index<=1 else ''}{index*5}",
             callback_data=f"set_minute_{'0' if index<=1 else ''}{index*5}"
         )
     builder.adjust(4, 4, 4, 4, 4, 4, 1)

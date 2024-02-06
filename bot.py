@@ -18,7 +18,7 @@ async def startup() -> None:
 
     bot_info = await bot.get_me()
 
-    logger.success(f"bot started as @{bot_info.username},")
+    logger.success(f"bot started as @{bot_info.username}")
 
 
 async def shutdown() -> None:
