@@ -1,27 +1,24 @@
 from database.database import db
 from database import dbcommands as dc
+from datetime import datetime, timedelta
 import asyncio
 from core.config import settings
 
 
 async def db_test():
     await db.set_bind(settings.database_url)
+    await db.gino.drop_all()
     await db.gino.create_all()
+    await dc.add_user(1123456789, "Test User", "en", "Europe/Kiev", 1, True, datetime.utcnow() + timedelta(days=30))
+    await dc.add_user(2298765432, "Test User 2", "uk", "Europe/London")
+    await dc.add_user(3312345678, "Test User 3", "ru", "Europe/Kyiv")
 
-    await dc.add_user(123, "ahahhad", "en", "Europe/London")
-    await dc.add_user(2535, "Tbebe")
-    await dc.add_user(125125, "Tesasdar 3", "ru", "GMT+3")
+    print(await dc.get_user_info(2298765432))
 
-    print(await dc.get_user_info(1))
-    await dc.update_user_lang(1, "uk")
-    print(await dc.get_user_info(1))
-    print("2")
-    print(await dc.get_user_info(228))
-    await dc.update_user_lang(228, "ukr")
-    await dc.update_user_tz(228, "Europe/Kiev")
+    await dc.update_user_premium(2298765432, True, datetime.utcnow() + timedelta(days=30))
 
-    print(await dc.get_user_info(228))
-    print(await dc.count_users())
+    print(await dc.get_user_info(2298765432))
+
 
 
 loop = asyncio.get_event_loop()

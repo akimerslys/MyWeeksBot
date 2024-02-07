@@ -2,15 +2,16 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from datetime import datetime, timedelta, tzinfo, timezone
 
+#TODO make reply keyboard with all timezones
 
 def timezone_simple_keyboard() -> InlineKeyboardMarkup:
     buttons = [
-            [InlineKeyboardButton(text="🌐 GMT 0 (London)", callback_data="set_timezone_0")],
-            [InlineKeyboardButton(text="🌐 GMT +1 (Europe)", callback_data="set_timezone_1")],
-            [InlineKeyboardButton(text="🌐 GMT +2 (Ukraine)", callback_data="set_timezone_2")],
-            [InlineKeyboardButton(text="🌐 GMT +3 (Moscow)", callback_data="set_timezone_3")],
-            [InlineKeyboardButton(text="🌐 ShowAll timezone", callback_data="show_all")],
+            [InlineKeyboardButton(text="London/GMT 0", callback_data="set_timezone_UTC")],
+            [InlineKeyboardButton(text="Europe/GMT +1", callback_data="set_timezone_Europe/Berlin")],
+            [InlineKeyboardButton(text="Ukraine/GMT +2", callback_data="set_timezone_Europe/Kyiv")],
+            [InlineKeyboardButton(text="Moscow/GMT +3", callback_data="set_timezone_Europe/Moscow")],
             [InlineKeyboardButton(text="send_timezone", callback_data="send_geo")],
+            [InlineKeyboardButton(text="🌐 ShowAll timezones", callback_data="show_all")],
             [InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb")],
         ]
     keyboard = InlineKeyboardBuilder(markup=buttons)

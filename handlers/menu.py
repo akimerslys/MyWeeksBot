@@ -7,6 +7,7 @@ from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard
 from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 from utils.states import AddNotif, AskLocation
+from database import dbcommands as dbc
 
 from loguru import logger
 from datetime import datetime, tzinfo
@@ -16,8 +17,10 @@ import pytz
 router = Router(name="menu")
 
 # TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)
+# TODO ADD NOTIFICATIONS TO THE DATABASE
+# TODO INTEGRATE PROFILE TO MENU
 # TODO ADD TIMEZONE TO THE NOTIFICATIONS
-# TODO ADD TIMEZONE SETTING FOR FIRST USER
+# TODO ADD TIMEZONE SETTING FOR FIRST USER                      #ADDED BUT NOT TESTED
 # TODO MOVE TIMEZONE SETTING TO ANOTHER FILE (IF NEEDED)
 
 # MAIN
@@ -40,10 +43,10 @@ async def choose_language(call: CallbackQuery):
 
 @router.callback_query(F.data.startswith("set_lang_"))
 async def set_language(call: CallbackQuery):
-    print(call)
     await call.message.edit_text(
-        f"🌐 Language changed to {call.data}\n\nif you see this message, everything ok, thank you :)",
+        f"🌐 Language changed to {call.data[9:]}",
         reply_markup=language_kb())
+    await dbc.update_user_lang(call.from_user.id, call.data[9:])
 
 
 @router.callback_query(F.data == "timezone_kb")
@@ -54,6 +57,7 @@ async def choose_timezone(call: CallbackQuery):
 @router.callback_query(F.data.startswith("set_timezone_"))
 async def set_timezone(call: CallbackQuery):
     await call.message.edit_text(f"🕔 Timezone changed to {call.data[13:]}", reply_markup=setting_kb())
+    await dbc.update_user_tz(call.from_user.id, call.data[13:])
 
 
 @router.callback_query(F.data.startswith("send_geo"))
@@ -88,6 +92,9 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
                     reply_markup=timezone_geo_reply()
             )
             await state.update_data(ask_location=tmp_msg.message_id)
+            return
+        await dbc.update_user_tz(message.from_user.id, timezone_str)
+        await state.clear()
 
 
 @router.callback_query(F.data == "show_all")
@@ -220,7 +227,7 @@ async def found_callback(call: CallbackQuery):
     await call.message.edit_text("⤵️ Please choose an option from the menu below", reply_markup=main_kb())
 
 
-@router.message()
+"""@router.message()
 async def found_message(message: Message):
     logger.error(f"Found unexpected message: {message.text}, from {message.from_user.username} ({message.from_user.id})")
-    await message.answer("⤵️ Please choose an option from the menu below", reply_markup=main_kb())
+    await message.answer("⤵️ Please choose an option from the menu below", reply_markup=main_kb())"""

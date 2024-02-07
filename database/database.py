@@ -1,12 +1,16 @@
+from gino import Gino
+from gino.dialects.asyncpg import AsyncpgDialect
+
+import sqlalchemy as sa
 from aiogram import Dispatcher
 
-from gino import Gino
-import sqlalchemy as sa
-from sqlalchemy import BigInteger, String
 from typing import List
-from loguru import logger
+
 from datetime import datetime
 from core.config import settings
+
+
+# TODO add async_session
 
 db = Gino()
 
@@ -51,6 +55,4 @@ class TimedBaseModel(BaseModel):
 
 
 async def on_startup(dispatcher: Dispatcher):
-    logger.warning("Connecting to PostgreSQL")
     await db.set_bind(settings.database_url)
-

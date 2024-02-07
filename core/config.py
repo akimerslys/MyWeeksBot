@@ -7,6 +7,7 @@ class EnvBaseSettings(BaseSettings):
 
 class BotSettings(EnvBaseSettings):
     TOKEN: str
+    RATE_LIMIT: float
     ADMINS_ID: list
 
 

@@ -12,19 +12,19 @@ from core.config import settings as config
 users_commands: dict[str, dict[str, str]] = {
     "en": {
         "start": "start",
-        "menu": "main menu with earning schemes",
+        "profile": "your profile",
         "report": "setting information about you",
         "author": "support contacts",
     },
     "uk": {
         "start": "start",
-        "menu": "main menu with earning schemes",
+        "profile": "your profile",
         "report": "setting information about you",
         "author": "support contacts",
     },
     "ru": {
         "start": "start",
-        "menu": "main menu with earning schemes",
+        "profile": "your profile",
         "report": "setting information about you",
         "author": "support contacts",
     },

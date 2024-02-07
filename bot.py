@@ -4,6 +4,8 @@ from core.loader import dp, bot
 from handlers import get_handlers_router
 from keyboards.default_commands import remove_default_commands, set_default_commands
 from middlewares import register_middlewares
+from core.config import settings
+from database.database import on_startup
 
 
 async def startup() -> None:
@@ -13,6 +15,14 @@ async def startup() -> None:
     dp.include_router(get_handlers_router())
 
     await set_default_commands(bot)
+
+    try:
+        logger.info("Connecting to PostgreSQL")
+        await on_startup(dp)
+    except Exception as e:
+        logger.error(f"Error while connecting to PostgreSQL: {e}")
+        return await shutdown()
+    logger.success("Connected to PostgreSQL")
 
     await bot.delete_webhook(drop_pending_updates=True)
 
@@ -27,7 +37,7 @@ async def shutdown() -> None:
 
     await remove_default_commands(bot)
 
-    # await db.close_database()
+    #await db.pop_bind().close()
     #await dp.storage.close()
 
     #await dp.fsm.storage.close()
