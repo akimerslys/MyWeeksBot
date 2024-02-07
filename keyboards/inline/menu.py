@@ -1,5 +1,9 @@
+from datetime import datetime, timedelta
+from pytz import timezone as tz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from pytz import common_timezones
 
 
 def main_kb() -> InlineKeyboardMarkup:
@@ -45,43 +49,45 @@ def language_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def add_keyboard_first() -> InlineKeyboardMarkup:
-    buttons = [
-        [InlineKeyboardButton(text="🌐 Monday", callback_data="day_Monday")],
-        [InlineKeyboardButton(text="🌐 Tuesday", callback_data="day_Tuesday")],
-        [InlineKeyboardButton(text="🌐 Wednesday", callback_data="day_Wednesday")],
-        [InlineKeyboardButton(text="🌐 Thursday", callback_data="day_Thursday")],
-        [InlineKeyboardButton(text="🌐 Friday", callback_data="day_Friday")],
-        [InlineKeyboardButton(text="🌐 Saturday", callback_data="day_Saturday")],
-        [InlineKeyboardButton(text="🌐 Today", callback_data="day_Today")],
-        [InlineKeyboardButton(text="🌐 Sunday", callback_data="day_Sunday")],
-        [InlineKeyboardButton(text="🕔 Calendar", callback_data="open_calendar")],
-        [InlineKeyboardButton(text="⬅️ Back", callback_data="main_kb")],
-    ]
-    keyboard = InlineKeyboardBuilder(markup=buttons)
-    keyboard.adjust(2, 2, 2, 3, 1)
-    return keyboard.as_markup(resize_keyboard=True)
+def add_keyboard_first(timezone_str: str = "UTC") -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    time_now = datetime.now(tz(timezone_str))
+    current_day_index = time_now.weekday()
+
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    sorted_days = days_of_week[current_day_index:] + days_of_week[:current_day_index]
+
+    for i, day in enumerate(sorted_days):
+        builder.button(
+            text=f"{day}{' (Today)' if i == 0 else ' (' + (time_now + timedelta(days=i)).strftime('%d.%m') + ')'} ",
+            callback_data=f"day_{(time_now + timedelta(days=i)).strftime('%Y %m %d')}"
+        )
+    builder.button(text="Calendar", callback_data="open_calendar")
+    builder.button(text="⬅️ Back", callback_data="main_kb")
+
+    builder.adjust(1, 2, 2, 2, 1, 1)
+    return builder.as_markup(resize_keyboard=True)
 
 
 def hours_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for index in range(0, 24):
         builder.button(
-            text=f"{'0' if index<=9 else ''}{index}:",
+            text=f"{index}:00",
             callback_data=f"set_hours_{index}"
         )
-    builder.adjust(4, 4, 4, 4, 4, 4, 1)
+    builder.adjust(1, 5, 1, 5, 1, 5, 1, 5)
     return builder.as_markup(resize_keyboard=True)
 
 
-def minute_kb() -> InlineKeyboardMarkup:
+def minute_kb(hour) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for index in range(0, 12):
         builder.button(
-            text=f"{'0' if index<=1 else ''}{index*5}",
+            text=f"{hour}:{'0' if index<=1 else ''}{index*5}",
             callback_data=f"set_minute_{'0' if index<=1 else ''}{index*5}"
         )
-    builder.adjust(4, 4, 4, 4, 4, 4, 1)
+    builder.adjust(1, 2, 1, 2, 1, 2, 1, 2)
     return builder.as_markup(resize_keyboard=True)
 
 

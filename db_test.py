@@ -1,23 +1,33 @@
 from database.database import db
-from database import dbcommands as dc
+from database import dbnotifcommands as dbnc
+from database import dbusercommands as dbuc
 from datetime import datetime, timedelta
 import asyncio
 from core.config import settings
+
+"""
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(db.DateTime(True))
+    userid = Column(BigInteger)
+    text = Column(String(20))
+    repeat = Column(Boolean, default=False)
+    week_repeat = Column(Boolean, default=False)
+    next_date = Column(db.DateTime(True))
+"""
 
 
 async def db_test():
     await db.set_bind(settings.database_url)
     await db.gino.drop_all()
     await db.gino.create_all()
-    await dc.add_user(1123456789, "Test User", "en", "Europe/Kiev", 1, True, datetime.utcnow() + timedelta(days=30))
-    await dc.add_user(2298765432, "Test User 2", "uk", "Europe/London")
-    await dc.add_user(3312345678, "Test User 3", "ru", "Europe/Kyiv")
+    await dbuc.add_user(1234567890, "Test user")
+    await dbnc.add_notif(datetime.now(), 1234567890, "Test notification")
+    await dbnc.add_notif(datetime.now()+timedelta(minutes=50), 1234567890, "Test notification2", True, False)
+    await dbnc.add_notif(datetime.now()+timedelta(minutes=100), 1234567890, "Test notification3", False, True)
+    await dbnc.add_notif(datetime.now()+timedelta(minutes=150), 19888, "Test notification4")
+    for notif in await dbnc.get_user_notifications(1234567890):
+        print(notif.date, notif.text, notif.repeat, notif.week_repeat)
 
-    print(await dc.get_user_info(2298765432))
-
-    await dc.update_user_premium(2298765432, True, datetime.utcnow() + timedelta(days=30))
-
-    print(await dc.get_user_info(2298765432))
 
 
 

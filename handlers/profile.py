@@ -3,7 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 
 
-from database.dbcommands import get_user_info
+from database.dbusercommands import get_user_info
 from core.config import settings
 
 import datetime

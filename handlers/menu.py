@@ -2,12 +2,15 @@ from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message, Location, ReplyKeyboardRemove
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
+
 from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard_first, \
     add_notif_repeat_week_kb, add_notif_repeat_none_kb, back_main, hours_kb, minute_kb, add_notif_repeat_month_kb
 from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 from utils.states import AddNotif, AskLocation
-from database import dbcommands as dbc
+
+from database import dbusercommands as dbuc
+from database import dbnotifcommands as dbnc
 
 from loguru import logger
 from datetime import datetime, tzinfo
@@ -22,9 +25,10 @@ router = Router(name="menu")
 # TODO ADD TIMEZONE TO THE NOTIFICATIONS
 # TODO ADD TIMEZONE SETTING FOR FIRST USER                      #ADDED BUT NOT TESTED
 # TODO MOVE TIMEZONE SETTING TO ANOTHER FILE (IF NEEDED)
+# TODO SORT WEEKDAYS BY TODAYS DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)
+
 
 # MAIN
-
 @router.callback_query(F.data == "main_kb")
 async def menu_back(call: CallbackQuery):
     await call.message.edit_text("⤵️ Please choose an option from the menu below", reply_markup=main_kb())
@@ -46,7 +50,7 @@ async def set_language(call: CallbackQuery):
     await call.message.edit_text(
         f"🌐 Language changed to {call.data[9:]}",
         reply_markup=language_kb())
-    await dbc.update_user_lang(call.from_user.id, call.data[9:])
+    await dbuc.update_user_lang(call.from_user.id, call.data[9:])
 
 
 @router.callback_query(F.data == "timezone_kb")
@@ -57,7 +61,7 @@ async def choose_timezone(call: CallbackQuery):
 @router.callback_query(F.data.startswith("set_timezone_"))
 async def set_timezone(call: CallbackQuery):
     await call.message.edit_text(f"🕔 Timezone changed to {call.data[13:]}", reply_markup=setting_kb())
-    await dbc.update_user_tz(call.from_user.id, call.data[13:])
+    await dbuc.update_user_tz(call.from_user.id, call.data[13:])
 
 
 @router.callback_query(F.data.startswith("send_geo"))
@@ -93,7 +97,7 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
             )
             await state.update_data(ask_location=tmp_msg.message_id)
             return
-        await dbc.update_user_tz(message.from_user.id, timezone_str)
+        await dbuc.update_user_tz(message.from_user.id, timezone_str)
         await state.clear()
 
 
@@ -107,8 +111,10 @@ async def show_all_timezone(call: CallbackQuery):
 
 @router.callback_query(F.data == "add")
 async def add_notification(call: CallbackQuery, state: FSMContext):
-    await state.set_state(AddNotif.day)
-    await call.message.edit_text("🕔 Choose day", reply_markup=add_keyboard_first())
+    await state.set_state(AddNotif.date)
+    await call.message.edit_text(
+        "🕔 Choose day",
+        reply_markup=add_keyboard_first(await dbuc.get_user_tz(call.from_user.id)))
 
 
 # CHOOSE DAY WITH CALENDAR
@@ -131,17 +137,17 @@ async def process_simple_calendar(call: CallbackQuery, state: FSMContext, callba
     selected, date = await calendar.process_selection(call, callback_data)
     if selected:
         await call.message.edit_text(
-            f'🕔 {date.strftime("%d/%m/%Y")}, please select a time:',
+            f'🕔 {date.strftime("%d %m %Y")}, please select a time:',
             reply_markup=hours_kb()
         )
-        await state.update_data(day=date.strftime("%d/%m/%Y"))
+        await state.update_data(date=date.strftime("%Y %m %d"))
         await state.set_state(AddNotif.hours)
 
 
-# CHOOSE TIME
+# CHOOSE DAY HOUR TIME
 @router.callback_query(F.data.startswith("day_"))
 async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext):
-    await state.update_data(day=call.data[4:])
+    await state.update_data(date=call.data[4:])
     await state.set_state(AddNotif.hours)
     await call.message.edit_text(f"🕔 Choose time for {call.data[4:]}", reply_markup=hours_kb())
 
@@ -152,7 +158,7 @@ async def add_notif_ask_minute(call: CallbackQuery, state: FSMContext):
     await state.set_state(AddNotif.minutes)
     await call.message.edit_text(
         "Please select a minute: ",
-        reply_markup=minute_kb()
+        reply_markup=minute_kb(call.data[10:])
     )
 
 
@@ -171,45 +177,59 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
     await state.update_data(text=message.text)
     data = await state.get_data()
     await bot.delete_message(message.from_user.id, data.get('tmp_msg'))
-    if data.get('date'):
-        await bot.send_message(
-            message.from_user.id,
-            f"📅 Date: {data.get('date')}\n"
-            f"⏰ Time: {data.get('hours')}:{data.get('minutes')}\n"
-            f"📝 Text: {data.get('text')}",
-            reply_markup=add_notif_repeat_none_kb()
-        )
-    else:
-        await bot.send_message(
-            message.from_user.id,
-            f"📅 Date: {data.get('day')}\n"
-            f"⏰ Time: {data.get('hours')}:{data.get('minutes')}\n"
-            f"📝 Text: {data.get('text')}",
-            reply_markup=add_notif_repeat_none_kb()
+    full_date = datetime.strptime(f"{data.get('date')} {data.get('hours')}:{data.get('minutes')}", "%Y %m %d %H:%M")
+    await bot.send_message(
+        message.from_user.id,
+        f"full_date: {full_date}\n"
+        f"📅 Date: {data.get('date')}\n"
+        f"⏰ Time: {data.get('hours')}:{data.get('minutes')}\n"
+        f"📝 Text: {data.get('text')}",
+        reply_markup=add_notif_repeat_none_kb()
         )
     await message.delete()
     await state.set_state(AddNotif.repeat)
 
 
 @router.callback_query(F.data == "repeatable_week")
-async def add_notif_text_off(call: CallbackQuery):
+async def add_notif_text_off(call: CallbackQuery, state: FSMContext):
+    await state.update_data(week_repeat=True)
+    await state.update_data(repeat=False)
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_week_kb())
 
 
 @router.callback_query(F.data == "repeatable_month")
-async def add_notification_text_off(call: CallbackQuery):
+async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
+    await state.update_data(week_repeat=False)
+    await state.update_data(repeat=True)
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_month_kb())
 
 
 @router.callback_query(F.data == "repeatable_none")
-async def add_notification_text_off(call: CallbackQuery):
+async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
+    await state.update_data(week_repeat=False)
+    await state.update_data(repeat=False)
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_none_kb())
 
 
 @router.callback_query(F.data == "add_complete")
 async def add_notification_finish(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    date_str = data.get('date')
+    hours_str = data.get('hours')
+    minutes_str = data.get('minutes')
+
+    full_date = datetime.strptime(f"{date_str} {hours_str} {minutes_str}", "%Y %m %d %H %M")
+
+    user_timezone_str = await dbuc.get_user_tz(call.from_user.id)
+    user_timezone = pytz.timezone(user_timezone_str)
+
+    full_date_localized = user_timezone.localize(full_date)
+    full_date_to_utc = full_date_localized.astimezone(pytz.utc)
+
+    print(full_date_to_utc)
+
     await state.clear()
-    await call.answer("✅ Notification added", show_alert=True)
+    await call.answer(f"✅ Notification added\nПроверь! Правильно ли время в utc?\nУведомл в твоей таймзоне:\n{full_date}\nВ UTC:\n{full_date_to_utc}", show_alert=True)
     await call.message.edit_reply_markup(reply_markup=back_main())
 
 

@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart
 from keyboards.inline.menu import main_kb
 from keyboards.inline.timezone import timezone_simple_keyboard
 
-from database.dbcommands import add_user, user_exists
+from database.dbusercommands import add_user, user_exists
 
 router = Router(name="start")
 

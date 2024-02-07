@@ -11,12 +11,12 @@ class AskLocation(StatesGroup):
 
 
 class AddNotif(StatesGroup):
-    day = State()
     date = State()
     hours = State()
     minutes = State()
     text = State()
     tmp_msg = State()
-    repeat = State()
+    repeat: False = State()
+    week_repeat: False = State()
 
 

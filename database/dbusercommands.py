@@ -1,17 +1,19 @@
 from asyncpg import UniqueViolationError
 from loguru import logger
-from database.schemas.users import User
+from database.modules.users import User
 from database.database import db
 from datetime import datetime, timedelta
 
 
-"""userid = Column(Integer, unique=True)
-name = Column(String(20))
-language = Column(String(5))
-timezone = Column(String(32))
-notifications = Column(SmallInteger, default=0)
-is_premium = Column(Boolean, default=False)
-premium_until = Column(db.DateTime(True), nullable=True)"""
+"""
+    userid = Column(Integer, unique=True)
+    name = Column(String(20))
+    language = Column(String(5))
+    timezone = Column(String(32))
+    notifications = Column(SmallInteger, default=0)
+    is_premium = Column(Boolean, default=False)
+    premium_until = Column(db.DateTime(True), nullable=True)
+"""
 
 
 async def add_user(userid: int, name: str, language: str = "en",
