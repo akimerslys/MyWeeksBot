@@ -57,9 +57,7 @@ async def use_key(key: str, userid: int):
 
     if not await is_key(key) or await is_key_used(key):
         return False
-    key = await select_key(key)
-    key.is_used = True
-    key.used_by = userid
-    key.update()
-    logger.info(f'Key {key.id} was used by {userid}')
+    key_ = await select_key(key)
+    await key_.update(is_used=True, used_by=userid).apply()
+    logger.info(f'Key {key_.id} was used by {key_.used_by}')
     return True

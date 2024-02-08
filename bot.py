@@ -11,7 +11,6 @@ from aiogram.exceptions import TelegramAPIError
 
 
 async def startup() -> None:
-
     logger.info("bot starting...")
     register_middlewares(dp)
     dp.include_router(get_handlers_router())

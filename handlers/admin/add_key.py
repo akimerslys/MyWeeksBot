@@ -13,7 +13,7 @@ from loguru import logger
 router = Router(name="add_key")
 
 
-@router.message(Command("add_key"), IsAdmin(settings.ADMINS_ID))
+@router.message(Command("add_key", "key_add"), IsAdmin(settings.ADMINS_ID))
 async def add_key(message: Message, bot: Bot):
     days = find_command_argument(message.text)
     await bot.delete_message(message.chat.id, message.message_id)

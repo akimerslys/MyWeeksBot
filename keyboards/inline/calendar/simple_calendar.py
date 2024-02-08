@@ -15,16 +15,17 @@ class SimpleCalendar(GenericCalendar):
     async def start_calendar(
         self,
         year: int = datetime.now().year,
-        month: int = datetime.now().month
+        month: int = datetime.now().month,
+        today: datetime = datetime.now()
     ) -> InlineKeyboardMarkup:
         """
         Creates an inline keyboard with the provided year and month
+        :param today:
         :param int year: Year to use in the calendar, if None the current year is used.
         :param int month: Month to use in the calendar, if None the current month is used.
         :return: Returns InlineKeyboardMarkup object with the calendar.
         """
 
-        today = datetime.now()
         now_weekday = self._labels.days_of_week[today.weekday()]
         now_month, now_year, now_day = today.month, today.year, today.day
 
@@ -121,7 +122,7 @@ class SimpleCalendar(GenericCalendar):
         cancel_row.append(InlineKeyboardButton(text=" ", callback_data=self.ignore_callback))
         cancel_row.append(InlineKeyboardButton(
             text=self._labels.today_caption,
-            callback_data=SimpleCalendarCallback(act=SimpleCalAct.today, year=year, month=month, day=day).pack()
+            callback_data=SimpleCalendarCallback(act=SimpleCalAct.day, year=today.year, month=today.month, day=today.day).pack()
         ))
         kb.append(cancel_row)
         return InlineKeyboardMarkup(row_width=7, inline_keyboard=kb)
@@ -170,11 +171,7 @@ class SimpleCalendar(GenericCalendar):
             next_date = temp_date + timedelta(days=31)
             await self._update_calendar(query, next_date)
         if data.act == SimpleCalAct.today:
-            next_date = datetime.now()
-            if next_date.year != int(data.year) or next_date.month != int(data.month):
-                await self._update_calendar(query, datetime.now())
-            else:
-                await query.answer(cache_time=60)
+            return await self.process_day_select(data, query)
         if data.act == SimpleCalAct.cancel:
             await query.answer(show_alert=True, text="Пока не пофиксил")
         # at some point user clicks DAY button, returning date

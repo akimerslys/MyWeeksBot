@@ -28,5 +28,4 @@ async def finish_report(message: Message, bot: Bot, state: FSMContext):
         f"New Report: @{message.from_user.id if message.from_user.username is None else message.from_user.username}"
         f"\n\n {message.text}")
     await state.clear()
-    await bot.delete_message(message.from_user.id, sent_message.message_id)
 

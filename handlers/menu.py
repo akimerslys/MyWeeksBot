@@ -10,13 +10,14 @@ from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard
 from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
     ask_location_confirm
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
+
 from utils.states import AddNotif, AskLocation
 
 from database import dbusercommands as dbuc
 from database import dbnotifcommands as dbnc
 
 from loguru import logger
-from datetime import datetime, tzinfo
+from datetime import datetime, tzinfo, timedelta
 from timezonefinder import TimezoneFinder
 import pytz
 
@@ -95,7 +96,6 @@ async def ask_for_location(call: CallbackQuery, bot: Bot, state: FSMContext):
     await state.update_data(ask_location=geo_msg.message_id)
 
 
-
 @router.message(AskLocation.ask_location)
 async def handle_location(message: Message, bot: Bot, state: FSMContext):
     data = await state.get_data()
@@ -105,7 +105,7 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
     )
     if message.location:
         try:
-            timezone_str = TimezoneFinder().timezone_at(lng=message.location.latitude, lat=message.location.longitude)
+            timezone_str = TimezoneFinder().timezone_at(lng=message.location.longitude, lat=message.location.latitude)
         except Exception as e:
             logger.error(f"Error processing location: {e}")
             tmp_msg = await bot.send_message(
@@ -165,9 +165,11 @@ async def add_notification(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "open_calendar")
 async def nav_cal_handler(call: CallbackQuery, state: FSMContext):
     await state.set_state(AddNotif.date)
+    user_time = pytz.timezone(await dbuc.get_user_tz(call.from_user.id)).localize(datetime.utcnow()).astimezone(
+        pytz.utc)
     await call.message.edit_text(
         "Please select a date: ",
-        reply_markup=await SimpleCalendar().start_calendar()
+        reply_markup=await SimpleCalendar().start_calendar(user_time.year, user_time.month, user_time)
     )
 
 
@@ -176,7 +178,9 @@ async def process_simple_calendar(call: CallbackQuery, state: FSMContext, callba
     calendar = SimpleCalendar(
         locale=await get_user_locale(call.from_user), show_alerts=True
     )
-    calendar.set_dates_range(datetime.now(), datetime(2025, 1, 1))
+    user_time = pytz.timezone(await dbuc.get_user_tz(call.from_user.id)).localize(datetime.utcnow()).astimezone(
+        pytz.utc)
+    calendar.set_dates_range(user_time.replace(tzinfo=None) - timedelta(days=1), user_time.replace(tzinfo=None) + timedelta(days=365))
     selected, date = await calendar.process_selection(call, callback_data)
     if selected:
         await call.message.edit_text(
@@ -206,10 +210,10 @@ async def add_notif_ask_minute(call: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("set_minute_"))
-async def add_notif_ask_text(call: CallbackQuery, state: FSMContext):
+async def add_notif_ask_text(call: CallbackQuery, bot: Bot, state: FSMContext):
     await state.update_data(minutes=call.data[11:])
     tmp_msg = await call.message.edit_text(
-        "Now write name of your notification:",
+        "Now write name of your notification: (skip button TBA)",           # TODO ADD SKIP BUTTON
     )
     await state.set_state(AddNotif.text)
     await state.update_data(tmp_msg=tmp_msg.message_id)
