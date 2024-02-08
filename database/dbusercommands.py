@@ -32,6 +32,7 @@ async def add_user(userid: int, name: str, language: str = "en",
             premium_until=premium_until
     )
     await user.create()
+    logger.info(f"User {userid} was added to the database")
 
 
 async def user_exists(userid: int) -> bool:
@@ -90,7 +91,7 @@ async def update_user_tz(userid: int, tz: str):
 
 
 # NOTIFICATIONS
-async def get_notifications(userid: int) -> int:
+async def count_notifications(userid: int) -> int:
     user = await select_user(userid)
     return user.notifications
 

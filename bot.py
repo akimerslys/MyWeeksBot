@@ -7,6 +7,8 @@ from middlewares import register_middlewares
 from core.config import settings
 from database.database import on_startup
 
+from aiogram.exceptions import TelegramAPIError
+
 
 async def startup() -> None:
 
@@ -38,7 +40,7 @@ async def shutdown() -> None:
     await remove_default_commands(bot)
 
     #await db.pop_bind().close()
-    #await dp.storage.close()
+    await dp.storage.close()
 
     #await dp.fsm.storage.close()
     await bot.session.close()
@@ -55,5 +57,5 @@ async def main() -> None:
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, TelegramAPIError):
         pass

@@ -1,13 +1,14 @@
 from aiogram import Bot, Router, F
 from aiogram.types import Message
 from aiogram.filters import Command
-from bot import shutdown, startup
+from bot import shutdown
 from core.config import settings as config
 from filters.admin import IsAdmin
 from loguru import logger
 import asyncio
 
 router = Router(name="stop")
+
 
 # TODO reformat to restart button (with docker)
 @router.message(Command("stop"), IsAdmin(config.ADMINS_ID))

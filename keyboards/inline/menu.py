@@ -9,7 +9,7 @@ from pytz import common_timezones
 def main_kb() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text="📈 Add Notification", callback_data="add")],
-        [InlineKeyboardButton(text="📊 Remove Notification", callback_data="remove")],
+        [InlineKeyboardButton(text="📊 Manage Notifications", callback_data="remove")],
         [InlineKeyboardButton(text="📚 Settings", callback_data="settings_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -19,6 +19,16 @@ def main_kb() -> InlineKeyboardMarkup:
 
 def back_main() -> InlineKeyboardMarkup:
     buttons = [
+        [InlineKeyboardButton(text="⬅️ Back to Main Menu", callback_data="main_kb")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def back_main_premium() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="🔑 Buy Premium", callback_data="buy_premium")],
         [InlineKeyboardButton(text="⬅️ Back to Main Menu", callback_data="main_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -41,7 +51,8 @@ def language_kb() -> InlineKeyboardMarkup:
     buttons = [
             [InlineKeyboardButton(text="🇬🇧 English", callback_data="set_lang_en")],
             [InlineKeyboardButton(text="🇺🇦 Українська", callback_data="set_lang_uk")],
-            [InlineKeyboardButton(text="🇷🇺 Руzzкий", callback_data="set_lang_ru")],
+            [InlineKeyboardButton(text="🏳️ Руzzкий", callback_data="set_lang_ru")],
+            [InlineKeyboardButton(text="ADD YOUR LANGUAGE!", callback_data="add_lang")],
             [InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb")],
         ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -76,7 +87,7 @@ def hours_kb() -> InlineKeyboardMarkup:
             text=f"{index}:00",
             callback_data=f"set_hours_{index}"
         )
-    builder.adjust(1, 5, 1, 5, 1, 5, 1, 5)
+    builder.adjust(1, 4, 1, 4, 1, 4, 1, 4, 1, 3)
     return builder.as_markup(resize_keyboard=True)
 
 
@@ -93,8 +104,18 @@ def minute_kb(hour) -> InlineKeyboardMarkup:
 
 def add_notif_repeat_none_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🕔 Do not repeat", callback_data="repeatable_week")],
-        [InlineKeyboardButton(text="✅ Complete",callback_data="add_complete")],
+        [InlineKeyboardButton(text="🕔 Do not repeat", callback_data="repeatable_day")],
+        [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def add_notif_repeat_day_kb() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text=" 🔒 Every Day ", callback_data="repeatable_week")],
+        [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
@@ -103,7 +124,7 @@ def add_notif_repeat_none_kb() -> InlineKeyboardMarkup:
 
 def add_notif_repeat_week_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🕔 Every   Week", callback_data="repeatable_month")],
+        [InlineKeyboardButton(text="  🕔 Every Week", callback_data="repeatable_month")],
         [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -113,7 +134,7 @@ def add_notif_repeat_week_kb() -> InlineKeyboardMarkup:
 
 def add_notif_repeat_month_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🕔 Every  Month", callback_data="repeatable_none")],
+        [InlineKeyboardButton(text=" 🕔 Every Month", callback_data="repeatable_none")],
         [InlineKeyboardButton(text="✅ Complete", callback_data="add_complete")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)

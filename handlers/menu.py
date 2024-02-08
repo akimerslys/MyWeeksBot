@@ -2,9 +2,11 @@ from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message, Location, ReplyKeyboardRemove
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
+from aiogram.exceptions import TelegramBadRequest
 
 from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard_first, \
-    add_notif_repeat_week_kb, add_notif_repeat_none_kb, back_main, hours_kb, minute_kb, add_notif_repeat_month_kb
+    add_notif_repeat_week_kb, add_notif_repeat_none_kb, back_main, hours_kb, minute_kb, add_notif_repeat_month_kb, \
+    back_main_premium, add_notif_repeat_day_kb
 from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 from utils.states import AddNotif, AskLocation
@@ -18,6 +20,7 @@ from timezonefinder import TimezoneFinder
 import pytz
 
 router = Router(name="menu")
+
 
 # TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)
 # TODO ADD NOTIFICATIONS TO THE DATABASE
@@ -49,8 +52,17 @@ async def choose_language(call: CallbackQuery):
 async def set_language(call: CallbackQuery):
     await call.message.edit_text(
         f"🌐 Language changed to {call.data[9:]}",
-        reply_markup=language_kb())
-    await dbuc.update_user_lang(call.from_user.id, call.data[9:])
+        reply_markup=setting_kb()
+    )
+    if await dbuc.get_user_lang(call.from_user.id) != call.data[9:]:
+        await dbuc.update_user_lang(call.from_user.id, call.data[9:])
+
+
+@router.callback_query(F.data == "add_lang")
+async def add_language(call: CallbackQuery):
+    await call.answer(
+        "⚙️ This function is not available yet\nSoon u will have ability to add your own language",
+        show_alert=True)
 
 
 @router.callback_query(F.data == "timezone_kb")
@@ -60,6 +72,13 @@ async def choose_timezone(call: CallbackQuery):
 
 @router.callback_query(F.data.startswith("set_timezone_"))
 async def set_timezone(call: CallbackQuery):
+    try:
+        pytz.timezone(call.data[13:])
+    except pytz.exceptions.UnknownTimeZoneError:
+        await call.answer("⚙️ Invalid Timezone, please use /report", show_alert=True)
+        await call.message.edit_text("⤵️ Please choose an option from the menu below", reply_markup=main_kb())
+        logger.error(f"User {call.from_user.id} tried to set invalid timezone: {call.data[13:]}")
+        return
     await call.message.edit_text(f"🕔 Timezone changed to {call.data[13:]}", reply_markup=setting_kb())
     await dbuc.update_user_tz(call.from_user.id, call.data[13:])
 
@@ -91,9 +110,9 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
         except Exception as e:
             logger.error(f"Error processing location: {e}")
             tmp_msg = await bot.send_message(
-                    message.from_user.id,
-                    "Unexpected Error. Please, try again.",
-                    reply_markup=timezone_geo_reply()
+                message.from_user.id,
+                "Unexpected Error. Please, try again.",
+                reply_markup=timezone_geo_reply()
             )
             await state.update_data(ask_location=tmp_msg.message_id)
             return
@@ -185,52 +204,70 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
         f"⏰ Time: {data.get('hours')}:{data.get('minutes')}\n"
         f"📝 Text: {data.get('text')}",
         reply_markup=add_notif_repeat_none_kb()
-        )
+    )
     await message.delete()
-    await state.set_state(AddNotif.repeat)
+    await state.set_state(AddNotif.repeat_day)
+    await state.update_data(repeat_day=False)
+    await state.update_data(repeat_week=False)
+    await state.update_data(repeat_month=False)
+
+
+@router.callback_query(F.data == "repeatable_day")
+async def add_notif_text_off(call: CallbackQuery, state: FSMContext):
+    await state.update_data(repeat_day=True)
+    await state.update_data(repeat_month=False)
+    await call.message.edit_reply_markup(reply_markup=add_notif_repeat_day_kb())
 
 
 @router.callback_query(F.data == "repeatable_week")
 async def add_notif_text_off(call: CallbackQuery, state: FSMContext):
-    await state.update_data(week_repeat=True)
-    await state.update_data(repeat=False)
+    await state.update_data(repeat_day=False)
+    await state.update_data(repeat_week=True)
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_week_kb())
 
 
 @router.callback_query(F.data == "repeatable_month")
 async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
-    await state.update_data(week_repeat=False)
-    await state.update_data(repeat=True)
+    await state.update_data(repeat_week=False)
+    await state.update_data(repeat_month=True)
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_month_kb())
 
 
 @router.callback_query(F.data == "repeatable_none")
 async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
-    await state.update_data(week_repeat=False)
-    await state.update_data(repeat=False)
+    await state.update_data(repeat_month=False)
     await call.message.edit_reply_markup(reply_markup=add_notif_repeat_none_kb())
 
 
 @router.callback_query(F.data == "add_complete")
 async def add_notification_finish(call: CallbackQuery, state: FSMContext):
+    if not await state.get_state():
+        await call.answer("⚙️ Error, please use /report", show_alert=True)
+        await call.message.edit_text("⤵️ Please choose an option from the menu below", reply_markup=main_kb())
+        return
     data = await state.get_data()
-    date_str = data.get('date')
-    hours_str = data.get('hours')
-    minutes_str = data.get('minutes')
+    if not await dbuc.get_user_premium(call.from_user.id) and data.get('repeat_day'):
+        await call.answer("Sorry, you need to buy premium to use this feature", show_alert=True)
+        await call.message.edit_reply_markup(reply_markup=add_notif_repeat_none_kb())
+        return
 
-    full_date = datetime.strptime(f"{date_str} {hours_str} {minutes_str}", "%Y %m %d %H %M")
+    user_notifs_len = await dbuc.count_notifications(call.from_user.id)
 
-    user_timezone_str = await dbuc.get_user_tz(call.from_user.id)
-    user_timezone = pytz.timezone(user_timezone_str)
+    if user_notifs_len > 5:
+        if not await dbuc.get_user_premium(call.from_user.id) or user_notifs_len >= 10:
+            await call.answer("You have reached the limit of 5 notifications", show_alert=True)
+            await call.message.edit_reply_markup(reply_markup=back_main_premium())
+            return
 
-    full_date_localized = user_timezone.localize(full_date)
-    full_date_to_utc = full_date_localized.astimezone(pytz.utc)
+    full_date = datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}", "%Y %m %d %H %M")
+    user_timezone = pytz.timezone(await dbuc.get_user_tz(call.from_user.id))
 
-    print(full_date_to_utc)
-
-    await state.clear()
-    await call.answer(f"✅ Notification added\nПроверь! Правильно ли время в utc?\nУведомл в твоей таймзоне:\n{full_date}\nВ UTC:\n{full_date_to_utc}", show_alert=True)
+    await dbnc.add_notification(user_timezone.localize(full_date).astimezone(pytz.utc), call.from_user.id, data.get('text'), data.get('repeat_day'),
+                                data.get('repeat_week'), data.get('repeat_month'))
+    await dbuc.inc_notifications(call.from_user.id)
+    await call.answer(f"✅ Notification added", show_alert=True)
     await call.message.edit_reply_markup(reply_markup=back_main())
+    await state.clear()
 
 
 # REMOVE NOTIFICATION
@@ -238,6 +275,18 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "remove")
 async def remove_notification(call: CallbackQuery):
     await call.answer("⚙️ This function is not available yet")
+
+
+# MANAGE NOTIFICATIONS
+@router.callback_query(F.data == "manage")
+
+# PREMIUM
+@router.callback_query(F.data == "buy_premium")
+async def buy_premium(call: CallbackQuery):
+    await call.answer(
+        "⚙️ This function is not available yet",
+        show_alert=True
+    )
 
 
 @router.callback_query()

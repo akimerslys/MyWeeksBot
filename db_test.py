@@ -20,15 +20,6 @@ async def db_test():
     await db.set_bind(settings.database_url)
     await db.gino.drop_all()
     await db.gino.create_all()
-    await dbuc.add_user(1234567890, "Test user")
-    await dbnc.add_notif(datetime.now(), 1234567890, "Test notification")
-    await dbnc.add_notif(datetime.now()+timedelta(minutes=50), 1234567890, "Test notification2", True, False)
-    await dbnc.add_notif(datetime.now()+timedelta(minutes=100), 1234567890, "Test notification3", False, True)
-    await dbnc.add_notif(datetime.now()+timedelta(minutes=150), 19888, "Test notification4")
-    for notif in await dbnc.get_user_notifications(1234567890):
-        print(notif.date, notif.text, notif.repeat, notif.week_repeat)
-
-
 
 
 loop = asyncio.get_event_loop()

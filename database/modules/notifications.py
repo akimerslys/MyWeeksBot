@@ -10,7 +10,7 @@ class Notification(TimedBaseModel):
     date = Column(db.DateTime(True))
     userid = Column(BigInteger)
     text = Column(String(20))
-    repeat = Column(Boolean, default=False)
-    week_repeat = Column(Boolean, default=False)
-    next_date = Column(db.DateTime(True), nullable=True)
+    repeat_day = Column(Boolean, default=False, nullable=False)
+    repeat_week = Column(Boolean, default=False, nullable=False)
+    repeat_month = Column(Boolean, default=False, nullable=False)
     query: sql.select

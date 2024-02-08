@@ -16,7 +16,8 @@ class AddNotif(StatesGroup):
     minutes = State()
     text = State()
     tmp_msg = State()
-    repeat: False = State()
-    week_repeat: False = State()
+    repeat_day = State()
+    repeat_week = State()
+    repeat_month = State()
 
 

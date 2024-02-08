@@ -20,7 +20,6 @@ async def start_report(message: Message, bot: Bot, state: FSMContext):
 
 @router.message(Report.text)
 async def finish_report(message: Message, bot: Bot, state: FSMContext):
-    sent_message = await bot.send_message(message.from_user.id, "Thank you for your report!")
     data = await state.get_data()
     await bot.delete_message(message.from_user.id, data['text'])
     await bot.delete_message(message.from_user.id, message.message_id)
