@@ -9,7 +9,7 @@ class BotSettings(EnvBaseSettings):
     TOKEN: str
     RATE_LIMIT: float
     ADMINS_ID: list
-
+    PREMIUM_KEY: str
 
 class DBSettings(EnvBaseSettings):
     DB_HOST: str
@@ -20,9 +20,7 @@ class DBSettings(EnvBaseSettings):
 
     @property
     def database_url(self):
-        if self.DB_PASSWORD:
-            return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        return f"postgresql+asyncpg://{self.DB_USER}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql+asyncpg://{self.DB_USER}{''if not self.DB_PASSWORD else ':' + self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
 class Settings(BotSettings, DBSettings):

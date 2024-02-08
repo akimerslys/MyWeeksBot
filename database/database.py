@@ -11,6 +11,7 @@ from core.config import settings
 
 
 # TODO add async_session
+# TODO add pytz timezone database class
 
 db = Gino()
 

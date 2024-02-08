@@ -7,7 +7,7 @@ class Report(StatesGroup):
 
 class AskLocation(StatesGroup):
     ask_location = State()
-    callback_id = State()
+    ask_location_confirm = State()
 
 
 class AddNotif(StatesGroup):
@@ -16,8 +16,8 @@ class AddNotif(StatesGroup):
     minutes = State()
     text = State()
     tmp_msg = State()
-    repeat_day = State()
-    repeat_week = State()
-    repeat_month = State()
+    repeat_day: False = State()
+    repeat_week: False = State()
+    repeat_month: False = State()
 
 

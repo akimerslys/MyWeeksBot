@@ -7,7 +7,8 @@ from aiogram.exceptions import TelegramBadRequest
 from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard_first, \
     add_notif_repeat_week_kb, add_notif_repeat_none_kb, back_main, hours_kb, minute_kb, add_notif_repeat_month_kb, \
     back_main_premium, add_notif_repeat_day_kb
-from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply
+from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
+    ask_location_confirm
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 from utils.states import AddNotif, AskLocation
 
@@ -23,12 +24,12 @@ router = Router(name="menu")
 
 
 # TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)
-# TODO ADD NOTIFICATIONS TO THE DATABASE
+# TODO ADD NOTIFICATIONS TO THE DATABASE                                        #DONE (NEED MORE TESTS)
 # TODO INTEGRATE PROFILE TO MENU
-# TODO ADD TIMEZONE TO THE NOTIFICATIONS
-# TODO ADD TIMEZONE SETTING FOR FIRST USER                      #ADDED BUT NOT TESTED
+# TODO ADD TIMEZONE TO THE NOTIFICATIONS                                        #DONE (NEED MORE TESTS)
+# TODO ADD TIMEZONE SETTING FOR FIRST USER                                      #ADDED BUT NOT TESTED
 # TODO MOVE TIMEZONE SETTING TO ANOTHER FILE (IF NEEDED)
-# TODO SORT WEEKDAYS BY TODAYS DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)
+# TODO SORT WEEKDAYS BY TODAYS DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)           #DONE (NEED MORE TESTS)
 
 
 # MAIN
@@ -92,7 +93,7 @@ async def ask_for_location(call: CallbackQuery, bot: Bot, state: FSMContext):
     )
     await state.set_state(AskLocation.ask_location)
     await state.update_data(ask_location=geo_msg.message_id)
-    await state.update_data(callback_id=call)
+
 
 
 @router.message(AskLocation.ask_location)
@@ -105,8 +106,6 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
     if message.location:
         try:
             timezone_str = TimezoneFinder().timezone_at(lng=message.location.latitude, lat=message.location.longitude)
-            # TODO ANSWER FUNCTION
-
         except Exception as e:
             logger.error(f"Error processing location: {e}")
             tmp_msg = await bot.send_message(
@@ -116,8 +115,33 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
             )
             await state.update_data(ask_location=tmp_msg.message_id)
             return
-        await dbuc.update_user_tz(message.from_user.id, timezone_str)
-        await state.clear()
+
+        tmp_msg = await bot.send_message(
+            message.from_user.id,
+            f"🕔 This timezone correct? {timezone_str}\nYour Time should be {datetime.now(pytz.timezone(timezone_str)).strftime('%H:%M')}",
+            reply_markup=ask_location_confirm()
+            )
+        await state.update_data(ask_for_location=tmp_msg.message_id)
+        await state.update_data(ask_location_confirm=timezone_str)
+        await state.set_state(AskLocation.ask_location_confirm)
+
+
+@router.callback_query(F.data == "confirm_location")
+async def confirm_location(call: CallbackQuery, bot: Bot, state: FSMContext):
+    data = await state.get_data()
+    await dbuc.update_user_tz(call.from_user.id, data.get('ask_location_confirm'))
+    await bot.delete_message(call.from_user.id, data.get('ask_for_location'))
+    await call.answer("✅ Timezone changed")
+    await state.clear()
+
+
+@router.callback_query(F.data == "cancel_location")
+async def cancel_location(call: CallbackQuery, bot: Bot, state: FSMContext):
+    data = await state.get_data()
+    await bot.delete_message(call.from_user.id, data.get('ask_for_location'))
+    await call.answer("📛 Timezone not set")
+    logger.warning(f"User {call.from_user.id} false location, timezone {data.get('ask_location_confirm')}")
+    await state.clear()
 
 
 @router.callback_query(F.data == "show_all")
@@ -143,7 +167,7 @@ async def nav_cal_handler(call: CallbackQuery, state: FSMContext):
     await state.set_state(AddNotif.date)
     await call.message.edit_text(
         "Please select a date: ",
-        reply_markup=await SimpleCalendar(locale=await get_user_locale(call.from_user)).start_calendar()
+        reply_markup=await SimpleCalendar().start_calendar()
     )
 
 
@@ -207,9 +231,6 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
     )
     await message.delete()
     await state.set_state(AddNotif.repeat_day)
-    await state.update_data(repeat_day=False)
-    await state.update_data(repeat_week=False)
-    await state.update_data(repeat_month=False)
 
 
 @router.callback_query(F.data == "repeatable_day")
@@ -248,7 +269,6 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     if not await dbuc.get_user_premium(call.from_user.id) and data.get('repeat_day'):
         await call.answer("Sorry, you need to buy premium to use this feature", show_alert=True)
-        await call.message.edit_reply_markup(reply_markup=add_notif_repeat_none_kb())
         return
 
     user_notifs_len = await dbuc.count_notifications(call.from_user.id)
@@ -262,8 +282,12 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext):
     full_date = datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}", "%Y %m %d %H %M")
     user_timezone = pytz.timezone(await dbuc.get_user_tz(call.from_user.id))
 
-    await dbnc.add_notification(user_timezone.localize(full_date).astimezone(pytz.utc), call.from_user.id, data.get('text'), data.get('repeat_day'),
-                                data.get('repeat_week'), data.get('repeat_month'))
+    await dbnc.add_notification(user_timezone.localize(full_date).astimezone(pytz.utc),
+                                call.from_user.id,
+                                data.get('text'),
+                                data.get('repeat_day'),
+                                data.get('repeat_week'),
+                                data.get('repeat_month'))
     await dbuc.inc_notifications(call.from_user.id)
     await call.answer(f"✅ Notification added", show_alert=True)
     await call.message.edit_reply_markup(reply_markup=back_main())

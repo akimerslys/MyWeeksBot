@@ -112,6 +112,8 @@ def add_notif_repeat_none_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
+
+# TODO ADD PREMIUM BUTTON IF USER NOT PREMIUM
 def add_notif_repeat_day_kb() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text=" 🔒 Every Day ", callback_data="repeatable_week")],
