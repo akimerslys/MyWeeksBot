@@ -230,6 +230,9 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
         reply_markup=add_notif_repeat_none_kb()
     )
     await message.delete()
+    await state.update_data(repeat_day=False)
+    await state.update_data(repeat_week=False)
+    await state.update_data(repeat_month=False)
     await state.set_state(AddNotif.repeat_day)
 
 
@@ -277,6 +280,7 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext):
         if not await dbuc.get_user_premium(call.from_user.id) or user_notifs_len >= 10:
             await call.answer("You have reached the limit of 5 notifications", show_alert=True)
             await call.message.edit_reply_markup(reply_markup=back_main_premium())
+            await state.clear()
             return
 
     full_date = datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}", "%Y %m %d %H %M")
