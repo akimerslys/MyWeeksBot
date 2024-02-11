@@ -1,27 +1,23 @@
-from database.database import db
-from database import dbnotifcommands as dbnc
-from database import dbusercommands as dbuc
-from datetime import datetime, timedelta
-import asyncio
+from database.engine import sessionmaker, create_async_engine
+from services import users as dbuser
+from services import notifs as dbnotif
+from services import keys as dbkey
+from database.models import Base
 from core.config import settings
+from loguru import logger
 
-"""
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    date = Column(db.DateTime(True))
-    userid = Column(BigInteger)
-    text = Column(String(20))
-    repeat = Column(Boolean, default=False)
-    week_repeat = Column(Boolean, default=False)
-    next_date = Column(db.DateTime(True))
-"""
+async def main():
+    async_engine = create_async_engine(url=settings.database_url)
+    session_maker = sessionmaker(bind=async_engine)
 
-
-async def db_test():
-    await db.set_bind(settings.database_url)
-    await db.gino.drop_all()
-    await db.gino.create_all()
+    async with session_maker as session:
+        await dbuser.add_user(session, 1337, "testnameXD123", "uk", "eu/uk")
+        logger.success(await dbuser.get_user(session, 1123))
+        key = await dbkey.add_key(session, 7)
+        await dbkey.use_key(session, key, 1337)
+        logger.success(await dbuser.get_user(session, 1123))
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(db_test())
-loop.close()
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

@@ -13,18 +13,21 @@ users_commands: dict[str, dict[str, str]] = {
     "en": {
         "start": "start",
         "profile": "your profile",
+        "changelog": "last updates",
         "report": "setting information about you",
         "author": "support contacts",
     },
     "uk": {
         "start": "start",
         "profile": "your profile",
+        "changelog": "last updates",
         "report": "setting information about you",
         "author": "support contacts",
     },
     "ru": {
         "start": "start",
         "profile": "your profile",
+        "changelog": "last updates",
         "report": "setting information about you",
         "author": "support contacts",
     },
@@ -35,6 +38,7 @@ admins_commands: dict[str, dict[str, str]] = {
     "en": {
         "ping": "Check bot ping",
         "stop": "Stops the bot",
+        "add_key": "Add a new key",
     },
 }
 
