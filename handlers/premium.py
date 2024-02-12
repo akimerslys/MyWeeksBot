@@ -8,7 +8,6 @@ from utils.command import find_command_argument
 
 from loguru import logger
 
-
 router = Router(name="premium")
 
 
@@ -22,7 +21,10 @@ async def give_premium(message, bot: Bot, session: AsyncSession):
 
     if await use_key(session, args, message.from_user.id):
         days = await get_key_days(session, args)
-        await bot.send_message(message.from_user.id, f"🎉 Your {days}d premium has been {'extended!' if await is_premium(session, message.from_user.id) else 'activated' }")
+        await bot.send_message(message.from_user.id,
+                               f"🎉 Your premium has been"
+                               f" {'extended!' if await is_premium(session, message.from_user.id) else 'activated'}"
+                               f" for {days} days! 🎉")
         await set_user_premium(session, message.from_user.id, days)
         logger.success(f"User {message.from_user.id} has activated premium by key")
     else:

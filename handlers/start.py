@@ -7,7 +7,7 @@ from keyboards.inline.menu import main_kb
 from keyboards.inline.timezone import timezone_simple_keyboard
 
 from services.users import add_user, user_exists
-from utils.last_commits import get_changelog
+
 
 
 router = Router(name="start")
@@ -15,15 +15,16 @@ router = Router(name="start")
 
 @router.message(CommandStart())
 async def start_message(message: Message, bot: Bot, session: AsyncSession):
-    changelog = await get_changelog(1)
-    message_start = f"Hi There, Welcome to MyWeeksBot\n\nLast Update:\n\n{''.join(changelog)}use /changelog to see more"
-    await bot.send_message(message.from_user.id, message_start)
+    await bot.send_message(
+        message.from_user.id,
+        f"Hi There, Welcome to MyWeeksBot\nThis bot is under development\n"
+        f"If you see any bug, please report it using /report")
     if not await user_exists(session, message.from_user.id):
         await add_user(session, message.from_user.id, message.from_user.first_name, message.from_user.language_code)
         await bot.send_message(
             message.from_user.id,
             "Please choose your timezone below",
-            reply_markup=timezone_simple_keyboard()
+            reply_markup=timezone_simple_keyboard(False)
         )
     else:
         await bot.send_message(

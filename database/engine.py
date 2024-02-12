@@ -1,12 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import asyncio
+from loguru import logger
 from sqlalchemy.ext.asyncio import create_async_engine as create_async_engine_
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from database.models import Base
 
 from core.config import settings
 
@@ -15,6 +13,7 @@ if TYPE_CHECKING:
 
 
 def create_async_engine(url: URL | str = settings.database_url) -> AsyncEngine:
+    logger.info(f"Starting Postgre async engine")
     return create_async_engine_(
         url=url,
         echo=settings.DEBUG,
@@ -23,14 +22,9 @@ def create_async_engine(url: URL | str = settings.database_url) -> AsyncEngine:
     )
 
 
-
-
-async def process_schemas(engine: AsyncEngine, metadata) -> None:
-    async with engine.connect() as conn:
-        await conn.run_sync(metadata.create_all)
-
-
 def create_sessionmaker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    logger.success(f"Engine started successfully.")
+    logger.info(f"Initializing sessionmaker")
     return async_sessionmaker(bind=engine,
                               autoflush=False,
                               class_=AsyncSession,

@@ -8,13 +8,47 @@ from pytz import common_timezones
 
 def main_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="📈 Add Notification", callback_data="add")],
-        [InlineKeyboardButton(text="📊 Manage Notifications", callback_data="manage")],
-        [InlineKeyboardButton(text="📚 Settings", callback_data="settings_kb")],
+        [InlineKeyboardButton(text="📈 Schedule", callback_data="schedule")],
+        [InlineKeyboardButton(text="📊 Notifications", callback_data="notifications")],
+        [InlineKeyboardButton(text="📚 Profile", callback_data="profile")],
+        [InlineKeyboardButton(text="📚 Extra features", callback_data="settings_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
+
+
+def schedule_kb() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="📈 Configure schedule", callback_data="schedule")],
+            # OR
+        [InlineKeyboardButton(text="📈 Your schedule", callback_data="schedule123")],
+        [InlineKeyboardButton(text="📊 Manage schedule", callback_data="schedule123")],
+        [InlineKeyboardButton(text="📚 Back", callback_data="main_kb")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def notifications_kb() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="📈 Add Notification", callback_data="add_notif")],
+        [InlineKeyboardButton(text="📊 Notifications", callback_data="manage_notifs")],
+        [InlineKeyboardButton(text="📚 back", callback_data="main_kb")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def manage_notifs_kb(user_notifs):
+    print(user_notifs)
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text="📚 back", callback_data="main_kb")
+    keyboard.adjust()
+    return keyboard.as_markup(resize_keyboard=True)
+
 
 
 def back_main() -> InlineKeyboardMarkup:
@@ -38,8 +72,10 @@ def back_main_premium() -> InlineKeyboardMarkup:
 
 def setting_kb() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text="🌐 Language", callback_data="lang_kb")],
-        [InlineKeyboardButton(text="🕔 Timezone", callback_data="timezone_kb")],
+        [InlineKeyboardButton(text="🌐 Set Language", callback_data="lang_kb")],
+        [InlineKeyboardButton(text="🕔 Set Timezone", callback_data="timezone_kb")],
+        [InlineKeyboardButton(text="🔑 Show Changelog", callback_data="show_changelog")],
+        [InlineKeyboardButton(text="🔑 Donate", callback_data="buy_premium")],
         [InlineKeyboardButton(text="⬅️ Back", callback_data="main_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -60,7 +96,7 @@ def language_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def add_keyboard_first(timezone_str: str = "UTC") -> InlineKeyboardMarkup:
+def add_notif_first_kb(timezone_str: str = "UTC") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     time_now = datetime.now(tz(timezone_str))
     current_day_index = time_now.weekday()
@@ -142,3 +178,5 @@ def add_notif_repeat_month_kb() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
+
+

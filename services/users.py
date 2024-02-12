@@ -164,9 +164,11 @@ async def set_user_premium(session: AsyncSession, user_id: int, days: int) -> No
         return
     logger.info(f"Setting user {user_id} premium for {days} days")
     if await is_premium(session, user_id):
-        stmt = update(UserModel).where(UserModel.user_id == user_id).values(premium_until=UserModel.premium_until + timedelta(days=days))
+        stmt = update(UserModel).where(UserModel.user_id == user_id).values(
+            premium_until=UserModel.premium_until + timedelta(days=days))
     else:
-        stmt = update(UserModel).where(UserModel.user_id == user_id).values(premium_until=datetime.now() + timedelta(days=days), is_premium=True)
+        stmt = update(UserModel).where(UserModel.user_id == user_id).values(
+            premium_until=datetime.now() + timedelta(days=days), is_premium=True)
 
     await session.execute(stmt)
     await session.commit()

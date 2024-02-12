@@ -21,7 +21,8 @@ class DBSettings(EnvBaseSettings):
 
     @property
     def database_url(self):
-        return f"postgresql+asyncpg://{self.DB_USER}{''if not self.DB_PASSWORD else ':' + self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql+asyncpg://{self.DB_USER}{''if not self.DB_PASSWORD else ':' + self.DB_PASSWORD}" \
+               f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
 class KeyGenSettings(EnvBaseSettings):
@@ -42,6 +43,11 @@ class CacheSettings(EnvBaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.REDIS_PASS + '@' if self.REDIS_PASS else ''}{self.REDIS_HOST}:{self.REDIS_PORT}"
+
+
+class UserSettings(EnvBaseSettings):
+    MAX_NOTIFS: int = 5
+    MAX_NOTIFS_PREMIUM: int = 10
 
 
 class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings):

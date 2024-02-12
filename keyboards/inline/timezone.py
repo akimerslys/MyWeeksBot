@@ -1,21 +1,25 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+
+from services.users import get_timezone
 from datetime import datetime, timedelta, tzinfo, timezone
 
 #TODO make reply keyboard with all timezones
 
 
-def timezone_simple_keyboard() -> InlineKeyboardMarkup:
+def timezone_simple_keyboard(user_exist: bool = True) -> InlineKeyboardMarkup:
     buttons = [
-            [InlineKeyboardButton(text="🇬🇧 London/GMT 0", callback_data="set_timezone_UTC")],
-            [InlineKeyboardButton(text="🇪🇺 Europe/GMT +1", callback_data="set_timezone_Europe/Berlin")],
-            [InlineKeyboardButton(text="🇺🇦 Ukraine/GMT +2", callback_data="set_timezone_Europe/Kyiv")],
-            [InlineKeyboardButton(text="🏳️ Moscow/GMT +3", callback_data="set_timezone_Europe/Moscow")],
+            [InlineKeyboardButton(text="🇬🇧 London/UTC", callback_data="set_timezone_UTC")],
+            [InlineKeyboardButton(text="🇪🇺 Europe", callback_data="set_timezone_Europe/Berlin")],
+            [InlineKeyboardButton(text="🇺🇦 Ukraine/Kyiv", callback_data="set_timezone_Europe/Kyiv")],
+            [InlineKeyboardButton(text="🏳️ Moscow", callback_data="set_timezone_Europe/Moscow")],
             [InlineKeyboardButton(text="🌍 ShowAll timezones", callback_data="show_all")],
             [InlineKeyboardButton(text="📍 Timezone by your Location(beta)", callback_data="send_geo")],
-            [InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb")],
         ]
+
     keyboard = InlineKeyboardBuilder(markup=buttons)
+    if user_exist:
+        keyboard.button(text="⬅️ Back", callback_data="settings_kb"),
     keyboard.adjust(2, 2, 1, 1, 1)
     return keyboard.as_markup(resize_keyboard=True)
 
