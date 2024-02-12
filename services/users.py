@@ -41,7 +41,7 @@ async def add_user(
     first_name: str = first_name
     language_code: str | None = language_code
     timezone: str | None = timezone
-
+    logger.info(f"Added new user {user_id} to the database")
     new_user = UserModel(
         user_id=user_id,
         first_name=first_name,
@@ -57,6 +57,7 @@ async def add_user(
 @cached(key_builder=lambda session, user_id: build_key(user_id))
 async def user_exists(session: AsyncSession, user_id: int) -> bool:
     """Checks if the user is in the database."""
+    logger.debug(f"Checking if user {user_id} exists")
     query = select(UserModel.id).filter_by(user_id=user_id).limit(1)
 
     result = await session.execute(query)
@@ -67,7 +68,7 @@ async def user_exists(session: AsyncSession, user_id: int) -> bool:
 
 async def get_user(session: AsyncSession, user_id: int) -> UserModel:
     query = select(UserModel).filter_by(user_id=user_id)
-
+    logger.debug(f"selected user {user_id}")
     result = await session.execute(query)
 
     user = result.scalar_one_or_none()
@@ -122,8 +123,8 @@ async def set_language_code(
     user_id: int,
     language_code: str,
 ) -> None:
+    logger.info(f"Setting user {user_id} language to {language_code}")
     stmt = update(UserModel).where(UserModel.user_id == user_id).values(language_code=language_code)
-
     await session.execute(stmt)
     await session.commit()
 
@@ -131,7 +132,7 @@ async def set_language_code(
 @cached(key_builder=lambda session, user_id: build_key(user_id))
 async def get_timezone(session: AsyncSession, user_id: int) -> str:
     query = select(UserModel.timezone).filter_by(user_id=user_id)
-
+    logger.debug(f"Returned timezone for user {user_id}")
     result = await session.execute(query)
 
     timezone = result.scalar_one_or_none()
@@ -144,7 +145,7 @@ async def set_timezone(
     timezone: str,
 ) -> None:
     stmt = update(UserModel).where(UserModel.user_id == user_id).values(timezone=timezone)
-
+    logger.info(f"Setting user {user_id} timezone to {timezone}")
     await session.execute(stmt)
     await session.commit()
 

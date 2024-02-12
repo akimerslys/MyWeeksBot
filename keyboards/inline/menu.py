@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from pytz import timezone as tz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
+from utils.time_localizer import localize_timenow_to_timezone
 from pytz import common_timezones
 
 
@@ -116,14 +116,18 @@ def add_notif_first_kb(timezone_str: str = "UTC") -> InlineKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def hours_kb() -> InlineKeyboardMarkup:
+def hours_kb(hour: int = 0) -> InlineKeyboardMarkup:
+    if hour != 0:
+        hour += 1
     builder = InlineKeyboardBuilder()
-    for index in range(0, 24):
-        builder.button(
-            text=f"{index}:00",
-            callback_data=f"set_hours_{index}"
-        )
+    if hour < 23:
+        for index in range(hour, 24):
+            builder.button(
+                text=f"{index}:00",
+                callback_data=f"set_hours_{index}"
+            )
     builder.adjust(1, 4, 1, 4, 1, 4, 1, 4, 1, 3)
+    builder.button(text="⬅️ Back", callback_data="add_notif")
     return builder.as_markup(resize_keyboard=True)
 
 

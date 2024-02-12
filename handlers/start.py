@@ -1,6 +1,7 @@
 from aiogram import Router, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from keyboards.inline.menu import main_kb
@@ -15,6 +16,7 @@ router = Router(name="start")
 
 @router.message(CommandStart())
 async def start_message(message: Message, bot: Bot, session: AsyncSession):
+    logger.info(f"User {message.from_user.id} started bot")
     await bot.send_message(
         message.from_user.id,
         f"Hi There, Welcome to MyWeeksBot\nThis bot is under development\n"

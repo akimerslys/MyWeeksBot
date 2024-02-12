@@ -4,13 +4,14 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from keyboards.inline import menu as mkb  # MenuKeyBoard
 from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
     ask_location_confirm
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 
 from utils.last_commits import get_changelog
-from utils.time_localizer import localize_time_to_utc, localize_time_to_timezone
+from utils.time_localizer import localize_time_to_utc, localize_timenow_to_timezone, is_today
 from utils.states import AddNotif, AskLocation
 from services import users as dbuc  # DataBase UserCommands
 from services import notifs as dbnc  # DataBase NotificationCommands
@@ -34,7 +35,6 @@ router = Router(name="menu")
 # TODO SORT WEEKDAYS BY TODAYS DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)           #DONE (NEED MORE TESTS)
 
 
-
 # MAIN
 @router.callback_query(F.data == "main_kb")
 async def menu_back(call: CallbackQuery):
@@ -56,6 +56,8 @@ async def notifications_menu(call: CallbackQuery):
 
 @router.callback_query(F.data == "add_notif")
 async def add_notification(call: CallbackQuery, state: FSMContext, session: AsyncSession):
+    if await state.get_state():
+        await state.clear()
     await state.set_state(AddNotif.date)
     await call.message.edit_text(
         "🕔 Choose day",
@@ -82,7 +84,7 @@ async def process_simple_calendar(call: CallbackQuery, state: FSMContext, callba
     calendar = SimpleCalendar(
         locale=await get_user_locale(call.from_user), show_alerts=True
     )
-    user_time = await localize_time_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
+    user_time = await localize_timenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
     calendar.set_dates_range(user_time - timedelta(days=1),
                              user_time + timedelta(days=365))
     selected, date = await calendar.process_selection(call, callback_data)
@@ -91,16 +93,25 @@ async def process_simple_calendar(call: CallbackQuery, state: FSMContext, callba
             f'🕔 {date.strftime("%d %m %Y")}, please select a time:',
             reply_markup=mkb.hours_kb()
         )
+        print(date)
         await state.update_data(date=date.strftime("%Y %m %d"))
         await state.set_state(AddNotif.hours)
 
 
 # CHOOSE DAY HOUR TIME
 @router.callback_query(F.data.startswith("day_"))
-async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext):
+async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext, session: AsyncSession):
     await state.update_data(date=call.data[4:])
     await state.set_state(AddNotif.hours)
-    await call.message.edit_text(f"🕔 Choose time for {call.data[4:]}", reply_markup=mkb.hours_kb())
+    await call.message.edit_text(f"🕔 Choose time for {call.data[4:]}")
+
+    if not await is_today(datetime.strptime(f"{call.data[4:]}", "%Y %m %d"), await dbuc.get_timezone(session, call.from_user.id)):
+        await call.message.edit_reply_markup(reply_markup=mkb.hours_kb())
+    else:
+        date = await localize_timenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
+        print(date)
+        print(date.strftime("%H"))
+        await call.message.edit_reply_markup(reply_markup=mkb.hours_kb(int(date.strftime("%H"))))
 
 
 @router.callback_query(F.data.startswith("set_hours_"))
@@ -236,17 +247,17 @@ async def send_profile(call: CallbackQuery, session: AsyncSession):
 
 # SETTINGS
 @router.callback_query(F.data == 'settings_kb')
-async def settings(call: CallbackQuery):
+async def place_settings_kb(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=mkb.setting_kb())
 
 
 @router.callback_query(F.data == "lang_kb")
-async def choose_language(call: CallbackQuery):
+async def choose_language_kb(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=mkb.language_kb())
 
 
 @router.callback_query(F.data.startswith("set_lang_"))
-async def set_language(call: CallbackQuery, session: AsyncSession):
+async def set_language_kb(call: CallbackQuery, session: AsyncSession):
     await call.message.edit_text(
         f"🌐 Language changed to {call.data[9:]}",
         reply_markup=mkb.setting_kb()
@@ -256,19 +267,19 @@ async def set_language(call: CallbackQuery, session: AsyncSession):
 
 
 @router.callback_query(F.data == "add_lang")
-async def add_language(call: CallbackQuery):
+async def add_language_kb(call: CallbackQuery):
     await call.answer(
         "⚙️ This function is not available yet\nSoon u will have ability to add your own language",
         show_alert=True)
 
 
 @router.callback_query(F.data == "timezone_kb")
-async def choose_timezone(call: CallbackQuery):
+async def choose_timezone_kb(call: CallbackQuery):
     await call.message.edit_text("🕔 Choose your timezone", reply_markup=timezone_simple_keyboard())
 
 
 @router.callback_query(F.data.startswith("set_timezone_"))
-async def set_timezone(call: CallbackQuery, session: AsyncSession):
+async def set_timezone_kb(call: CallbackQuery, session: AsyncSession):
     try:
         pytz.timezone(call.data[13:])
     except pytz.exceptions.UnknownTimeZoneError:
@@ -346,10 +357,13 @@ async def show_all_timezone(call: CallbackQuery):
 
 
 # CHANGELOG
-@router.callback_query(F.data == "changelog")
-async def send_changelog(message, bot: Bot):
+@router.callback_query(F.data == "show_changelog")
+async def send_changelog(call: CallbackQuery, bot: Bot):
     message_changelog = "".join(await get_changelog(5))
-    await bot.send_message(message.from_user.id, f"Latest updates:\n{message_changelog}")
+    await call.message.edit_text(
+        f"📝 Latest Updates\n\n{message_changelog}",
+        reply_markup=mkb.back_main()
+    )
 
 
 # PREMIUM

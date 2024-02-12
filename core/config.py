@@ -50,7 +50,7 @@ class UserSettings(EnvBaseSettings):
     MAX_NOTIFS_PREMIUM: int = 10
 
 
-class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings):
+class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSettings):
     DEBUG: bool = True
 
 

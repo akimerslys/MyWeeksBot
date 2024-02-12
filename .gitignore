@@ -4,3 +4,4 @@ __pycache__
 venv
 logs/myweeks.log
 ignore
+db_test.py

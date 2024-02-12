@@ -2,6 +2,7 @@ from aiogram import Router, Bot
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from loguru import logger
 
 from utils.states import Report
 from core.config import settings
@@ -23,9 +24,11 @@ async def finish_report(message: Message, bot: Bot, state: FSMContext):
     data = await state.get_data()
     await bot.delete_message(message.from_user.id, data['text'])
     await bot.delete_message(message.from_user.id, message.message_id)
+    msg = message.from_user.id if message.from_user.username is None else message.from_user.username
     await bot.send_message(
         settings.ADMINS_ID[0],
-        f"New Report: @{message.from_user.id if message.from_user.username is None else message.from_user.username}"
+        f"New Report: @{msg}"
         f"\n\n {message.text}")
+    logger.info(f"New report from @{msg}: {message.text}")
     await state.clear()
 
