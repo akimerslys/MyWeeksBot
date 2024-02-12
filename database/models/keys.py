@@ -10,7 +10,7 @@ class KeyModel(Base):
     key: Mapped[str] = mapped_column(primary_key=True)
     days: Mapped[int] = mapped_column(default=7, nullable=False)
     is_used: Mapped[bool] = mapped_column(default=False)
-    user_id = Column(BigInteger, default=None, nullable=True)
+    used_by = Column(BigInteger, default=None, nullable=True)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 

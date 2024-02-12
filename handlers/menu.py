@@ -2,6 +2,7 @@ from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from keyboards.inline.menu import main_kb, setting_kb, language_kb, add_keyboard_first, \
     add_notif_repeat_week_kb, add_notif_repeat_none_kb, back_main, hours_kb, minute_kb, add_notif_repeat_month_kb, \
@@ -11,12 +12,11 @@ from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advance
 from keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 
 from utils.states import AddNotif, AskLocation
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from services import users as dbuc  # DataBase UserCommands
-from services.notifs import add_notif
+from services import notifs as dbnc  # DataBase NotificationCommands
+
 from loguru import logger
-from datetime import datetime, tzinfo, timedelta
+from datetime import datetime, timedelta
 from timezonefinder import TimezoneFinder
 import pytz
 
@@ -276,7 +276,9 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
         await call.message.edit_text("⤵️ Please choose an option from the menu below", reply_markup=main_kb())
         return
     data = await state.get_data()
-    if not await dbuc.is_premium(session, call.from_user.id) and data.get('repeat_daily'):
+    repeat_daily = data.get('repeat_daily')
+    repeat_weekly = data.get('repeat_weekly')
+    if not await dbuc.is_premium(session, call.from_user.id) and repeat_daily and not repeat_weekly:
         await call.answer("Sorry, you need to buy premium to use this feature", show_alert=True)
         return
 
@@ -284,7 +286,7 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
 
     if user_notifs_len > 5:
         if not await dbuc.is_premium(session, call.from_user.id) or user_notifs_len >= 10:
-            await call.answer("You have reached the limit of 5 notifications", show_alert=True)
+            await call.answer("You have reached the limit of 10 notifications", show_alert=True)
             await call.message.edit_reply_markup(reply_markup=back_main_premium())
             await state.clear()
             return
@@ -292,26 +294,43 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
     full_date = datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}", "%Y %m %d %H %M")
     user_timezone = pytz.timezone(await dbuc.get_timezone(session, call.from_user.id))
 
-    await add_notif(session, user_timezone.localize(full_date).astimezone(pytz.utc),
+    await dbnc.add_notif(session, user_timezone.localize(full_date).astimezone(pytz.utc).replace(tzinfo=None),
                     call.from_user.id,
                     data.get('text'),
-                    data.get('repeat_daily'),
-                    data.get('repeat_weekly'))
+                    repeat_daily,
+                    repeat_weekly)
     await dbuc.inc_user_notifs(session, call.from_user.id)
     await call.answer(f"✅ Notification added", show_alert=True)
     await call.message.edit_reply_markup(reply_markup=back_main())
     await state.clear()
 
 
-# REMOVE NOTIFICATION
-
-@router.callback_query(F.data == "remove")
-async def remove_notification(call: CallbackQuery):
-    await call.answer("⚙️ This function is not available yet")
-
-
+@router.callback_query(F.data == "manage")
+async def buy_premium(call: CallbackQuery):
+    await call.answer(
+        "⚙️ This function is not available yet",
+        show_alert=True
+    )
 # MANAGE NOTIFICATIONS
 @router.callback_query(F.data == "manage")
+async def manage_notification(call: CallbackQuery, session: AsyncSession):
+    user_notifs = await (session, call.from_user.id)
+    if not user_notifs:
+        await call.answer("You don't have any notifications", show_alert=True)
+        return
+    await call.message.edit_text(
+        "📝 Your notifications",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    for notif in user_notifs:
+        await call.message.answer(
+            f"📅 Date: {notif.date.strftime('%d %m %Y')}\n"
+            f"⏰ Time: {notif.date.strftime('%H:%M')}\n"
+            f"📝 Text: {notif.text}\n"
+            f"🔁 Repeat: {'Daily' if notif.repeat_daily else 'Weekly' if notif.repeat_weekly else 'None'}"
+        )
+
+
 # PREMIUM
 @router.callback_query(F.data == "buy_premium")
 async def buy_premium(call: CallbackQuery):

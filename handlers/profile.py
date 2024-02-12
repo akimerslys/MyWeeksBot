@@ -4,9 +4,6 @@ from aiogram.filters import Command
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.users import get_user
-from core.config import settings
-
-import datetime
 
 router = Router(name="profile")
 """"id": user.id,

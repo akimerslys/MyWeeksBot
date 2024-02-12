@@ -1,15 +1,13 @@
 from aiogram import Router, Bot
-from aiogram.types import Message, TextQuote
+from aiogram.types import Message
 from aiogram.filters import CommandStart
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from keyboards.inline.menu import main_kb
 from keyboards.inline.timezone import timezone_simple_keyboard
 
 from services.users import add_user, user_exists
-
-from core.config import settings
 from utils.last_commits import get_changelog
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 router = Router(name="start")
@@ -18,7 +16,7 @@ router = Router(name="start")
 @router.message(CommandStart())
 async def start_message(message: Message, bot: Bot, session: AsyncSession):
     changelog = await get_changelog(1)
-    message_start = f"Hi There, Welcome to MyWeeksBot\n\nLast Update: {''.join(changelog)}\n use /changelog to see more"
+    message_start = f"Hi There, Welcome to MyWeeksBot\n\nLast Update:\n\n{''.join(changelog)}use /changelog to see more"
     await bot.send_message(message.from_user.id, message_start)
     if not await user_exists(session, message.from_user.id):
         await add_user(session, message.from_user.id, message.from_user.first_name, message.from_user.language_code)

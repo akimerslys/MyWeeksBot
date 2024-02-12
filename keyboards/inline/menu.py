@@ -9,7 +9,7 @@ from pytz import common_timezones
 def main_kb() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text="📈 Add Notification", callback_data="add")],
-        [InlineKeyboardButton(text="📊 Manage Notifications", callback_data="remove")],
+        [InlineKeyboardButton(text="📊 Manage Notifications", callback_data="manage")],
         [InlineKeyboardButton(text="📚 Settings", callback_data="settings_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -142,5 +142,3 @@ def add_notif_repeat_month_kb() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
-
-

@@ -50,8 +50,8 @@ async def select_key(session: AsyncSession, key: str) -> KeyModel | None:
 
     result = await session.execute(query)
 
-    user = result.scalar_one_or_none()
-    return user
+    key = result.scalar_one_or_none()
+    return key
 
 
 async def is_used(session: AsyncSession, key: str) -> bool:
@@ -68,22 +68,21 @@ async def is_key(session: AsyncSession, key: str) -> bool:
 
 
 async def get_key_days(session: AsyncSession, key: str) -> int:
-    key_ = select_key(session, key)
+    key_ = await select_key(session, key)
     return key_.days
 
 
 async def use_key(session: AsyncSession, key: str, user_id: int) -> bool:
     key_ = await select_key(session, key)
-    if key_ or key_.is_used:
+    if not key_ or key_.is_used:
         return False
     logger.info(f"Using key for user {user_id}")
     key_.is_used = True
     key_.used_by = user_id
-
-    await set_user_premium(session, user_id, key_.days)
-
     stmt = update(KeyModel).where(KeyModel.key == key).values(is_used=True, used_by=user_id)
     await session.execute(stmt)
     await session.commit()
+    await set_user_premium(session, user_id, key_.days)
+
     return True
 

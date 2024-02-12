@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from loguru import logger
 from sqlalchemy import func, select, update
 
 from cache.redis import build_key, cached, clear_cache
@@ -161,6 +162,7 @@ async def is_premium(session: AsyncSession, user_id: int) -> bool:
 async def set_user_premium(session: AsyncSession, user_id: int, days: int) -> None:
     if days < 1:
         return
+    logger.info(f"Setting user {user_id} premium for {days} days")
     if await is_premium(session, user_id):
         stmt = update(UserModel).where(UserModel.user_id == user_id).values(premium_until=UserModel.premium_until + timedelta(days=days))
     else:

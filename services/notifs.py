@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     updated_at: Mapped[updated_at]
 """
 
-# TODO process timezone converting here
+
 async def add_notif(
     session: AsyncSession,
     date: datetime,

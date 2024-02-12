@@ -15,11 +15,11 @@ router = Router(name="add_key")
 
 
 @router.message(Command("add_key", "key_add"), IsAdmin(settings.ADMINS_ID))
-async def add_key(message: Message, bot: Bot, session: AsyncSession):
+async def generating_key(message: Message, bot: Bot, session: AsyncSession):
     days = find_command_argument(message.text)
     await bot.delete_message(message.chat.id, message.message_id)
     if days:
-        if not days.isdigit():
+        if not days.isdigit() or int(days) < 1:
             await bot.send_message(message.from_user.id, "Invalid argument")
             return
     await bot.send_message(
