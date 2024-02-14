@@ -1,11 +1,12 @@
 import asyncio
+
 from loguru import logger
 
-from core.loader import dp, bot
+from bot.core.loader import dp, bot
 
-from handlers import get_handlers_router
-from keyboards.default_commands import remove_default_commands, set_default_commands
-from middlewares import register_middlewares
+from bot.handlers import get_handlers_router
+from bot.keyboards.default_commands import remove_default_commands, set_default_commands
+from bot.middlewares import register_middlewares
 
 
 async def startup() -> None:
@@ -47,6 +48,8 @@ async def main() -> None:
         rotation="10 MB",
         compression="zip",
             )
+
+    #redis_pool = await create_pool(settings.redis_url)
 
     dp.startup.register(startup)
 
