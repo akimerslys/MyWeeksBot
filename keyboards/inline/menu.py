@@ -44,6 +44,8 @@ def notifications_kb() -> InlineKeyboardMarkup:
 
 def manage_notifs_kb(user_notifs):
     print(user_notifs)
+    for user_notif in user_notifs:
+        print(user_notif.date)
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="📚 back", callback_data="main_kb")
     keyboard.adjust()

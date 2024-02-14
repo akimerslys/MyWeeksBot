@@ -42,7 +42,7 @@ class CacheSettings(EnvBaseSettings):
 
     @property
     def redis_url(self) -> str:
-        return f"redis://{self.REDIS_PASS + '@' if self.REDIS_PASS else ''}{self.REDIS_HOST}:{self.REDIS_PORT}"
+        return f"redis://:{self.REDIS_PASS + '@' if self.REDIS_PASS else ''}{self.REDIS_HOST}:{self.REDIS_PORT}"
 
 
 class UserSettings(EnvBaseSettings):
@@ -55,3 +55,5 @@ class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSetti
 
 
 settings = Settings()
+
+print(settings.database_url)

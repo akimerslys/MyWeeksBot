@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from redis.asyncio import Redis, ConnectionPool
+from redis.connection import AbstractConnection
 
 from loguru import logger
 from core.config import settings

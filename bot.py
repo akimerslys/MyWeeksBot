@@ -1,9 +1,8 @@
 import asyncio
 from loguru import logger
 
-from core.config import settings
 from core.loader import dp, bot
-from database.engine import create_async_engine, create_sessionmaker
+
 from handlers import get_handlers_router
 from keyboards.default_commands import remove_default_commands, set_default_commands
 from middlewares import register_middlewares

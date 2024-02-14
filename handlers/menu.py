@@ -358,7 +358,7 @@ async def show_all_timezone(call: CallbackQuery):
 
 # CHANGELOG
 @router.callback_query(F.data == "show_changelog")
-async def send_changelog(call: CallbackQuery, bot: Bot):
+async def send_changelog(call: CallbackQuery):
     message_changelog = "".join(await get_changelog(5))
     await call.message.edit_text(
         f"📝 Latest Updates\n\n{message_changelog}",
