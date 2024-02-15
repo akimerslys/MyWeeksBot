@@ -20,4 +20,10 @@ class AddNotif(StatesGroup):
     repeat_weekly: False = State()
 
 
+class ChangeNotif(StatesGroup):
+    text = State()
+    repeat_daily = State()
+    repeat_weekly = State()
+    tmp_msg = State()
+
 

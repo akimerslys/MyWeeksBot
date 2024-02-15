@@ -3,11 +3,11 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from bot.__main__ import __version__
 from bot.keyboards.inline.menu import main_kb
 from bot.keyboards.inline.timezone import timezone_simple_keyboard
 
-from bot.services.users import add_user, user_exists
+from bot.services.users import user_exists
 
 router = Router(name="start")
 
@@ -17,10 +17,9 @@ async def start_message(message: Message, bot: Bot, session: AsyncSession):
     logger.info(f"User {message.from_user.id} started bot")
     await bot.send_message(
         message.from_user.id,
-        f"Hi There, Welcome to MyWeeksBot (pre-dev)\n"
+        f"<b>Hi There, Welcome to MyWeeksBot</b> <u>{__version__}</u>\n\n"
         f"If you see any bug, please report it using /report")
     if not await user_exists(session, message.from_user.id):
-        await add_user(session, message.from_user.id, message.from_user.first_name, message.from_user.language_code)
         await bot.send_message(
             message.from_user.id,
             "Please choose your timezone below",

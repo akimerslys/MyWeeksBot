@@ -17,4 +17,21 @@ async def main():
 
 
 asyncio.run(main())"""
+from datetime import datetime
+
+
+now = datetime.now()
+
+year = now.year
+month = now.month
+day = now.day
+hour = now.hour
+minute = now.minute
+desired_datetime = datetime(year=year, month=month, day=day, hour=hour, minute=minute)
+# Вывод: 2024, 2, 14, 20, 34
+print(desired_datetime)
+print(now.ctime())
+
+
+# Вывод: 2024, 02, 14, 20, 34
 

@@ -9,10 +9,11 @@ from bot.keyboards.inline import menu as mkb
 from bot.keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
     ask_location_confirm
 from bot.keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
+from bot.keyboards.reply.skip import skip_kb
 
 from bot.utils.last_commits import get_changelog
 from bot.utils.time_localizer import localize_time_to_utc, localize_timenow_to_timezone, is_today
-from bot.utils.states import AddNotif, AskLocation
+from bot.utils.states import AddNotif, AskLocation, ChangeNotif
 from bot.services import users as dbuc, notifs as dbnc
 
 from loguru import logger
@@ -31,7 +32,7 @@ router = Router(name="menu")
 # TODO LOCALIZATION
 # TODO ADD TIMEZONE TO THE NOTIFICATIONS                                        #DONE (NEED MORE TESTS)
 # TODO ADD TIMEZONE SETTING FOR FIRST USER                                      #DONE (NEED MORE TESTS)
-# TODO SORT WEEKDAYS BY TODAYS DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)           #DONE (NEED MORE TESTS)
+# TODO SORT WEEKDAYS BY TODAY'S DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)           #DONE (NEED MORE TESTS)
 
 
 # MAIN
@@ -104,7 +105,8 @@ async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext, session: As
     await state.set_state(AddNotif.hours)
     await call.message.edit_text(f"🕔 Choose time for {call.data[4:]}")
 
-    if not await is_today(datetime.strptime(f"{call.data[4:]}", "%Y %m %d"), await dbuc.get_timezone(session, call.from_user.id)):
+    if not await is_today(datetime.strptime(f"{call.data[4:]}", "%Y %m %d"),
+                          await dbuc.get_timezone(session, call.from_user.id)):
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb())
     else:
         date = await localize_timenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
@@ -126,8 +128,11 @@ async def add_notif_ask_minute(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.startswith("set_minute_"))
 async def add_notif_ask_text(call: CallbackQuery, bot: Bot, state: FSMContext):
     await state.update_data(minutes=call.data[11:])
-    tmp_msg = await call.message.edit_text(
-        "Now write name of your notification: (skip button TBA)",  # TODO ADD SKIP BUTTON
+    await bot.delete_message(call.from_user.id, call.message.message_id)
+    tmp_msg = await bot.send_message(
+        call.from_user.id,
+        f"Now name your notification:",
+        reply_markup=skip_kb()
     )
     await state.set_state(AddNotif.text)
     await state.update_data(tmp_msg=tmp_msg.message_id)
@@ -135,10 +140,14 @@ async def add_notif_ask_text(call: CallbackQuery, bot: Bot, state: FSMContext):
 
 @router.message(AddNotif.text)
 async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
-    await state.update_data(text=message.text)
+    if message.text == "Skip":
+        await state.update_data(text="None")
+    else:
+        await state.update_data(text=message.text)
     data = await state.get_data()
     await bot.delete_message(message.from_user.id, data.get('tmp_msg'))
     full_date = datetime.strptime(f"{data.get('date')} {data.get('hours')}:{data.get('minutes')}", "%Y %m %d %H:%M")
+
     await bot.send_message(
         message.from_user.id,
         f"full_date: {full_date}\n"
@@ -197,14 +206,15 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
 
     if user_notifs_len > settings.MAX_NOTIFS:
         if not await dbuc.is_premium(session, call.from_user.id) or user_notifs_len >= settings.MAX_NOTIFS_PREMIUM:
-            await call.answer("You have reached the limit of 10 notifications", show_alert=True)
+            await call.answer("You have reached the limit of notifications", show_alert=True)
             await call.message.edit_reply_markup(reply_markup=mkb.back_main_premium())
             await state.clear()
             return
 
     await dbnc.add_notif(session,
                          await localize_time_to_utc(
-                             datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}",         #converts user's time to utc format
+                             datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}",
+                                               # converts user's time to utc format
                                                "%Y %m %d %H %M"), await dbuc.get_timezone(session, call.from_user.id)),
                          call.from_user.id,
                          data.get('text'),
@@ -227,6 +237,75 @@ async def manage_notification(call: CallbackQuery, session: AsyncSession):
         "📝 Your notifications",
         reply_markup=mkb.manage_notifs_kb(user_notifs)
     )
+
+
+@router.callback_query(F.data.startswith("notif_set_"))
+async def manage_notif(call: CallbackQuery, session: AsyncSession):
+    user_notif = await dbnc.get_notif(session, int(call.data[10:]))
+    await call.message.edit_text(
+        f"{'🟩 Active' if user_notif.active else '🟥 Inactive'}\n"
+        f"📅 Date: {user_notif.date.strftime('%d %m %Y')}\n"
+        f"⏰ Time: {user_notif.date.strftime('%H:%M')}\n"
+        f"📝 Text: {user_notif.text}\n"
+        f"🔔 Repeat: will be fixed",                 # TODO FIX
+        reply_markup=mkb.notif_info_kb(user_notif)
+    )
+
+
+@router.callback_query(F.data.startswith("notif_text_"))
+async def manage_notif_text(call: CallbackQuery, state: FSMContext):
+    await state.set_state(ChangeNotif.text)
+    tmp_msg = await call.message.edit_text("Write you text", reply_markup=None)
+    await state.update_data(tmp_msg=tmp_msg.message_id)
+    await state.update_data(repeat_daily=int(call.data[11:]))
+
+
+@router.message(ChangeNotif.text)
+async def manage_notif_text_finish(message: Message, bot: Bot, state: FSMContext, session: AsyncSession):
+    data = await state.get_data()
+    notif_id = data.get('repeat_daily')
+    await dbnc.update_notif_text(session, notif_id, message.text)
+    await bot.delete_messages(message.from_user.id, data.get('tmp_msg'), message.message_id)
+    await state.clear()
+    user_notif = await dbnc.get_notif(session, notif_id)
+    await bot.send_message(
+        message.from_user.id,
+        f"{'🟩 Active' if user_notif.active else '🟥 Inactive'}\n"
+        f"📅 Date: {user_notif.date.strftime('%d %m %Y')}\n"
+        f"⏰ Time: {user_notif.date.strftime('%H:%M')}\n"
+        f"📝 Text: {user_notif.text}\n"
+        f"🔔 Repeat: will be fixed",
+        reply_markup=mkb.notif_info_kb(user_notif))
+
+
+@router.callback_query(F.data.startswith("notif_active_"))
+async def manage_notif_active(call: CallbackQuery, session: AsyncSession):
+    notif_id = int(call.data[13:])
+    user_notif = await dbnc.get_notif(session, notif_id)
+    if user_notif.active:
+        await dbnc.update_notif_active(session, notif_id, False)
+    else:
+        await dbnc.update_notif_active(session, notif_id, True)
+
+    user_notif = await dbnc.get_notif(session, notif_id)
+    await call.message.edit_text(
+        f"{'🟩 Active' if user_notif.active else '🟥 Inactive'}\n"
+        f"📅 Date: {user_notif.date.strftime('%d %m %Y')}\n"
+        f"⏰ Time: {user_notif.date.strftime('%H:%M')}\n"
+        f"📝 Text: {user_notif.text}\n"
+        f"🔔 Repeat: will be fixed",  # TODO FIX
+        reply_markup=mkb.notif_info_kb(user_notif)
+    )
+
+
+@router.callback_query(F.data.startswith("notif_delete_"))
+async def manage_notif_delete(call: CallbackQuery, session: AsyncSession):
+    notif_id = int(call.data[13:])
+    await dbnc.delete_notif(session, notif_id)
+    await dbuc.dec_user_notifs(session, call.from_user.id)
+    await call.answer("✅ Notification deleted", show_alert=True)
+    await call.message.edit_text("📝 Your notifications", reply_markup=mkb.manage_notifs_kb(
+        await dbnc.get_user_notifs(session, call.from_user.id)))
 
 
 # PROFILE
@@ -287,7 +366,10 @@ async def set_timezone_kb(call: CallbackQuery, session: AsyncSession):
         logger.error(f"User {call.from_user.id} tried to set invalid timezone: {call.data[13:]}")
         return
     await call.message.edit_text(f"🕔 Timezone changed to {call.data[13:]}", reply_markup=mkb.setting_kb())
-    await dbuc.set_timezone(session, call.from_user.id, call.data[13:])
+    if await dbuc.user_exists(session, call.from_user.id):
+        await dbuc.set_timezone(session, call.from_user.id, call.data[13:])
+    else:
+        await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, call.from_user.language_code)
 
 
 @router.callback_query(F.data.startswith("send_geo"))
@@ -335,7 +417,10 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
 @router.callback_query(F.data == "confirm_location")
 async def confirm_location(call: CallbackQuery, bot: Bot, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
-    await dbuc.set_timezone(session, call.from_user.id, data.get('ask_location_confirm'))
+    if await dbuc.user_exists(session, call.from_user.id):
+        await dbuc.set_timezone(session, call.from_user.id, call.data[13:])
+    else:
+        await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, call.from_user.language_code)
     await bot.delete_message(call.from_user.id, data.get('ask_for_location'))
     await call.answer("✅ Timezone changed")
     await state.clear()
@@ -348,6 +433,11 @@ async def cancel_location(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.answer("📛 Timezone not set")
     logger.warning(f"User {call.from_user.id} false location, timezone {data.get('ask_location_confirm')}")
     await state.clear()
+
+
+@router.callback_query(F.data == "show_all")
+async def show_all_timezone(call: CallbackQuery):
+    await call.answer("⚙️ This function is upgrading", show_alert=True)
 
 
 @router.callback_query(F.data == "show_all")

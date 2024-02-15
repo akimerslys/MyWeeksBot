@@ -92,32 +92,34 @@ async def get_notif_text(session: AsyncSession, id: int) -> None:
     return text or ""
 
 
-async def update_notif(session: AsyncSession,
-                       id: int,
-                       date: datetime | None = None,
-                       text: str | None = None,
-                       repeat_daily: bool | None = None,
-                       repeat_weekly: bool | None = None,
-                        ) -> None:
-    notification = await get_notif(session, id)
-    if date is not None:
-        notification.date = date
-    if text is not None:
-        notification.text = text
-    if repeat_daily is not None:
-        notification.repeat_daily = repeat_daily
-    if repeat_weekly is not None:
-        notification.repeat_weekly = repeat_weekly
-
-    stmt = update(NotifModel).where(NotifModel.id == id).values(
-        date=notification.date,
-        text=notification.text,
-        repeat_daily=notification.repeat_daily,
-        repeat_weekly=notification.repeat_weekly
-    )
-    logger.info(f"updated notification {id}")
+async def update_notif_text(session: AsyncSession, id: int, text: str) -> None:
+    stmt = update(NotifModel).where(NotifModel.id == id).values(text=text)
+    logger.debug(f"updated notification text {id}")
     await session.execute(stmt)
     await session.commit()
+
+
+async def update_notif_active(session: AsyncSession, id: int, active: bool) -> None:
+    stmt = update(NotifModel).where(NotifModel.id == id).values(active=active)
+    logger.debug(f"updated notification active {id}")
+    await session.execute(stmt)
+    await session.commit()
+
+
+async def delete_notif(session: AsyncSession, id: int) -> None:
+    stmt = update(NotifModel).where(NotifModel.id == id).values(user_id=0, active=False)
+    logger.debug(f"deleted notification {id}")
+    await session.execute(stmt)
+    await session.commit()
+
+
+async def get_notifs_by_date(session: AsyncSession, dtime: datetime):
+    query = select(NotifModel).filter_by(date=dtime)
+
+    result = await session.execute(query)
+    logger.debug(f"got notifs by date {dtime}")
+    notifs = result.scalars()
+    return list(notifs)
 
 
 async def update_notif_auto(session: AsyncSession,
@@ -125,15 +127,18 @@ async def update_notif_auto(session: AsyncSession,
                             ) -> None:
     notification = await get_notif(session, id)
 
-    if notification.repeat_daily:
+    if not notification.repeat_daily and not notification.repeat_weekly:
+        notification.active = False
+    elif notification.repeat_daily and not notification.repeat_weekly:
         notification.date = notification.date + timedelta(days=1)
-    elif notification.repeat_weekly:
+    elif notification.repeat_weekly and not notification.repeat_daily:
         notification.date = notification.date + timedelta(days=7)
     else:
         notification.date = notification.date + timedelta(days=30)
 
     stmt = update(NotifModel).where(NotifModel.id == id).values(
         date=notification.date,
+        active=notification.active
     )
     logger.info(f"updated notification(auto) {id}")
     await session.execute(stmt)

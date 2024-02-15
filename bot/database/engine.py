@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def create_async_engine(url: URL | str = settings.database_url) -> AsyncEngine:
-    logger.info(f"Starting Postgre async engine")
+    logger.info(f"Starting Postgres async engine")
     return create_async_engine_(
         url=url,
         echo=settings.DEBUG,
