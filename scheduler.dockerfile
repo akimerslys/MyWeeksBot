@@ -1,4 +1,4 @@
-FROM python:3.10.13-alpine3.18
+FROM python:3.11-alpine3.18
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -9,7 +9,6 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /usr/src/app
 
-COPY . .
 
 RUN pip install --no-cache-dir "poetry==$POETRY_VERSION" \
     && poetry install --without admin --without dev --no-root \
@@ -22,5 +21,6 @@ RUN pip install --no-cache-dir "poetry==$POETRY_VERSION" \
     && chown -R appuser:appuser .
 
 USER appuser
-
-CMD ["python", "-m", "bot"]
+COPY scheduler/main.py
+COPY bot/services/
+CMD ["arq", "bot.scheduler.main.WorkerSettings"]

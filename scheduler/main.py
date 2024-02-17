@@ -1,11 +1,12 @@
+# to start scheduler u can use docker or "arq scheduler.main.WorkerSettings" in main.py
+
 from datetime import datetime, tzinfo
 
 from aiogram import Bot
 from arq import cron
 from loguru import logger
 from bot.core.config import settings
-from bot.database.engine import sessionmaker, engine
-from sqlalchemy.ext.asyncio import AsyncSession
+from bot.database.engine import sessionmaker
 
 from bot.services.notifs import get_notifs_by_date, update_notif_auto
 

@@ -15,6 +15,7 @@ class UserModel(Base):
     active_notifs: Mapped[int] = mapped_column(default=0)
     is_premium: Mapped[bool] = mapped_column(default=False)
     premium_until: Mapped[datetime.datetime | None] = mapped_column(default=None)
+    is_blocked: Mapped[bool] = mapped_column(default=False, nullable=True)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 

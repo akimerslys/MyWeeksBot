@@ -11,7 +11,7 @@ from loguru import logger
 router = Router(name="premium")
 
 
-# TODO add anti brutforce middleware ?
+# TODO add anti brutforce ware ?
 @router.message(Command("premium"))
 async def give_premium(message, bot: Bot, session: AsyncSession):
     args = find_command_argument(message.text)

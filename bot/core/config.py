@@ -1,3 +1,7 @@
+from __future__ import annotations
+from pathlib import Path
+from typing import ClassVar
+
 from arq.connections import RedisSettings
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -10,7 +14,7 @@ class BotSettings(EnvBaseSettings):
     TOKEN: str
     RATE_LIMIT: float
     ADMINS_ID: list
-    PATH_DIR: str
+    DEBUG: bool = True
 
 
 class DBSettings(EnvBaseSettings):
@@ -55,7 +59,10 @@ class UserSettings(EnvBaseSettings):
 
 
 class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSettings):
-    DEBUG: bool = True
+    PATH_DIR: Path = Path(__file__).absolute().parent.parent.parent
+    BOT_DIR: Path = Path(__file__).absolute().parent.parent
+    LOCALES_DIR: str = f"{BOT_DIR}/locales"
+    I18N_DOMAIN: str = "messages"
 
 
 settings = Settings()

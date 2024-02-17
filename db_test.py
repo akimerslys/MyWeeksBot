@@ -17,21 +17,12 @@ async def main():
 
 
 asyncio.run(main())"""
+print(len("schedule_add_complete"))
 from datetime import datetime
+days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+for i, day in enumerate(days_of_week):
+    print(i, day)
 
 
-now = datetime.now()
 
-year = now.year
-month = now.month
-day = now.day
-hour = now.hour
-minute = now.minute
-desired_datetime = datetime(year=year, month=month, day=day, hour=hour, minute=minute)
-# Вывод: 2024, 2, 14, 20, 34
-print(desired_datetime)
-print(now.ctime())
-
-
-# Вывод: 2024, 02, 14, 20, 34
 

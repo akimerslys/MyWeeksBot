@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, update, asc
 
 from bot.cache.redis import build_key, cached, clear_cache
 from bot.database.models import NotifModel
@@ -107,14 +107,17 @@ async def update_notif_active(session: AsyncSession, id: int, active: bool) -> N
 
 
 async def delete_notif(session: AsyncSession, id: int) -> None:
-    stmt = update(NotifModel).where(NotifModel.id == id).values(user_id=0, active=False)
+    user_notif = await get_notif(session, id)
+    tmp_id = int("0" + str(user_notif.user_id))
+    stmt = update(NotifModel).where(NotifModel.id == id).values(user_id=tmp_id, active=False)
     logger.debug(f"deleted notification {id}")
     await session.execute(stmt)
     await session.commit()
+    await clear_cache(get_notif, id)
 
 
 async def get_notifs_by_date(session: AsyncSession, dtime: datetime):
-    query = select(NotifModel).filter_by(date=dtime)
+    query = select(NotifModel).filter_by(date=dtime).order_by(asc(NotifModel.date))
 
     result = await session.execute(query)
     logger.debug(f"got notifs by date {dtime}")

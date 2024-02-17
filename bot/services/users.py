@@ -46,6 +46,7 @@ async def add_user(
         first_name=first_name,
         language_code=language_code,
         timezone=timezone,
+        is_blocked=False,
     )
 
     session.add(new_user)
@@ -114,7 +115,7 @@ async def get_language_code(session: AsyncSession, user_id: int) -> str:
     result = await session.execute(query)
 
     language_code = result.scalar_one_or_none()
-    return language_code or ""
+    return language_code or "en"
 
 
 async def set_language_code(
