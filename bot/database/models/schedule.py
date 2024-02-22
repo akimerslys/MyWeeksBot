@@ -10,6 +10,6 @@ class ScheduleModel(Base):
     user_id = Column(BigInteger)
     day: Mapped[str]
     time: Mapped[str]
-    text: Mapped[str] = mapped_column(default=None)
+    text: Mapped[str] = mapped_column(default=None, nullable=True)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]

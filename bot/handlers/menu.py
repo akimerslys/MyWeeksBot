@@ -1,16 +1,20 @@
-from datetime import datetime, timedelta
+from __future__ import annotations
 
+import time
+from datetime import datetime, timedelta
 import pytz
 from aiogram import Router, F, Bot
 from aiogram.utils.i18n import gettext as _
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, BufferedInputFile
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from timezonefinder import TimezoneFinder
 
 from bot.core.config import settings
+from bot.core.loader import lock
+from bot.image_generator.images import generate_user_schedule_week
 from bot.keyboards.inline import menu as mkb
 from bot.keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback, get_user_locale
 from bot.keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
@@ -19,21 +23,25 @@ from bot.keyboards.reply.skip import skip_kb
 from bot.services import users as dbuc, notifs as dbnc, schedule as dbsc
 from bot.utils.last_commits import get_changelog
 from bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule
-from bot.utils.time_localizer import localize_time_to_utc, localize_timenow_to_timezone, is_today
+from bot.utils.time_localizer import localize_time_to_utc, localize_timenow_to_timezone, is_today, day_of_week_to_date
 
 router = Router(name="menu")
 
+
 # DO NOT SPLIT THIS FILE TO ROUTERS! IT WILL BE IMPLEMENTED IN THE FUTURE
 
-# TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)                                  #NEED MORE TESTS
 # TODO ADD NOTIFICATIONS TO THE DATABASE                                        #DONE (NEED MORE TESTS)
-# TODO INTEGRATE PROFILE TO MENU                                                #NEED CHANGES
-# TODO DETERMINE SOLUTION FOR PREMIUM/EXTRA FEATURES
-# TODO MAKE ADMIN PANEL
-# TODO LOCALIZATION
 # TODO ADD TIMEZONE TO THE NOTIFICATIONS                                        #DONE (NEED MORE TESTS)
 # TODO ADD TIMEZONE SETTING FOR FIRST USER                                      #DONE (NEED MORE TESTS)
-# TODO SORT WEEKDAYS BY TODAY'S DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)           #DONE (NEED MORE TESTS)
+# TODO SORT WEEKDAYS BY TODAY'S DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)          #DONE (NEED MORE TESTS)
+# TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)                                  #DONE (NEED MORE TESTS)
+# TODO INTEGRATE PROFILE TO MENU                                                #NEED CHANGES
+# TODO DETERMINE SOLUTION FOR PREMIUM/EXTRA FEATURES                            # every 5$ gives you 10 notifications
+# TODO MAKE ADMIN PANEL
+# TODO LOCALIZATION
+# TODO REWRITE ADD_NOTIF_REPEAT / OPTIMIZE ADD_NOTIF_COMPLETE
+# TODO REWRITE MANAGE_NOTIF / TO CHOOSE NOTIFS BY DATE / OR CALENDAR (idk)
+# TODO ADD FUNC DELETE ALL INFORMATION ABOUT USER IN PROFILE
 
 
 # MAIN
@@ -43,12 +51,32 @@ async def menu_back(call: CallbackQuery):
 
 
 # MY WEEKS
-# SCHEDULE WEEK
+# SCHEDULE
 @router.callback_query(F.data == "schedule")
 async def schedule_menu(call: CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup(reply_markup=mkb.schedule_kb())
     if await state.get_state():
         await state.clear()
+
+
+@router.callback_query(F.data == "show_schedule_menu")
+async def show_schedule_menu(call: CallbackQuery, bot: Bot, session: AsyncSession):
+    start = time.time()
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    msg = await bot.send_message(call.message.chat.id, _("WAIT_MESSAGE"))
+    try:
+        async with lock:
+            image_bytes = await generate_user_schedule_week(session, call.from_user.id)
+            await bot.send_photo(call.message.chat.id,
+                                 BufferedInputFile(image_bytes.getvalue(), filename=f"schedule_{call.from_user.id}.jpeg"))
+    except Exception as e:
+        logger.critical("WTF????\n" + e)
+        await bot.send_message(settings.ADMIN_ID[1], f"ERROR IN GENERATION IMAGE\n{e}")
+        await bot.send_message(call.message.chat.id, _("⚙️ Error, please use /report"))
+    finally:
+        await bot.delete_message(call.message.chat.id, msg.message_id)
+        logger.info(f"generated schedule, it tooks: {time.time() - start}")
+    await bot.send_message(call.message.chat.id, _("Please choose an option below"), reply_markup=mkb.schedule_kb(True))
 
 
 @router.callback_query(F.data.startswith("schedule_add_day_"))
@@ -112,36 +140,73 @@ async def schedule_add_text(call: CallbackQuery, bot: Bot, state: FSMContext):
 async def schedule_text_complete(message: Message, bot: Bot, state: FSMContext):
     data = await state.get_data()
     await bot.delete_messages(message.from_user.id, [data.get('tmp_msg'), message.message_id])
-    await state.update_data(text=message.text)
+    if message.text == _("Skip") or message.text == "Skip":
+        await state.update_data(text=None)
+    await state.update_data(text=message.text[:31])
     await bot.send_message(
         message.from_user.id,
         f"📅 Days: {data.get('days')}\n"
         f"⏰ Time: {data.get('hours')}:{data.get('minutes')}\n"
         f"📝 Text: {message.text}",
-        reply_markup=mkb.schedule_complete_kb()
+        reply_markup=mkb.schedule_complete_kb(False)
     )
+
+
+@router.callback_query(F.data.startswith("schedule_add_complete_notify_"))
+async def add_notifs_to_schedule(call: CallbackQuery, state: FSMContext):
+    if call.data[29:] == "no":
+        await state.update_data(notify=False)
+        await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
+    elif call.data[29:] == "yes":
+        await state.update_data(notify=True)
+        await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(True))
 
 
 @router.callback_query(F.data.startswith("schedule_add_complete"))
 async def schedule_complete(call: CallbackQuery, state: FSMContext, session: AsyncSession):
-    logger.warning(f"{call.data[22:]}")
     if call.data[22:] == "no":
         await call.message.edit_text(_("Please choose an option below"), reply_markup=mkb.schedule_kb())
-
     else:
         data = await state.get_data()
         days = data.get('days')
         time = data.get('hours') + ":" + data.get('minutes')
+        if data.get('notify'):
+            user_notifs = await dbnc.count_user_notifs(session, call.from_user.id)
+            if not await dbuc.is_premium(session, call.from_user.id) and user_notifs + len(days) >= settings.MAX_NOTIFS:
+                await call.answer(_("Sorry, you reached the limit of your notifications"), show_alert=True)
+                return
+            if await dbuc.is_premium(session, call.from_user.id) and user_notifs + len(days) >= settings.MAX_NOTIFS_PREMIUM:
+                await call.answer(_("Sorry, you reached the limit of your notifications"), show_alert=True)
+                return
+        for day in days:
+            dtime = await day_of_week_to_date(day, time, await dbuc.get_timezone(session, call.from_user.id))
+            dtime_to_utc = await localize_time_to_utc(dtime, await dbuc.get_timezone(session, call.from_user.id))
+            await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
         for day in days:
             await dbsc.add_schedule(session, call.from_user.id, day, time, data.get('text'))
         await call.answer(_("✅ Schedule updated"), show_alert=True)
-        await call.message.edit_reply_markup(reply_markup=mkb.back_main())
+        await call.message.edit_reply_markup(reply_markup=mkb.back_main_schedule())
     await state.clear()
+
+
+# MANAGE SCHEDULE
+@router.callback_query(F.data == "manage_schedule")
+async def manage_schedule(call: CallbackQuery, session: AsyncSession):
+    user_schedule = await dbsc.get_user_schedule(session, call.from_user.id)
+    if not user_schedule:
+        await call.answer(_("You don't have any schedules"), show_alert=True)
+        return
+    await call.message.edit_text(
+        _("📝 Your schedules"),
+        reply_markup=mkb.manage_schedule_kb(user_schedule)
+    )
 
 
 # NOTIFICATIONS
 @router.callback_query(F.data == "notifications")
-async def notifications_menu(call: CallbackQuery):
+async def notifications_menu(call: CallbackQuery, state: FSMContext):
+    if state.get_state():
+        await state.clear()
     await call.message.edit_reply_markup(reply_markup=mkb.notifications_kb())
 
 
@@ -219,7 +284,7 @@ async def add_notif_ask_text(call: CallbackQuery, bot: Bot, state: FSMContext):
     await bot.delete_message(call.from_user.id, call.message.message_id)
     tmp_msg = await bot.send_message(
         call.from_user.id,
-        _("Now name your notification:"),
+        _("Now name your notification: (max symbols: 34)"),
         reply_markup=skip_kb()
     )
     await state.set_state(AddNotif.text)
@@ -229,7 +294,7 @@ async def add_notif_ask_text(call: CallbackQuery, bot: Bot, state: FSMContext):
 @router.message(AddNotif.text)
 async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
     if message.text == _("Skip") or message.text == "Skip":
-        await state.update_data(text="None")
+        await state.update_data(text=None)
     else:
         await state.update_data(text=message.text)
     data = await state.get_data()
@@ -241,7 +306,7 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
         "📅 Date: {}\n⏰ Time: {}:{}\n📝 Text: {}".format(
             data.get('date'), data.get('hours'), data.get('minutes'), data.get('text')
         ),
-        reply_markup=mkb.add_notif_repeat_none_kb()
+        reply_markup=mkb.add_notif_repeat_kb(0)
     )
     await message.delete()
     await state.update_data(repeat_daily=False)
@@ -249,7 +314,25 @@ async def add_notif_text(message: Message, bot: Bot, state: FSMContext):
     await state.set_state(AddNotif.repeat_daily)
 
 
-@router.callback_query(F.data == "repeatable_day")
+@router.callback_query(F.data.startswith("repeatable_"))
+async def add_notif_repeat(call: CallbackQuery, state: FSMContext):
+    if call.data == "repeatable_day":
+        await state.update_data(repeat_daily=True)
+        await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_kb(1))  # every day
+    elif call.data == "repeatable_week":
+        await state.update_data(repeat_weekly=True)
+        await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_kb(2))  # every_week
+    elif call.data == "repeatable_month":
+        await state.update_data(repeat_daily=True)
+        await state.update_data(repeat_weekly=True)
+        await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_kb(3))  # every_month
+    else:
+        await state.update_data(repeat_daily=False)
+        await state.update_data(repeat_weekly=False)
+        await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_kb(0))  # none
+
+
+"""@router.callback_query(F.data == "repeatable_day")
 async def add_notif_text_off(call: CallbackQuery, state: FSMContext):
     await state.update_data(repeat_daily=True)
     await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_day_kb())
@@ -273,7 +356,7 @@ async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
 async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
     await state.update_data(repeat_daily=False)
     await state.update_data(repeat_weekly=False)
-    await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_none_kb())
+    await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_none_kb())"""
 
 
 @router.callback_query(F.data == "add_complete")
@@ -307,9 +390,8 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
                          data.get('text'),
                          repeat_daily,
                          repeat_weekly)
-    await dbuc.inc_user_notifs(session, call.from_user.id)
     await call.answer(_("✅ Notification added"), show_alert=True)
-    await call.message.edit_reply_markup(reply_markup=mkb.back_main())
+    await call.message.edit_reply_markup(reply_markup=mkb.back_main_notif())
     await state.clear()
 
 
@@ -392,7 +474,6 @@ async def manage_notif_active(call: CallbackQuery, session: AsyncSession):
 async def manage_notif_delete(call: CallbackQuery, session: AsyncSession):
     notif_id = int(call.data[13:])
     await dbnc.delete_notif(session, notif_id)
-    await dbuc.dec_user_notifs(session, call.from_user.id)
     await call.answer(_("✅ Notification deleted"), show_alert=True)
     await call.message.edit_text(_("📝 Your notifications"), reply_markup=mkb.manage_notifs_kb(
         await dbnc.get_user_notifs(session, call.from_user.id)))
@@ -462,7 +543,7 @@ async def set_timezone_kb(call: CallbackQuery, session: AsyncSession):
         await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, call.from_user.language_code)
 
 
-@router.callback_query(F.data.startswith("send_geo"))
+@router.callback_query(F.data == "timezone_send_geo")
 async def ask_for_location(call: CallbackQuery, bot: Bot, state: FSMContext):
     geo_msg = await bot.send_message(
         call.message.chat.id,
@@ -526,14 +607,14 @@ async def cancel_location(call: CallbackQuery, bot: Bot, state: FSMContext):
     await state.clear()
 
 
-@router.callback_query(F.data == "show_all")
+@router.callback_query(F.data == "timezone_show_adv")
 async def show_all_timezone(call: CallbackQuery):
     await call.answer(_("⚙️ This function is upgrading"), show_alert=True)
 
 
 @router.callback_query(F.data == "show_all")
 async def show_all_timezone(call: CallbackQuery):
-    await call.message.edit_text(_("🕔 Choose your timezone"), reply_markup=timezone_advanced_keyboard())
+    await call.message.edit_reply_markup(reply_markup=timezone_advanced_keyboard())
 
 
 # CHANGELOG
@@ -553,6 +634,11 @@ async def buy_premium(call: CallbackQuery):
         "⚙️ This function is not available yet",
         show_alert=True
     )
+
+
+@router.callback_query(F.data == "ignore")
+async def found_callback(call: CallbackQuery):
+    await call.answer("⚙️ Under construction", show_alert=True)
 
 
 @router.callback_query()

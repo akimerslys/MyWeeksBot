@@ -26,7 +26,7 @@ class AddSchedule(StatesGroup):
     hours = State()
     minutes = State()
     text = State()
-    repeat = State()
+    notify = State()
 
 
 

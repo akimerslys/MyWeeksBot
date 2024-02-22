@@ -1,1 +1,1 @@
-from . import stop, ping, add_key
+from . import delete, add_key

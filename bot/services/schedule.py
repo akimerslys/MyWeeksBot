@@ -31,13 +31,18 @@ async def add_schedule(
 ) -> None:
     """Add a new user to the database."""
     logger.info(f"adding schedule for user {user_id}")
+    if time[1] == ":":
+        time = '0' + time
+    if text == "Skip":
+        text = None
     new_notif = ScheduleModel(
         user_id=user_id,
         day=day,
         time=time,
         text=text,
     )
-
+    await clear_cache(get_user_schedule, user_id)
+    await clear_cache(get_user_schedule_day_time_text, user_id)
     session.add(new_notif)
     await session.commit()
 
@@ -61,6 +66,18 @@ async def get_user_schedule(session: AsyncSession, user_id: int) -> list[Schedul
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
+async def get_user_schedule_day_time_text(session: AsyncSession, user_id: int) -> list[tuple]:
+    query = select(ScheduleModel).filter_by(user_id=user_id)
+
+    result = await session.execute(query)
+    logger.debug(f"got user notifs {user_id}")
+    schedule_list = result.scalars()
+
+    schedule_info = [(schedule.day, schedule.time, schedule.text) for schedule in schedule_list]
+
+    return schedule_info
+
+
 async def count_user_schedule(session: AsyncSession, user_id: int) -> int:
     query = select(ScheduleModel).filter_by(user_id=user_id)
 
@@ -115,7 +132,6 @@ async def get_all_notifs(session: AsyncSession) -> list[ScheduleModel]:
     return list(users)
 
 
-@cached(key_builder=lambda session: build_key())
 async def count_schedules(session: AsyncSession) -> int:
     query = select(func.count()).select_from(ScheduleModel)
 

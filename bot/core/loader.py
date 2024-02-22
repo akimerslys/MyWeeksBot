@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
@@ -20,6 +21,7 @@ storage = RedisStorage(
     key_builder=DefaultKeyBuilder(with_bot_id=True),
 )
 
+lock = asyncio.Lock()
 
 dp = Dispatcher(storage=storage)
 logger.success("storage loaded")

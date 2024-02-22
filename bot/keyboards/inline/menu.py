@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from pytz import timezone as tz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -19,15 +20,14 @@ def main_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def schedule_kb() -> InlineKeyboardMarkup:
-    buttons = [
-        [InlineKeyboardButton(text=_("schedule"), callback_data="schedule_add_day_0")],
-        # OR
-        [InlineKeyboardButton(text=_("📈 Your schedule"), callback_data="schedule123")],
-        [InlineKeyboardButton(text=_("📊 Manage schedule"), callback_data="schedule123")],
-        [InlineKeyboardButton(text=_("back"), callback_data="main_kb")],
-    ]
-    keyboard = InlineKeyboardBuilder(markup=buttons)
+def schedule_kb(is_sch: bool = False) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    if not is_sch:
+        keyboard.button(text=_("show_you_schedule"), callback_data="show_schedule_menu")
+    keyboard.button(text=_("📈 Update schedule"), callback_data="schedule_add_day_0")
+    keyboard.button(text=_("📊 Manage schedule"), callback_data="manage_schedule")
+    keyboard.button(text=_("back"), callback_data="main_kb")
+
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
 
@@ -69,22 +69,47 @@ def minute_schedule_kb():
     builder = InlineKeyboardBuilder()
     for index in range(0, 12):
         builder.button(
-            text=f"{index * 5}",
-            callback_data=f"schedule_add_minute_{index * 5}"
+            text=f"{index * 5 if index>1 else '0' + str(index * 5)}",
+            callback_data=f"schedule_add_minute_{index * 5 if index>1 else '0' + str(index * 5)}"
         )
     builder.button(text=_("back"), callback_data="schedule_add_day_back")
     builder.adjust(1, 2, 1, 2, 1, 2, 1, 2)
     return builder.as_markup(resize_keyboard=True)
 
 
-def schedule_complete_kb() -> InlineKeyboardMarkup:
+def schedule_complete_kb(notify: bool = False) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    if not notify:
+        InlineKeyboardButton(text=_("not notify"), callback_data="schedule_add_complete_notify_no")
+    else:
+        InlineKeyboardButton(text=_("notify"), callback_data="schedule_add_complete_notify_yes")
+    InlineKeyboardButton(text=_("cancel"), callback_data="schedule_add_complete_no")
+    InlineKeyboardButton(text=_("complete"), callback_data="schedule_add_complete")
+
+
+    keyboard.adjust(1, 2)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def back_main_schedule() -> InlineKeyboardMarkup:
     buttons = [
-        [InlineKeyboardButton(text=_("notify"), callback_data="schedule_add_complete_notify")],
-        [InlineKeyboardButton(text=_("cancel"), callback_data="schedule_add_complete_no")],
-        [InlineKeyboardButton(text=_("complete"), callback_data="schedule_add_complete")],
+        [InlineKeyboardButton(text=_("Add another schedule"), callback_data="schedule_add_day_0")],
+        [InlineKeyboardButton(text=_("back_main"), callback_data="main_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
-    keyboard.adjust(1, 2)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+def manage_schedule_kb(user_schedule) -> InlineKeyboardMarkup:
+    days_of_week_short = [_("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat"), _("Sun")]
+    keyboard = InlineKeyboardBuilder()
+    for day_short in days_of_week_short:
+        keyboard.button(text=_(day_short), callback_data="ignore")
+
+    # TODO CYCLE
+
+    keyboard.adjust(7)
+    keyboard.button(text=_("back"), callback_data="schedule")
     return keyboard.as_markup(resize_keyboard=True)
 
 
@@ -120,8 +145,7 @@ def add_notif_first_kb(timezone_str: str = "UTC") -> InlineKeyboardMarkup:
 
 
 def hours_kb(hour: int = 0) -> InlineKeyboardMarkup:
-    if hour != 0:
-        hour += 1  # TODO CHANGE TO +1
+    hour += 1  # TODO CHANGE TO +1
     builder = InlineKeyboardBuilder()
     if hour < 23:
         for index in range(hour, 24):
@@ -146,7 +170,19 @@ def minute_kb(hour) -> InlineKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def add_notif_repeat_none_kb() -> InlineKeyboardMarkup:
+def add_notif_repeat_kb(status: int) -> InlineKeyboardMarkup:
+    status_list = ["none", "day", "week", "month"]
+    buttons = [
+        [InlineKeyboardButton(text=_("repeat_" + status_list[status]),
+                              callback_data="repeatable_" + status_list[status+1 if status < 3 else 0])],
+        [InlineKeyboardButton(text=_("complete"), callback_data="add_complete")],
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+"""def add_notif_repeat_none_kb() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text=_("repeat_none"), callback_data="repeatable_day")],
         [InlineKeyboardButton(text=_("complete"), callback_data="add_complete")],
@@ -184,7 +220,7 @@ def add_notif_repeat_month_kb() -> InlineKeyboardMarkup:
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
-    return keyboard.as_markup(resize_keyboard=True)
+    return keyboard.as_markup(resize_keyboard=True)"""
 
 
 def back_main_notif() -> InlineKeyboardMarkup:
@@ -254,14 +290,19 @@ def setting_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def language_kb() -> InlineKeyboardMarkup:
+def language_kb(is_new: bool = False) -> InlineKeyboardMarkup:
+    transfer_to_guide = ""
+    if is_new:
+        transfer_to_guide = "new_"               # new users will see guide page after choosing language
     buttons = [
-        [InlineKeyboardButton(text="🇬🇧 English", callback_data="set_lang_en")],
-        [InlineKeyboardButton(text="🇺🇦 Українська", callback_data="set_lang_uk")],
-        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_lang_ru")],
-        [InlineKeyboardButton(text=_("add_lang"), callback_data="add_lang")],
-        [InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb")],
+        [InlineKeyboardButton(text="🇬🇧 English", callback_data=f"set_{transfer_to_guide}lang_en")],
+        [InlineKeyboardButton(text="🇺🇦 Українська", callback_data=f"set_{transfer_to_guide}lang_uk")],
+        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data=f"set_{transfer_to_guide}lang_ru")],
+        [InlineKeyboardButton(text=_("add_lang"), callback_data=f"add_lang")],
     ]
+
+    if not is_new:
+        buttons.append(InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb"))
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)

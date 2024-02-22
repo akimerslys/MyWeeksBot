@@ -117,7 +117,7 @@ class SimpleCalendar(GenericCalendar):
         cancel_row = []
         cancel_row.append(InlineKeyboardButton(
             text=self._labels.cancel_caption,
-            callback_data=SimpleCalendarCallback(act=SimpleCalAct.cancel, year=year, month=month, day=day).pack()
+            callback_data="notifications"
         ))
         cancel_row.append(InlineKeyboardButton(text=" ", callback_data=self.ignore_callback))
         cancel_row.append(InlineKeyboardButton(
@@ -172,7 +172,5 @@ class SimpleCalendar(GenericCalendar):
             await self._update_calendar(query, next_date)
         if data.act == SimpleCalAct.today:
             return await self.process_day_select(data, query)
-        if data.act == SimpleCalAct.cancel:
-            await query.answer(show_alert=True, text="Пока не пофиксил")
         # at some point user clicks DAY button, returning date
         return return_data

@@ -7,6 +7,8 @@ from sqlalchemy import func, select, update, asc
 from bot.cache.redis import build_key, cached, clear_cache
 from bot.database.models import NotifModel
 
+from bot.services.users import inc_user_notifs, dec_user_notifs
+
 from datetime import datetime, timedelta
 
 if TYPE_CHECKING:
@@ -46,7 +48,7 @@ async def add_notif(
         repeat_daily=repeat_daily,
         repeat_weekly=repeat_weekly,
     )
-
+    await inc_user_notifs(session, user_id)
     session.add(new_notif)
     await session.commit()
     #await clear_cache()
@@ -64,7 +66,7 @@ async def get_notif(session: AsyncSession, id: int) -> NotifModel:
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
 async def get_user_notifs(session: AsyncSession, user_id: int) -> list[NotifModel]:
-    query = select(NotifModel).filter_by(user_id=user_id)
+    query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
 
     result = await session.execute(query)
     logger.debug(f"got user notifs {user_id}")
@@ -111,13 +113,14 @@ async def delete_notif(session: AsyncSession, id: int) -> None:
     tmp_id = int("0" + str(user_notif.user_id))
     stmt = update(NotifModel).where(NotifModel.id == id).values(user_id=tmp_id, active=False)
     logger.debug(f"deleted notification {id}")
+    await dec_user_notifs(session, user_notif.user_id)
     await session.execute(stmt)
     await session.commit()
     await clear_cache(get_notif, id)
 
 
 async def get_notifs_by_date(session: AsyncSession, dtime: datetime):
-    query = select(NotifModel).filter_by(date=dtime).order_by(asc(NotifModel.date))
+    query = select(NotifModel).filter_by(date=dtime)
 
     result = await session.execute(query)
     logger.debug(f"got notifs by date {dtime}")

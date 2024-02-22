@@ -1,0 +1,162 @@
+# English translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-02-15 16:27+0000\n"
+"PO-Revision-Date: 2024-02-15 16:27+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+#: handlers/start.py:20
+msgid "start_msg"
+msgstr "👋 Hello! I'm a bot that helps you to manage your schedule.\n You can configure your schedule, add notifications and much more.\nTo start, please, choose your language."
+
+#: handlers/start.py:24
+msgid "choose_timezone"
+msgstr "🕔 Choose your timezone"
+
+#: handlers/start.py:30
+msgid "pls_choose_option"
+msgstr "⤵️ Please, choose any option below"
+
+#: keyboards/inline/menu.py:10 keyboards/inline/menu.py:22
+msgid "schedule"
+msgstr "📈 Расписание"
+
+#: keyboards/inline/menu.py:11
+msgid "notifications"
+msgstr "🔔 Нагадування"
+
+#: keyboards/inline/menu.py:12
+msgid "profile"
+msgstr "🙍‍♂️ Профіль"
+
+#: keyboards/inline/menu.py:13
+msgid "settings"
+msgstr "⚙️ Налаштування"
+
+#: keyboards/inline/menu.py:24
+msgid "📈 Your schedule"
+msgstr "📈 Ваше расписание"
+
+#: keyboards/inline/menu.py:25
+msgid "📊 Manage schedule"
+msgstr "📊 Управление расписанием"
+
+#: keyboards/inline/menu.py:26 keyboards/inline/menu.py:37
+#: keyboards/inline/menu.py:58 keyboards/inline/menu.py:74
+#: keyboards/inline/menu.py:137 keyboards/inline/menu.py:149
+msgid "back"
+msgstr "⬅️ Назад"
+
+#: keyboards/inline/menu.py:35
+msgid "add_notif"
+msgstr "📈 Добавить напоминание"
+
+#: keyboards/inline/menu.py:36
+msgid "notifs"
+msgstr "📊 Напоминания"
+
+#: keyboards/inline/menu.py:49
+msgid "Monday"
+msgstr "Понедельник"
+
+#: keyboards/inline/menu.py:49
+msgid "Tuesday"
+msgstr "Вторник"
+
+#: keyboards/inline/menu.py:49
+msgid "Wednesday"
+msgstr "Среда"
+
+#: keyboards/inline/menu.py:49
+msgid "Thursday"
+msgstr "Четверг"
+
+#: keyboards/inline/menu.py:49
+msgid "Friday"
+msgstr "Пятница"
+
+#: keyboards/inline/menu.py:49
+msgid "Saturday"
+msgstr "Суббота"
+
+#: keyboards/inline/menu.py:49
+msgid "Sunday"
+msgstr "Воскресенье"
+
+#: keyboards/inline/menu.py:57
+msgid "calendar"
+msgstr "Календарь"
+
+#: keyboards/inline/menu.py:92
+msgid "repeat_none"
+msgstr "❗️Не повторять"
+
+#: keyboards/inline/menu.py:93 keyboards/inline/menu.py:104
+#: keyboards/inline/menu.py:114 keyboards/inline/menu.py:124
+msgid "complete"
+msgstr "✅ Добавить"
+
+#: keyboards/inline/menu.py:103
+msgid "repeat_day"
+msgstr " 🔒 Каждый День"
+
+#: keyboards/inline/menu.py:113
+msgid "repeat_week"
+msgstr "  🔄 Каждую Неделю"
+
+#: keyboards/inline/menu.py:123
+msgid "repeat_month"
+msgstr " 🔄 Каждый Месяц"
+
+#: keyboards/inline/menu.py:146
+msgid "notif_text"
+msgstr "🔔 Изменить текст"
+
+#: keyboards/inline/menu.py:147
+msgid "notif_repeat"
+msgstr "🔔 Изменить повторение"
+
+#: keyboards/inline/menu.py:148
+msgid "notif_delete"
+msgstr "❌ Удалить"
+
+#: keyboards/inline/menu.py:158 keyboards/inline/menu.py:168
+msgid "back_main"
+msgstr "⬅️ Назад в меню"
+
+#: keyboards/inline/menu.py:167
+msgid "buy_premium"
+msgstr "🔑 Активировать дополнения"
+
+#: keyboards/inline/menu.py:177
+msgid "set_lang"
+msgstr "🇬🇧 Язык"
+
+#: keyboards/inline/menu.py:178
+msgid "set_timezone"
+msgstr "🕔 Часовой пояс"
+
+#: keyboards/inline/menu.py:179
+msgid "changelog"
+msgstr "📰 Изменения (ENG)"
+
+#: keyboards/inline/menu.py:180
+msgid "buy_premium_donate"
+msgstr "🍩 Поддержать проект"
+
+#: keyboards/inline/menu.py:193
+msgid "add_lang"
+msgstr "🍩 Donate"
+

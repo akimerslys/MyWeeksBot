@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, update, delete
 
 from bot.cache.redis import build_key, cached, clear_cache
 from bot.database.models import UserModel
@@ -127,6 +127,7 @@ async def set_language_code(
     stmt = update(UserModel).where(UserModel.user_id == user_id).values(language_code=language_code)
     await session.execute(stmt)
     await session.commit()
+    await clear_cache(get_language_code, user_id)
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
@@ -148,6 +149,7 @@ async def set_timezone(
     logger.info(f"Setting user {user_id} timezone to {timezone}")
     await session.execute(stmt)
     await session.commit()
+    await clear_cache(get_timezone, user_id)
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
@@ -175,7 +177,6 @@ async def set_user_premium(session: AsyncSession, user_id: int, days: int) -> No
     await session.commit()
 
 
-@cached(key_builder=lambda session: build_key())
 async def get_all_users(session: AsyncSession) -> list[UserModel]:
     query = select(UserModel)
 
@@ -185,7 +186,6 @@ async def get_all_users(session: AsyncSession) -> list[UserModel]:
     return list(users)
 
 
-@cached(key_builder=lambda session: build_key())
 async def count_users(session: AsyncSession) -> int:
     query = select(func.count()).select_from(UserModel)
 
@@ -193,3 +193,36 @@ async def count_users(session: AsyncSession) -> int:
 
     count = result.scalar_one_or_none() or 0
     return int(count)
+
+
+async def block_user(session: AsyncSession, user_id: int) -> None:
+    logger.info(f"Blocking user {user_id}")
+    stmt = update(UserModel).where(UserModel.user_id == user_id).values(is_blocked=True)
+
+    await session.execute(stmt)
+    await session.commit()
+
+
+async def unblock_user(session: AsyncSession, user_id: int) -> None:
+    logger.info(f"Unblocking user {user_id}")
+    stmt = update(UserModel).where(UserModel.user_id == user_id).values(is_blocked=False)
+
+    await session.execute(stmt)
+    await session.commit()
+
+
+async def delete_user(session: AsyncSession, user_id: int) -> None:
+    logger.info(f"Deleting user {user_id}")
+    stmt = delete(UserModel).where(UserModel.user_id == user_id)
+
+    await session.execute(stmt)
+    await session.commit()
+    await clear_cache(user_exists, user_id)
+    await clear_cache(get_first_name, user_id)
+    await clear_cache(get_language_code, user_id)
+    await clear_cache(get_timezone, user_id)
+    await clear_cache(is_premium, user_id)
+    await clear_cache(count_user_notifs, user_id)
+    await clear_cache(get_user, user_id)
+    await clear_cache(get_all_users)
+    await clear_cache(count_users, user_id)
