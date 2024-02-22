@@ -164,6 +164,7 @@ async def add_notifs_to_schedule(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("schedule_add_complete"))
 async def schedule_complete(call: CallbackQuery, state: FSMContext, session: AsyncSession):
+    await call.message.edit_reply_markup(reply_markup=mkb.loading())
     if call.data[22:] == "no":
         await call.message.edit_text(_("Please choose an option below"), reply_markup=mkb.schedule_kb())
     else:
@@ -205,7 +206,7 @@ async def manage_schedule(call: CallbackQuery, session: AsyncSession):
 # NOTIFICATIONS
 @router.callback_query(F.data == "notifications")
 async def notifications_menu(call: CallbackQuery, state: FSMContext):
-    if state.get_state():
+    if await state.get_state():
         await state.clear()
     await call.message.edit_reply_markup(reply_markup=mkb.notifications_kb())
 
@@ -361,6 +362,7 @@ async def add_notification_text_off(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "add_complete")
 async def add_notification_finish(call: CallbackQuery, state: FSMContext, session: AsyncSession):
+    await call.message.edit_reply_markup(reply_markup=mkb.loading())
     if not await state.get_state():
         await call.answer(_("⚙️ Error, please use /report"), show_alert=True)
         await call.message.edit_text(_("⤵️ Please choose an option from the menu below"), reply_markup=mkb.main_kb())

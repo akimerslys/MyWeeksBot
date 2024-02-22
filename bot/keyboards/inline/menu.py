@@ -78,21 +78,20 @@ def minute_schedule_kb():
 
 
 def schedule_complete_kb(notify: bool = False) -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard = InlineKeyboardBuilder()
     if not notify:
-        InlineKeyboardButton(text=_("not notify"), callback_data="schedule_add_complete_notify_no")
+        keyboard.button(text=_("🔔 on"), callback_data="schedule_add_complete_notify_yes")
     else:
-        InlineKeyboardButton(text=_("notify"), callback_data="schedule_add_complete_notify_yes")
-    InlineKeyboardButton(text=_("cancel"), callback_data="schedule_add_complete_no")
-    InlineKeyboardButton(text=_("complete"), callback_data="schedule_add_complete")
-
-
+        keyboard.button(text=_("🔕 offed"), callback_data="schedule_add_complete_notify_no")
+    keyboard.button(text=_("cancel"), callback_data="schedule_add_complete_no")
+    keyboard.button(text=_("complete"), callback_data="schedule_add_complete")
     keyboard.adjust(1, 2)
     return keyboard.as_markup(resize_keyboard=True)
 
 
 def back_main_schedule() -> InlineKeyboardMarkup:
     buttons = [
+        [InlineKeyboardButton(text=_("show_you_schedule"), callback_data="show_schedule_menu")],
         [InlineKeyboardButton(text=_("Add another schedule"), callback_data="schedule_add_day_0")],
         [InlineKeyboardButton(text=_("back_main"), callback_data="main_kb")],
     ]
@@ -303,6 +302,15 @@ def language_kb(is_new: bool = False) -> InlineKeyboardMarkup:
 
     if not is_new:
         buttons.append(InlineKeyboardButton(text="⬅️ Back", callback_data="settings_kb"))
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def loading() -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text=_("loading"), callback_data="ignore")],
+    ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)

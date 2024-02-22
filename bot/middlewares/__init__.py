@@ -10,9 +10,10 @@ def register_middlewares(dp: Dispatcher) -> None:
     from .i18n import ACLMiddleware
     from .logging import LoggingMiddleware
     from .throttling import ThrottlingMiddleware
+    from .callspam import AntiSpamMiddleware
 
     dp.message.outer_middleware(ThrottlingMiddleware())
-
+    dp.callback_query.outer_middleware(AntiSpamMiddleware())
     dp.update.outer_middleware(LoggingMiddleware())
 
     dp.update.outer_middleware(DatabaseMiddleware())

@@ -73,4 +73,4 @@ async def day_of_week_to_date(day, time, timezone):
         target_date += timedelta(days=7)
         target_datetime_with_timezone = target_date.replace(tzinfo=tz)
 
-    return target_datetime_with_timezone
+    return target_datetime_with_timezone.replace(tzinfo=None)

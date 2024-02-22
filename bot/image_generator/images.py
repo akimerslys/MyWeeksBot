@@ -28,12 +28,12 @@ def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
                 line_len += len(word) + 1  # +1 for space
             else:
                 wrapped_text += '\n ' + word[:max_len_second_line] + ' '
-                line_len = len(word[:max_len_second_line])
+                line_len = len(word[:max_len_second_line]) + 1
                 first_line = False
         else:
             if line_len + len(word) <= max_len_second_line:
                 wrapped_text += word + ' '
-                line_len += len(word)-1   # mby add +1 for space
+                line_len += len(word)   # mby add +1 for space
             else:
                 wrapped_text += word[:(max_len_second_line-line_len)]
                 break
