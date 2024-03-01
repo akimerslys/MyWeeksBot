@@ -110,24 +110,14 @@ async def delete_one_schedule(session: AsyncSession, id: int) -> None:
     logger.info(f"deleted schedule {id}")
 
 
-
-
-async def get_notifs_by_day(session: AsyncSession, day: str) -> list[ScheduleModel]:
-    query = select(ScheduleModel).filter_by(day=day)
-
-    result = await session.execute(query)
-    logger.debug(f"got schedule by day {day}")
-    notifs = result.scalars()
-    return list(notifs)
-
-
-async def get_user_schedule_by_day(session: AsyncSession, user_id: int, day: str) -> list[ScheduleModel]:
+async def get_user_schedule_by_day(session: AsyncSession, user_id: int, day: str) -> list[tuple]:
     query = select(ScheduleModel).filter_by(user_id=user_id, day=day).order_by(ScheduleModel.time)
 
     result = await session.execute(query)
     logger.debug(f"got user schedule by day {day}")
     notifs = result.scalars()
-    return list(notifs)
+    schedule_list = [(schedule.time, schedule.text) for schedule in notifs]
+    return list(schedule_list)
 
 
 @cached(key_builder=lambda session: build_key())

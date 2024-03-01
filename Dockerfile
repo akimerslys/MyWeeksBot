@@ -1,26 +1,26 @@
-FROM python:3.11.7-alpine3.19
+FROM python:3.11.7-alpine3.19 as python-base
 
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=0 \
-    POETRY_HOME="/etc/poetry" \
-    POETRY_CACHE_DIR="/tmp/poetry_cache" \
-    POETRY_VERSION=1.7.0
+ENV POETRY_VERSION=1.8.1 \
+    POETRY_HOME=/opt/poetry \
+    POETRY_VENV=/opt/poetry-venv \
+    POETRY_CACHE_DIR=/opt/.cache
+
+FROM python-base as poetry-base
+
+RUN python3 -m venv $POETRY_VENV \
+    && $POETRY_VENV/bin/pip install -U pip setuptools \
+    && $POETRY_VENV/bin/pip install poetry==${POETRY_VERSION}
+
+FROM python-base as app
+
+COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
+ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR /app
+COPY ../poetry.lock pyproject.toml ./
+COPY README.md ./
 
+RUN poetry check && \
+    poetry install --no-interaction --no-cache --no-root
 COPY . .
-
-RUN pip install --no-cache-dir "poetry==$POETRY_VERSION" \
-    && poetry install --without admin --without dev --no-root \
-    && pip uninstall -y poetry \
-    && pybabel compile -d bot/locales \
-    && rm -rf /home/appuser/.cache \
-    && rm -rf $POETRY_CACHE_DIR \
-    && rm -rf /usr/src/app/{__pycache__,admin} \
-    && adduser -D appuser \
-    && chown -R appuser:appuser .
-
-USER appuser
-
-CMD ["python", "-m", "bot"]
+CMD ["poetry", "run", "python", "-m", "bot.main"]

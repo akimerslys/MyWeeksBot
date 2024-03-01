@@ -22,6 +22,34 @@ def main_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
+def config_schedule_hrs() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    for i in range(4, 13):
+        i_str = ('0' + str(i) if i < 10 else str(i))
+        keyboard.button(text=i_str + ":00", callback_data=f"schedule_config_hrs_{i_str}")
+    keyboard.button(text=_("back"), callback_data="main_kb")
+    keyboard.adjust(2, 2, 2, 2, 1, 1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def config_schedule_min(hrs: str) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    for i in range(0, 4):
+        i_str = '0' + str(i * 15) if i == 0 else str(i * 15)
+        keyboard.button(text=f"{hrs}:{i_str}", callback_data=f"schedule_config_min_{i_str}")
+    keyboard.button(text=_("back"), callback_data="main_kb")
+    keyboard.adjust(2, 2, 2, 2, 2)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def config_schedule_confirm() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=_("back"), callback_data="config_schedule_confirm_no")
+    keyboard.button(text=_("confirm"), callback_data="config_schedule_confirm_yes")
+    keyboard.adjust(2)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
 def schedule_kb(is_sch: bool = False) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     if not is_sch:
@@ -82,9 +110,9 @@ def minute_schedule_kb():
 def schedule_complete_kb(notify: bool = False) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     if not notify:
-        keyboard.button(text=_("🔔 on"), callback_data="schedule_add_complete_notify_yes")
+        keyboard.button(text=_("🔕 OFF"), callback_data="schedule_add_complete_notify_yes")
     else:
-        keyboard.button(text=_("🔕 offed"), callback_data="schedule_add_complete_notify_no")
+        keyboard.button(text=_("🔔 ON"), callback_data="schedule_add_complete_notify_no")
     keyboard.button(text=_("cancel"), callback_data="schedule_add_complete_no")
     keyboard.button(text=_("complete"), callback_data="schedule_add_complete")
     keyboard.adjust(1, 2)

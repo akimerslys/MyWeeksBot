@@ -18,7 +18,7 @@ from bot.keyboards.inline.timezone import timezone_simple_keyboard
 from bot.services.users import user_exists, set_language_code, add_user, get_user_active, get_timezone, set_timezone, \
     get_language_code, set_user_active
 from bot.services.notifs import add_notif, get_notif
-from bot.utils.time_localizer import localize_time_to_timezone
+from bot.utils.time_localizer import localize_datetime_to_timezone
 from bot.utils.states import NewUser
 
 router = Router(name="start")
@@ -36,8 +36,8 @@ async def start_message_with_args(message: Message, bot: Bot, command: CommandOb
     logger.debug(notif_args)
     try:
         shared_notif = await get_notif(session, int(notif_args[0]))
-        # Assuming `localize_time_to_timezone` is an asynchronous function
-        notif_date: str = (await localize_time_to_timezone(shared_notif.date, notif_args[1])).strftime("%d/%m/%Y %H:%M")
+        # Assuming `localize_datetime_to_timezone` is an asynchronous function
+        notif_date: str = (await localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime("%d/%m/%Y %H:%M")
     except (IntegrityError, ProgrammingError) as e:
         logger.error(f"Error while getting notif from payload: {e}")
         await bot.send_message(message.from_user.id, "Error getting shared notification, use /report")

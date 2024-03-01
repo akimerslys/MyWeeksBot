@@ -1,11 +1,26 @@
 from PIL import Image, ImageDraw, ImageFont
-import asyncio
 import time
+from datetime import datetime
+from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
+from bot.services.schedule import get_user_schedule_day_time_text, get_user_schedule_by_day
+from io import BytesIO
 
 
-def day_of_week_number(day):
+def days_of_week(day: str, num: int) -> int | str:
     days = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7}
-    return days.get(day, 0)
+
+    if day:
+        if day in days:
+            return days[day]
+        elif num in days.values():
+            return next(key for key, value in days.items() if value == num)
+        else:
+            return 'Invalid input'
+    elif num in days.values():
+        return next(key for key, value in days.items() if value == num)
+    else:
+        return 'Invalid input'
 
 
 def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
@@ -15,55 +30,43 @@ def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
     first_line = True
 
     for word in words:
-        if first_line and len(word)>=max_len_first_line :
+        if first_line and len(word) >= max_len_first_line:
             first_line = False
-            wrapped_text += '\n'
+            wrapped_text += '\n '
         if first_line:
             if line_len + len(word) <= max_len_first_line:
                 wrapped_text += word + ' '
                 line_len += len(word) + 1  # +1 for space
             else:
-                wrapped_text += '\n' + word[:max_len_second_line] + ' '  # Добавляем только часть слова во вторую строку
-                line_len = len(word[:max_len_second_line])  # Учитываем только часть слова
+                wrapped_text += '\n ' + word[:max_len_second_line] + ' '
+                line_len = len(word[:max_len_second_line]) + 1
                 first_line = False
         else:
             if line_len + len(word) <= max_len_second_line:
                 wrapped_text += word + ' '
-                line_len += len(word) + 1  # +1 for space
+                line_len += len(word)   # mby add +1 for space
             else:
-                wrapped_text += word[:(max_len_second_line-line_len)]                # Добавляем только часть слова во вторую строку
-                break  # Прерываем цикл, если превышен лимит второй строки
+                wrapped_text += word[:(max_len_second_line-line_len)]
+                break
 
     return wrapped_text
 
 
-my_list = [('Thursday', '08:00', 'Wake-up!'), ('Friday', '08:00', 'Wake-up!'), ('Wednesday', '08:00', 'Wake-up!'),
-           ('Monday', '08:00', 'Wake-up!'), ('Tuesday', '08:00', 'Wake-up!'), ('Tuesday', '20:00', 'Rubbish!!'),
-           ('Friday', '10:00', 'work'), ('Monday', '10:00', 'work'), ('Wednesday', '10:00', 'work'),
-           ('Sunday', '10:00', 'work'), ('Monday', '18:00', 'Prepare for driver licence test'),
-           ('Tuesday', '18:00', 'Lollllllllllllll ahahahahahhahaa'),
-           ('Wednesday', '18:00', 'Prepare for driver licence test'),
-           ('Thursday', '18:00', 'Prepare for driver licence test'),
-           ('Friday', '18:00', 'Prepare for driver licence test'),
-           ('Saturday', '18:00', 'Prepare for driver licence test'),
-           ('Sunday', '18:00', 'Prepare for driver licence test')]
-
-
-async def main():
+async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> BytesIO:
+    user_list = await get_user_schedule_day_time_text(session, user_id)
+    logger.debug(f"User list: {user_list}")
     start_time = time.time()
-    image = Image.open("media/schedule1280.jpg")
+    image = Image.open("media/week.jpeg")
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=16)
-    text_color = (255, 255, 255)
-
-    my_list_sorted = (
+    user_list_sorted = (
         [(day, times, status) for day, times, status in
-         sorted(my_list, key=lambda x: (day_of_week_number(x[0]), x[1]))])
-
+         sorted(user_list, key=lambda x: (days_of_week(x[0], 0)))])
+    text_color = (255, 255, 255)
     height = 205
     text_position = 30
     last_day = 'Monday'
-    for day, times, text in my_list_sorted:
+    for day, times, text in user_list_sorted:
         if last_day != day:
             last_day = day
             height = 205
@@ -82,18 +85,92 @@ async def main():
                 text_position = (933, height)
             case "Sunday":
                 text_position = (1114, height)
-        height += 24
-        text_len = len(text)
-        if text_len > 12:
-            text = wrap_text(text, 12, 20)
-            height += 16
-        text = f"{times if times[0] != '0' else '  ' + times[1:]} - {text}"
+        height += 32
+        if not text:
+            text = ''
+        if text:
+            if len(text) > 12:
+                text = wrap_text(text, 12, 16)
+                height += 16
+            text = ' - ' + text
+        text = f"{times if times[0] != '0' else '  ' + times[1:]}{text}"  # 00:00 - text  ||  00:00
         draw.text(text_position, text, fill=text_color, font=font)
-    image.save("1280_with_text.jpeg")
+    image.save("media/1280_with_text.jpg")
     total_time = time.time() - start_time
-    print(f"Total time: {total_time:.4f} seconds")
+    logger.info(f"Generated image in: {total_time:.4f} seconds")
+    if total_time > 5:
+        logger.warning(f"Too long generation: {total_time:.4f} seconds")
     image.show()
+    #image_buffer = BytesIO()
+    #image.save(image_buffer, format="JPEG")
+    #image_buffer.seek(0)
 
-if __name__ == "__main__":
+    #return image_buffer
+
+
+async def generate_user_schedule_day(session: AsyncSession, user_id: int, day: int) -> None:
+    print(days_of_week('', day+1))
+    schedule_list = await get_user_schedule_by_day(session, user_id, days_of_week('', day+1))
+    logger.debug(f"Schedule list: {schedule_list}")
+    start_time = time.time()
+    image = Image.open("media/day.jpeg")
+    draw = ImageDraw.Draw(image)
+    text_color = (0, 0, 0)
+
+    # DAY
+    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=44)
+    width = 130 if day in (2, 3, 5) else 155
+    height = 56
+    text_position = (width, height)
+    draw.text(text_position, text=days_of_week('', day+1), fill=text_color, font=font)
+    # DATE
+    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=20)
+    width = 372
+    height = 105
+    text_position = (width, height)
+    text = datetime.now().strftime("%d.%m")
+    draw.text(text_position, text=text, fill=text_color, font=font)
+    # SCHEDULE
+    text_color = (255, 255, 255)
+    width = 26
+    height = 192
+    for time_, text in schedule_list:
+
+        if text:
+            text = str(time_) + ' - ' + text[:28]
+        else:
+
+            text = str(time_)
+        text_position = (width, height)
+        height += 40
+        draw.text(text_position, text, fill=text_color, font=font)
+
+    image.save("one_with_text.jpeg")
+    total_time = time.time() - start_time
+    logger.info(f"Generated image in: {total_time:.4f} seconds")
+    if total_time > 5:
+        logger.warning(f"Too long generation: {total_time:.4f} seconds")
+    image.show()
+    # image_buffer = BytesIO()
+    # image.save(image_buffer, format="JPEG")
+    # image_buffer.seek(0)
+
+    # return image_buffer
+
+
+
+
+
+if __name__ == '__main__':
+    from bot.database.engine import sessionmaker
+    import asyncio
+
+    async def main():
+        async with sessionmaker() as session:
+            await generate_user_schedule_week(session, 2111546062)
+            await asyncio.sleep(10)
+            await generate_user_schedule_day(session, 2111546062)
+
+
     asyncio.run(main())
 

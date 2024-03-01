@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import pytz
 from aiogram import Router, F, Bot
 from aiogram.utils.deep_linking import create_start_link
@@ -24,8 +24,8 @@ from bot.keyboards.inline.timezone import timezone_simple_keyboard, timezone_adv
 from bot.keyboards.reply.skip import skip_kb
 from bot.services import users as dbuc, notifs as dbnc, schedule as dbsc
 from bot.utils.last_commits import get_changelog
-from bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser
-from bot.utils.time_localizer import localize_time_to_utc, localize_timenow_to_timezone, is_today, day_of_week_to_date
+from bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser, ConfigSchedule
+from bot.utils import time_localizer as timecom          # timecommands
 from bot.utils.notif_repeat import repeat_to_str
 
 router = Router(name="menu")
@@ -44,14 +44,14 @@ router = Router(name="menu")
 # TODO LOCALIZATION
 # TODO REWRITE ADD_NOTIF_REPEAT / OPTIMIZE ADD_NOTIF_COMPLETE                   # DONE (NEED MORE TESTS)
 # TODO REWRITE MANAGE_NOTIF / TO CHOOSE NOTIFS BY DATE / OR CALENDAR (idk)
-# TODO ADD FUNC DELETE ALL INFORMATION ABOUT USER IN PROFILE
+# TODO ADD FUNC DELETE ALL INFORMATION ABOUT USER IN PROFILE                    # DONE
 # TODO SHARE NOTIF BUTTON                                                       # DONE (NEED MORE TESTS)
 # TODO INLINE MOD (CREATE NOTIFICATION/SHARE SCHEDULE)
 # TODO BLOCK USER COMMAND + BLOCK MIDDLEWARE                                    # DONE
 # TODO REMAKE CHANGELOG
 # TODO MAKE INFO WHEN NOTIF WILL BE SENT (IN 5 hrs, in 2 days, etc)
 # TODO MAKE INFO HOW MANY PEOPLE ADDED YOUR NOTIFICATION
-# TODO CONNECT NOTIFS TO SCHEDULE
+# TODO CONNECT NOTIFS TO SCHEDULE                                               # NO NEEDED
 # TODO SHARE SCHEDULE BUTTON                                                    # NO NEEDED
 # TODO ADD TOTAL SHARED TO EVERY NOTIF
 
@@ -64,8 +64,14 @@ async def menu_back(call: CallbackQuery):
 # MY WEEKS
 # SCHEDULE
 @router.callback_query(F.data == "schedule")
-async def schedule_menu(call: CallbackQuery, state: FSMContext):
-    await call.message.edit_reply_markup(reply_markup=mkb.schedule_kb())
+async def schedule_menu(call: CallbackQuery, state: FSMContext, session: AsyncSession):
+    if not await dbuc.get_schedule_time(session, call.from_user.id):
+        await call.message.edit_text(
+            _("Lets configure your schedule\nWhen we should send your schedule? (everyday)"),
+            reply_markup=mkb.config_schedule_hrs()
+        )
+    else:
+        await call.message.edit_reply_markup(reply_markup=mkb.schedule_kb())
     if await state.get_state():
         await state.clear()
 
@@ -75,9 +81,10 @@ async def show_schedule_menu(call: CallbackQuery, bot: Bot, session: AsyncSessio
     start = time.time()
     await bot.delete_message(call.message.chat.id, call.message.message_id)
     msg = await bot.send_message(call.message.chat.id, _("WAIT_MESSAGE"))
+    user_list = await dbsc.get_user_schedule_day_time_text(session, call.from_user.id)
     try:
         async with lock:
-            image_bytes = await generate_user_schedule_week(session, call.from_user.id)
+            image_bytes = await generate_user_schedule_week(session, user_list)
             await bot.send_photo(call.message.chat.id,
                                  BufferedInputFile(image_bytes.getvalue(),
                                                    filename=f"schedule_{call.from_user.id}.jpeg"))
@@ -163,6 +170,7 @@ async def schedule_text_complete(message: Message, bot: Bot, state: FSMContext):
                                       text=message.text),
         reply_markup=mkb.schedule_complete_kb(False)
     )
+    await state.update_data(notify=False)
 
 
 @router.callback_query(F.data.startswith("schedule_add_complete_notify_"))
@@ -183,18 +191,18 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
     else:
         data = await state.get_data()
         days = data.get('days')
-        if data.get('notify'):
+        time = data.get('hours') + ":" + data.get('minutes')
+        if data.get('notify') is True:
             user_notifs = await dbnc.count_user_notifs(session, call.from_user.id)
             max_user_notifs = await dbuc.get_user_max_notifs(session, call.from_user.id)
             if max_user_notifs <= user_notifs + len(days):
                 await call.answer(_("limit_notifs"), show_alert=True)
                 await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
                 return
-        time = data.get('hours') + ":" + data.get('minutes')
-        for day in days:
-            dtime = await day_of_week_to_date(day, time, await dbuc.get_timezone(session, call.from_user.id))
-            dtime_to_utc = await localize_time_to_utc(dtime, await dbuc.get_timezone(session, call.from_user.id))
-            await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
+            for day in days:
+                dtime = await timecom.day_of_week_to_date(day, time, await dbuc.get_timezone(session, call.from_user.id))
+                dtime_to_utc = await timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session, call.from_user.id))
+                await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
         for day in days:
             await dbsc.add_schedule(session, call.from_user.id, day, time, data.get('text'))
         await call.answer(_("schedule_updated"), show_alert=True)
@@ -282,7 +290,7 @@ async def process_simple_calendar(call: CallbackQuery, state: FSMContext, callba
     calendar = SimpleCalendar(
         locale=await dbuc.get_language_code(session, call.from_user.id), show_alerts=True
     )
-    user_time = await localize_timenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
+    user_time = await timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
     calendar.set_dates_range(user_time - timedelta(days=1),
                              user_time + timedelta(days=365))
     selected, date = await calendar.process_selection(call, callback_data)
@@ -301,11 +309,11 @@ async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext, session: As
     await state.update_data(date=call.data[14:])
     await state.set_state(AddNotif.hours)
     await call.message.edit_text("choose_time_for_date".format(date=call.data[14:]))
-    if not await is_today(datetime.strptime(f"{call.data[14:]}", "%Y %m %d"),
+    if not await timecom.is_today(datetime.strptime(f"{call.data[14:]}", "%Y %m %d"),
                           await dbuc.get_timezone(session, call.from_user.id)):
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb())
     else:
-        date = await localize_timenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
+        date = await timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb(int(date.strftime("%H"))))
 
 
@@ -426,7 +434,7 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
 
     try:
         id = await dbnc.add_notif(session,
-                                  await localize_time_to_utc(
+                                  await timecom.localize_datetime_to_utc(
                                       datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}",
                                                         # converts user's time to utc format
                                                         "%Y %m %d %H %M"),
@@ -555,7 +563,8 @@ async def send_profile(call: CallbackQuery, session: AsyncSession):
         f"⭐️ Extra features: {'Active' if user_info.is_premium else 'Inactive'}\n"
         f"{'' if not user_info.is_premium else '🕔 Premium until: ' + user_info.premium_until.strftime('%d %m %Y')}\n"
         f"🇬🇧 Language: {user_info.language_code}\n"
-        f"🕔 Timezone: {user_info.timezone}",
+        f"🕔 Timezone: {user_info.timezone}\n"
+        f"{'🕔 Schedule time: ' + str(user_info.schedule_time) if user_info.schedule_time else ''}",
         reply_markup=mkb.profile_kb()
     )
 
@@ -727,6 +736,55 @@ async def show_all_timezone(call: CallbackQuery):
 @router.callback_query(F.data == "show_all")
 async def show_all_timezone(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=timezone_advanced_keyboard())
+
+
+#config schedule
+@router.callback_query(F.data == "config_schedule")
+async def config_schedule(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text(
+        _("Lets configure your schedule\nWhen we should send your schedule? (everyday)"),
+        reply_markup=mkb.config_schedule_hrs()
+    )
+    if not await state.get_state():
+        await state.set_state(ConfigSchedule.hours)
+
+@router.callback_query(F.data.startswith("schedule_config_hrs_"))
+async def config_schedule_hrs(call: CallbackQuery, state: FSMContext):
+    hrs = call.data.split("_")[-1]
+    await call.message.edit_reply_markup(
+        reply_markup=mkb.config_schedule_min(hrs)
+    )
+    if not await state.get_state():
+        await state.set_state(ConfigSchedule.hours)
+    await state.update_data(hours=hrs)
+
+
+@router.callback_query(F.data.startswith("schedule_config_min_"))
+async def config_schedule_min(call: CallbackQuery, state: FSMContext):
+    minutes = call.data.split("_")[-1]
+    data = await state.get_data()
+    await call.message.edit_text(
+        _("We will send your schedule everyday at {hrs}:{min}, right?").format(hrs=data.get('hours'), min=minutes),
+        reply_markup=mkb.config_schedule_confirm()
+    )
+    await state.set_state(ConfigSchedule.minutes)
+    await state.update_data(minutes=minutes)
+
+
+@router.callback_query(F.data.startswith("config_schedule_confirm_"))
+async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, session: AsyncSession):
+    if call.data.split("_")[-1] == "yes":
+        await call.message.edit_reply_markup(reply_markup=mkb.loading())
+
+        data = await state.get_data()
+        config_time = await timecom.localize_time_to_utc(data.get('hours'), data.get('minutes'),
+                                                   await dbuc.get_timezone(session, call.from_user.id))
+
+        await dbuc.set_schedule_time(session, call.from_user.id, config_time)
+        await call.answer(_("schedule_updated"), show_alert=True)
+
+    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
+    await state.clear()
 
 
 # CHANGELOG

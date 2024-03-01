@@ -1,4 +1,2 @@
-from datetime import datetime
-
-now = datetime.now()
-print(now.strftime("%A"))
+lol = '02'
+print(int(lol))

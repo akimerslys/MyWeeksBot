@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import pytz
 from loguru import logger
 
 
-async def localize_time_to_utc(time: datetime, timezone: str) -> datetime:
+async def localize_datetime_to_utc(time: datetime, timezone: str) -> datetime:
     """
     Convert time from user timezone to UTC
     :param timezone: str
@@ -14,7 +14,7 @@ async def localize_time_to_utc(time: datetime, timezone: str) -> datetime:
     return pytz.timezone(timezone).localize(time).astimezone(pytz.utc).replace(tzinfo=None)
 
 
-async def localize_timenow_to_timezone(timezone: str) -> datetime:
+async def localize_datetimenow_to_timezone(timezone: str) -> datetime:
     """
     Convert current time to user timezone
     :param timezone: str
@@ -24,7 +24,7 @@ async def localize_timenow_to_timezone(timezone: str) -> datetime:
     return pytz.utc.localize(datetime.utcnow()).astimezone(pytz.timezone(timezone)).replace(tzinfo=None)
 
 
-async def localize_time_to_timezone(time: datetime, timezone: str) -> datetime:
+async def localize_datetime_to_timezone(time: datetime, timezone: str) -> datetime:
     """
     Convert time to user timezone
     :param time: datetime
@@ -75,3 +75,20 @@ async def day_of_week_to_date(day, time, timezone):
         target_datetime_with_timezone = target_date.replace(tzinfo=tz)
 
     return target_datetime_with_timezone.replace(tzinfo=None)
+
+
+async def localize_time_to_utc(hrs: str, minutes: str, timezone: str) -> time:
+    """
+    Convert time from user timezone to UTC
+    :param hrs: str
+    :param minutes: str
+    :param timezone: str
+    :return: time
+    """
+    config_time = time(int(hrs), int(minutes))
+    current_date = datetime.now().date()
+    config_datetime = datetime.combine(current_date, config_time)
+    timezone = pytz.timezone(timezone)
+    result = timezone.localize(config_datetime).astimezone(pytz.utc).replace(tzinfo=None)
+    logger.debug(f"localize_time_to_utc: timezone={timezone}, time={time}")
+    return result.time()

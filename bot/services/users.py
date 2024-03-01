@@ -237,6 +237,33 @@ async def count_users(session: AsyncSession) -> int:
     return int(count)
 
 
+async def set_schedule_time(session: AsyncSession, user_id: int, time: datetime.time) -> None:
+    stmt = update(UserModel).where(UserModel.user_id == user_id).values(schedule_time=time)
+
+    await session.execute(stmt)
+    await session.commit()
+    await clear_cache(get_schedule_time, user_id)
+
+
+@cached(key_builder=lambda session, user_id: build_key(user_id))
+async def get_schedule_time(session: AsyncSession, user_id: int) -> datetime.time | None:
+    query = select(UserModel.schedule_time).filter_by(user_id=user_id)
+
+    result = await session.execute(query)
+
+    schedule_time = result.scalar_one_or_none()
+    return schedule_time
+
+
+async def get_schedule_users_by_time(session: AsyncSession, time: datetime.time) -> list[UserModel]:
+    query = select(UserModel).filter_by(schedule_time=time)
+
+    result = await session.execute(query)
+
+    users = result.scalars()
+    return list(users)
+
+
 async def block_user(session: AsyncSession, user_id: int) -> None:
     logger.info(f"Blocking user {user_id}")
     stmt = update(UserModel).where(UserModel.user_id == user_id).values(is_blocked=True)

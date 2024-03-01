@@ -11,6 +11,10 @@ class Report(StatesGroup):
     text = State()
 
 
+class ConfigSchedule(StatesGroup):
+    hours = State()
+    minutes = State()
+
 class AskLocation(StatesGroup):
     ask_location = State()
     ask_location_confirm = State()
