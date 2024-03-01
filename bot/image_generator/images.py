@@ -43,6 +43,7 @@ def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
 
 async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> BytesIO:
     user_list = await get_user_schedule_day_time_text(session, user_id)
+    logger.debug(f"User list: {user_list}")
     start_time = time.time()
     image = Image.open("media/1280.jpeg")
     draw = ImageDraw.Draw(image)
@@ -77,11 +78,12 @@ async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> By
         height += 32
         if not text:
             text = ''
-        if len(text) > 12:
-            text = wrap_text(text, 12, 16)
-            height += 16
-
-        text = f"{times if times[0] != '0' else '  ' + times[1:]} - {text}"
+        if text:
+            if len(text) > 12:
+                text = wrap_text(text, 12, 16)
+                height += 16
+            text = ' - ' + text
+        text = f"{times if times[0] != '0' else '  ' + times[1:]}{text}"  # 00:00 - text  ||  00:00
         draw.text(text_position, text, fill=text_color, font=font)
     #image.save("1280_with_text.jpg")
     total_time = time.time() - start_time

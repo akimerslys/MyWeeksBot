@@ -1,3 +1,5 @@
+from aiogram.utils.i18n import gettext as _
+
 from typing import Optional
 from enum import Enum
 
@@ -44,8 +46,7 @@ class DialogCalendarCallback(CalendarCallback, prefix="dialog_calendar"):
 
 
 class CalendarLabels(BaseModel):
-    "Schema to pass labels for calendar. Can be used to put in different languages"
-    days_of_week: conlist(str, max_length=7, min_length=7) = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    days_of_week: conlist(str, max_length=7, min_length=7) = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     months: conlist(str, max_length=12, min_length=12) = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ]

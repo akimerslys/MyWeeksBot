@@ -47,6 +47,7 @@ async def add_user(
         language_code=language_code,
         timezone=timezone,
         is_blocked=False,
+        active=False
     )
 
     session.add(new_user)
@@ -64,6 +65,24 @@ async def user_exists(session: AsyncSession, user_id: int) -> bool:
 
     user = result.scalar_one_or_none()
     return bool(user)
+
+
+@cached(key_builder=lambda session, user_id: build_key(user_id))
+async def get_user_active(session: AsyncSession, user_id: int) -> bool:
+    query = select(UserModel.active).filter_by(user_id=user_id)
+
+    result = await session.execute(query)
+
+    active = result.scalar_one_or_none()
+    return bool(active)
+
+
+async def set_user_active(session: AsyncSession, user_id: int, active: bool) -> None:
+    stmt = update(UserModel).where(UserModel.user_id == user_id).values(active=active)
+
+    await session.execute(stmt)
+    await session.commit()
+    await clear_cache(get_user_active, user_id)
 
 
 async def get_user(session: AsyncSession, user_id: int) -> UserModel:
@@ -89,11 +108,33 @@ async def inc_user_notifs(session: AsyncSession, user_id: int) -> None:
 
     await session.execute(stmt)
     await session.commit()
-
+    await clear_cache(count_user_notifs, user_id)
 
 async def dec_user_notifs(session: AsyncSession, user_id: int) -> None:
     stmt = update(UserModel).where(UserModel.user_id == user_id).values(active_notifs=UserModel.active_notifs - 1)
 
+    await session.execute(stmt)
+    await session.commit()
+    await clear_cache(count_user_notifs, user_id)
+
+
+@cached(key_builder=lambda session, user_id: build_key(user_id))
+async def get_user_max_notifs(session: AsyncSession, user_id: int) -> int:
+    query = select(UserModel.max_notifs).filter_by(user_id=user_id)
+
+    result = await session.execute(query)
+
+    max_notifs = result.scalar_one_or_none()
+    return max_notifs or None
+
+
+async def update_max_notifs(session: AsyncSession, user_id: int, max_notifs: int, operator: str) -> None:
+    if operator == None:
+        stmt = update(UserModel).where(UserModel.user_id == user_id).values(max_notifs=max_notifs)
+    elif operator == "add":
+        stmt = update(UserModel).where(UserModel.user_id == user_id).values(max_notifs=UserModel.max_notifs + max_notifs)
+    elif operator == "sub":
+        stmt = update(UserModel).where(UserModel.user_id == user_id).values(max_notifs=UserModel.max_notifs - max_notifs)
     await session.execute(stmt)
     await session.commit()
 
@@ -175,6 +216,7 @@ async def set_user_premium(session: AsyncSession, user_id: int, days: int) -> No
 
     await session.execute(stmt)
     await session.commit()
+    await clear_cache(is_premium, user_id)
 
 
 async def get_all_users(session: AsyncSession) -> list[UserModel]:
@@ -201,6 +243,7 @@ async def block_user(session: AsyncSession, user_id: int) -> None:
 
     await session.execute(stmt)
     await session.commit()
+    await clear_cache(is_blocked, user_id)
 
 
 async def unblock_user(session: AsyncSession, user_id: int) -> None:
@@ -209,6 +252,17 @@ async def unblock_user(session: AsyncSession, user_id: int) -> None:
 
     await session.execute(stmt)
     await session.commit()
+    await clear_cache(is_blocked, user_id)
+
+
+@cached(key_builder=lambda session, user_id: build_key(user_id))
+async def is_blocked(session: AsyncSession, user_id: int) -> bool:
+    query = select(UserModel.is_blocked).filter_by(user_id=user_id)
+
+    result = await session.execute(query)
+
+    is_blocked = result.scalar_one_or_none()
+    return bool(is_blocked)
 
 
 async def delete_user(session: AsyncSession, user_id: int) -> None:
@@ -222,7 +276,7 @@ async def delete_user(session: AsyncSession, user_id: int) -> None:
     await clear_cache(get_language_code, user_id)
     await clear_cache(get_timezone, user_id)
     await clear_cache(is_premium, user_id)
-    await clear_cache(count_user_notifs, user_id)
-    await clear_cache(get_user, user_id)
-    await clear_cache(get_all_users)
-    await clear_cache(count_users, user_id)
+    await clear_cache(get_user_max_notifs, user_id)
+    await clear_cache(is_blocked, user_id)
+    await clear_cache(get_user_active, user_id)
+

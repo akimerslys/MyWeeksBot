@@ -34,6 +34,7 @@ async def localize_time_to_timezone(time: datetime, timezone: str) -> datetime:
     logger.debug(f"localize_time_to_timezone: timezone={timezone}, time={time}")
     return pytz.utc.localize(time).astimezone(pytz.timezone(timezone)).replace(tzinfo=None)
 
+
 async def is_today(dtime: datetime, timezone: str) -> bool:
     """
     Check if time is today in user timezone

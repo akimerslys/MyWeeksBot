@@ -10,7 +10,7 @@ from bot.handlers import get_handlers_router
 from bot.keyboards.default_commands import remove_default_commands, set_default_commands
 from bot.middlewares import register_middlewares
 
-__version__ = "(pre-dev0.2.0)"
+__version__ = "(pre-dev0.5.0)"
 
 
 async def startup() -> None:
@@ -44,14 +44,13 @@ async def shutdown() -> None:
 
 
 async def main() -> None:
-
     logger.add(
-        "../logs/myweeks.log",
+        "logs/myweeks.log",
         level="DEBUG",
         format="{time} | {level} | {module}:{function}:{line} | {message}",
         rotation="10 MB",
         compression="zip",
-            )
+    )
 
     redis_pool = await create_pool(settings.redis_pool)
 

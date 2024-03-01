@@ -11,13 +11,13 @@ def register_middlewares(dp: Dispatcher) -> None:
     from .logging import LoggingMiddleware
     from .throttling import ThrottlingMiddleware
     from .callspam import AntiSpamMiddleware
+    from .blocked import BlockedMiddleware
 
     dp.message.outer_middleware(ThrottlingMiddleware())
     dp.callback_query.outer_middleware(AntiSpamMiddleware())
     dp.update.outer_middleware(LoggingMiddleware())
-
     dp.update.outer_middleware(DatabaseMiddleware())
-
+    dp.update.outer_middleware(BlockedMiddleware())
     #dp.message.middleware(AuthMiddleware())
 
     dp.message.middleware(ACLMiddleware(i18n=_i18n))

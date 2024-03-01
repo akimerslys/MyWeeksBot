@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from sqlalchemy import func, select, update, asc
+from sqlalchemy import func, select, update, asc, delete
 
 from bot.cache.redis import build_key, cached, clear_cache
 from bot.database.models import NotifModel
@@ -51,6 +51,7 @@ async def add_notif(
     await inc_user_notifs(session, user_id)
     session.add(new_notif)
     await session.commit()
+    return new_notif.id
     #await clear_cache()
 
 
@@ -84,7 +85,6 @@ async def count_user_notifs(session: AsyncSession, user_id: int) -> int:
     return count
 
 
-@cached(key_builder=lambda session, user_id: build_key(user_id))
 async def get_notif_text(session: AsyncSession, id: int) -> None:
     query = select(NotifModel.text).filter_by(id=id)
 
@@ -108,7 +108,7 @@ async def update_notif_active(session: AsyncSession, id: int, active: bool) -> N
     await session.commit()
 
 
-async def delete_notif(session: AsyncSession, id: int) -> None:
+async def delete_notif_fake(session: AsyncSession, id: int) -> None:
     user_notif = await get_notif(session, id)
     tmp_id = int("0" + str(user_notif.user_id))
     stmt = update(NotifModel).where(NotifModel.id == id).values(user_id=tmp_id, active=False)
@@ -152,7 +152,6 @@ async def update_notif_auto(session: AsyncSession,
     await clear_cache(get_notif, id)
 
 
-@cached(key_builder=lambda session: build_key())
 async def get_all_notifs(session: AsyncSession) -> list[NotifModel]:
     query = select(NotifModel)
 
@@ -162,7 +161,6 @@ async def get_all_notifs(session: AsyncSession) -> list[NotifModel]:
     return list(users)
 
 
-@cached(key_builder=lambda session: build_key())
 async def count_notif(session: AsyncSession) -> int:
     query = select(func.count()).select_from(NotifModel)
 
@@ -170,3 +168,15 @@ async def count_notif(session: AsyncSession) -> int:
     logger.debug(f"counted all notifs")
     count = result.scalar_one_or_none() or 0
     return int(count)
+
+
+async def delete_all_user_notifs(session: AsyncSession, user_id: int) -> None:
+    stmt = delete(NotifModel).where(NotifModel.user_id == user_id)
+
+    await session.execute(stmt)
+    await session.commit()
+    await clear_cache(get_user_notifs, user_id)
+    await clear_cache(count_user_notifs, user_id)
+    await clear_cache(get_notif, user_id)
+
+    logger.info(f"deleted all user notifs {user_id}")

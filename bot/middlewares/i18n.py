@@ -1,10 +1,12 @@
 """
-pybabel extract --input-dirs=. -o bot/locales/messages.pot --project=messages.
-pybabel init -i bot/locales/messages.pot -d bot/locales -D messages -l en
-pybabel init -i bot/locales/messages.pot -d bot/locales -D messages -l ru
-pybabel init -i bot/locales/messages.pot -d bot/locales -D messages -l uk
-pybabel compile -d bot/locales -D messages --statistics
-pybabel update -i bot/locales/messages.pot -d bot/locales -D messages
+cd bot
+pybabel extract --input-dirs=. -o locales/messages.pot --project=messages.
+pybabel init -i locales/messages.pot -d locales -D messages -l en
+pybabel init -i locales/messages.pot -d locales -D messages -l ru
+pybabel init -i locales/messages.pot -d locales -D messages -l uk
+pybabel compile -d locales -D messages --statistics
+pybabel update -i locales/messages.pot -d locales --update
+pybabel update -i locales/messages.pot -d locales -D messages
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any

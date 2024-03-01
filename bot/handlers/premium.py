@@ -1,5 +1,6 @@
 from aiogram import Router, Bot
 from aiogram.filters import Command
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.services.users import set_user_premium, is_premium
@@ -21,11 +22,9 @@ async def give_premium(message, bot: Bot, session: AsyncSession):
 
     if await use_key(session, args, message.from_user.id):
         days = await get_key_days(session, args)
-        await bot.send_message(message.from_user.id,
-                               f"🎉 Your premium has been"
-                               f" {'extended!' if await is_premium(session, message.from_user.id) else 'activated'}"
-                               f" for {days} days! 🎉")
         await set_user_premium(session, message.from_user.id, days)
+        await bot.send_message(message.from_user.id,
+                               _("premium_activated").format(status=_("extended") if await is_premium(session, message.from_user.id) else _("activated"), days=days))
         logger.success(f"User {message.from_user.id} has activated premium by key")
     else:
         logger.warning(f"User {message.from_user.id} has tried to activate premium by key")

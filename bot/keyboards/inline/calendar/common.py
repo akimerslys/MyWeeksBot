@@ -1,3 +1,5 @@
+from aiogram.utils.i18n import gettext as _
+
 import calendar
 import locale
 
@@ -5,14 +7,6 @@ from aiogram.types import User
 from datetime import datetime
 
 from .schemas import CalendarLabels
-
-
-async def get_user_locale(from_user: User) -> str:
-    "Returns user locale in format en_US, accepts User instance from Message, CallbackData etc"
-    loc = from_user.language_code
-    return locale.locale_alias[loc].split(".")[0]
-
-
 class GenericCalendar:
 
     def __init__(
@@ -56,13 +50,13 @@ class GenericCalendar:
         date = datetime(int(data.year), int(data.month), int(data.day))
         if self.min_date and self.min_date > date:
             await query.answer(
-                f'The date have to be later {self.min_date.strftime("%d/%m/%Y")}',
+                _('calendar_late_date').format(date=self.min_date.strftime("%d/%m/%Y")),
                 show_alert=self.show_alerts
             )
             return False, None
         elif self.max_date and self.max_date < date:
             await query.answer(
-                f'The date have to be before {self.max_date.strftime("%d/%m/%Y")}',
+                _('calendar_early_date').format(date=self.max_date.strftime("%d/%m/%Y")),
                 show_alert=self.show_alerts
             )
             return False, None

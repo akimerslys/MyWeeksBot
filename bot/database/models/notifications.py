@@ -9,7 +9,7 @@ class NotifModel(Base):
     id: Mapped[int_pk]
     date: Mapped[dtime]
     user_id = Column(BigInteger)
-    text: Mapped[str]
+    text: Mapped[str] = mapped_column(nullable=True, default=None)
     repeat_daily: Mapped[bool] = mapped_column(default=False)
     repeat_weekly: Mapped[bool] = mapped_column(default=False)
     active: Mapped[bool] = mapped_column(default=True)

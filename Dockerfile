@@ -1,4 +1,4 @@
-FROM python:3.10.13-alpine3.18
+FROM python:3.11.7-alpine3.19
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -7,7 +7,7 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_CACHE_DIR="/tmp/poetry_cache" \
     POETRY_VERSION=1.7.0
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY . .
 

@@ -1,6 +1,12 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
+class NewUser(StatesGroup):
+    new_user = State()
+    ask_location = State()
+    location_confirm = State()
+
+
 class Report(StatesGroup):
     text = State()
 
@@ -29,11 +35,9 @@ class AddSchedule(StatesGroup):
     notify = State()
 
 
-
 class ChangeNotif(StatesGroup):
     text = State()
     repeat_daily = State()
     repeat_weekly = State()
     tmp_msg = State()
-
 
