@@ -49,10 +49,9 @@ services:
       - redis-server --requirepass ${REDIS_PASS}
 
   scheduler:
-    build:
-        context: .
-        dockerfile: scheduler.dockerfile
+    build: .
     container_name: scheduler
+    command: sh -c "arq scheduler.main.WorkerSettings"
     restart: always
     env_file:
       - .env
