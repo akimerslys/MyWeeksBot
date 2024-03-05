@@ -39,17 +39,22 @@ generate:
 migrate:
 	source .env
 	poetry run alembic upgrade head
-
+	
+# Docker utils
 .PHONY: rebuild
 rebuild:
 	docker-compose down --remove-orphans
 	docker-compose up --force-recreate --build
 
-# Docker utils
 .PHONY: start
 start:
 	docker-compose up --force-recreate ${MODE}
 
 .PHONY: stop
-project-stop:
+stop:
 	docker-compose down --remove-orphans ${MODE}
+
+.PHONY: clear
+clear:
+	sudo sync && echo 3 > /proc/sys/vm/drop_caches
+	echo sudo free -h

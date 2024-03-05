@@ -3,18 +3,15 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram.utils.i18n import I18n
-from redis.asyncio import Redis, ConnectionPool
 
 from loguru import logger
 from bot.core.config import settings
+from bot.core.redis_loader import redis_client
 
 bot = Bot(token=settings.TOKEN, parse_mode=ParseMode.HTML)
 
 
 logger.info("loading redis")
-redis_client = Redis(
-    connection_pool=ConnectionPool.from_url(settings.redis_url)
-)
 
 storage = RedisStorage(
     redis=redis_client,

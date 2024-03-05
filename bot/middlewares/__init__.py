@@ -1,7 +1,7 @@
 from aiogram import Dispatcher
 from aiogram.utils.callback_answer import CallbackAnswerMiddleware
 
-from core.loader import i18n as _i18n
+from bot.core.loader import i18n as _i18n
 
 
 def register_middlewares(dp: Dispatcher) -> None:

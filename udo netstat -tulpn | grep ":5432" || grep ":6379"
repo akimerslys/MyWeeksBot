@@ -1,0 +1,21 @@
+[0;1;32m●[0m docker.service - Docker Application Container Engine
+     Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: enabled)
+     Active: [0;1;32mactive (running)[0m since Tue 2024-03-05 06:22:56 MSK; 49min ago
+TriggeredBy: [0;1;32m●[0m docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 827 (dockerd)
+      Tasks: 16
+     Memory: 312.6M
+     CGroup: /system.slice/docker.service
+             └─827 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.380796465+03:00" level=info msg="IPv6 enabled; Adding default IPv6 external servers: [nameserver 2001:4860:4860::8888 nameserver 2001:4860:4860::8844]"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.573495975+03:00" level=info msg="No non-localhost DNS nameservers are left in resolv.conf. Using default external servers: [nameserver 8.8.8.8 nameserver 8.8.4.4]"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.573753298+03:00" level=info msg="IPv6 enabled; Adding default IPv6 external servers: [nameserver 2001:4860:4860::8888 nameserver 2001:4860:4860::8844]"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.603267210+03:00" level=info msg="No non-localhost DNS nameservers are left in resolv.conf. Using default external servers: [nameserver 8.8.8.8 nameserver 8.8.4.4]"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.603355907+03:00" level=info msg="IPv6 enabled; Adding default IPv6 external servers: [nameserver 2001:4860:4860::8888 nameserver 2001:4860:4860::8844]"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.628675785+03:00" level=warning msg="Failed to allocate and map port 5432-5432: Error starting userland proxy: listen tcp4 0.0.0.0:5432: bind: address already in use"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.656337950+03:00" level=error msg="Handler for POST /v1.44/containers/c13e00426d282e3309e0ac33b0f183a4f198b74945b76f6dbea8a79a38912e07/start returned error: driver failed programming external connectivity on endpoint pgbouncer (db109600b2a854b524cd2f4dd23b8112c1bbdc444336b8ee3cdde5bf5a049d9d): Error starting userland proxy: listen tcp4 0.0.0.0:5432: bind: address already in use"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.676854940+03:00" level=warning msg="Failed to allocate and map port 6379-6379: Error starting userland proxy: listen tcp4 0.0.0.0:6379: bind: address already in use"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.699055142+03:00" level=error msg="Handler for POST /v1.44/containers/0fcc346df0f5206b8d391a8e4872ff4e2e725263047620206b22382d4c8d8d12/start returned error: driver failed programming external connectivity on endpoint redis (6dd419251511203f8133c7f66fd1fbd1c6b20a88a94de879aec41e54a1bf0a7c): Error starting userland proxy: listen tcp4 0.0.0.0:6379: bind: address already in use"
+Mar 05 07:06:36 its-me-mario.aeza.network dockerd[827]: time="2024-03-05T07:06:36.919849018+03:00" level=error msg="attach failed with error: error attaching stdout stream: write unix /run/docker.sock->@: write: broken pipe"

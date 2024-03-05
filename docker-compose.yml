@@ -1,4 +1,4 @@
-version: "7.0.0"
+version: "3.3"
 
 services:
   bot:
@@ -48,7 +48,7 @@ services:
       - ADMIN_USERS=postgres,${DB_USER}
       - AUTH_TYPE=scram-sha-256
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - "5432:5432"
     depends_on:
       - postgres
     networks:
@@ -78,7 +78,7 @@ services:
   scheduler:
     build:
         context: .
-        dockerfile: buildfiles/scheduler.dockerfile
+        dockerfile: buildfiles/schedule.dockerfile
     container_name: scheduler
     restart: always
     env_file:
@@ -92,8 +92,6 @@ services:
 
 networks:
   app:
-    driver: bridge
-  monitoring:
     driver: bridge
 
 volumes:

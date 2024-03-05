@@ -1,4 +1,3 @@
-# to start scheduler u can use docker or "arq scheduler.main.WorkerSettings" in main.py
 import time
 from typing import TYPE_CHECKING
 
