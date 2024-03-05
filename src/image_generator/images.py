@@ -93,12 +93,12 @@ async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
             text = ' - ' + text
         text = f"{times if times[0] != '0' else '  ' + times[1:]}{text}"  # 00:00 - text  ||  00:00
         draw.text(text_position, text, fill=text_color, font=font)
-    image.save("media/1280_with_text.jpg")
+    #image.save("media/1280_with_text.jpg")
     total_time = time.time() - start_time
     logger.info(f"Generated image in: {total_time:.4f} seconds")
     if total_time > 5:
         logger.warning(f"Too long generation: {total_time:.4f} seconds")
-    image.show()
+    #image.show()
     image_buffer = BytesIO()
     image.save(image_buffer, format="JPEG")
     image_buffer.seek(0)

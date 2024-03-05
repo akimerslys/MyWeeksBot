@@ -19,12 +19,12 @@ from src.image_generator.images import generate_user_schedule_week
 from src.bot.keyboards.inline import menu as mkb
 from src.bot.keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback
 from src.bot.keyboards.inline.guide import start_menu_kb
-from keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
+from src.bot.keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
     ask_location_confirm
 from src.bot.keyboards.reply.skip import skip_kb
-from services import users as dbuc, notifs as dbnc, schedule as dbsc
+from src.bot.services import users as dbuc, notifs as dbnc, schedule as dbsc
 from src.bot.utils.last_commits import get_changelog
-from utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser, ConfigSchedule
+from src.bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser, ConfigSchedule
 from src.bot.utils import time_localizer as timecom          # timecommands
 from src.bot.utils.notif_repeat import repeat_to_str
 
@@ -86,13 +86,13 @@ async def show_schedule_menu(call: CallbackQuery, bot: Bot, session: AsyncSessio
     user_list: list[tuple] = await dbsc.get_user_schedule_day_time_text(session, call.from_user.id)
     try:
         async with lock:
-            image_bytes = await generate_user_schedule_week(session, user_list)
+            image_bytes = await generate_user_schedule_week(user_list)
             await bot.send_photo(call.message.chat.id,
                                  BufferedInputFile(image_bytes.getvalue(),
                                                    filename=f"schedule_{call.from_user.id}.jpeg"))
     except Exception as e:
         logger.critical("WTF????\n" + e)
-        await bot.send_message(settings.ADMIN_ID[1], f"ERROR IN GENERATION IMAGE\n{e}")
+        await bot.send_message(settings.ADMIN_ID[0], f"ERROR IN GENERATION IMAGE\n{e}")
         await bot.send_message(call.message.chat.id, _("ERROR_MESSAGE"))
     finally:
         await bot.delete_message(call.message.chat.id, msg.message_id)
@@ -194,8 +194,10 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
         data = await state.get_data()
         days = data.get('days')
         time = data.get('hours') + ":" + data.get('minutes')
-        if data.get('notify') is True:
+        if data.get('notify'):
             user_notifs = await dbnc.count_user_notifs(session, call.from_user.id)
+	    if not user_notifs:
+		user_notifs = 0
             max_user_notifs = await dbuc.get_user_max_notifs(session, call.from_user.id)
             if max_user_notifs <= user_notifs + len(days):
                 await call.answer(_("limit_notifs"), show_alert=True)
@@ -228,6 +230,7 @@ async def manage_schedule(call: CallbackQuery, session: AsyncSession):
 @router.callback_query(F.data.startswith("manage_schedule_day_"))
 async def manage_schedule_day(call: CallbackQuery, session: AsyncSession):
     day = call.data.split("_")[-1]
+  
     user_day_schedule = await dbsc.get_user_schedule_by_day(session, call.from_user.id, day)
     await call.message.edit_text("📆 " + _(day) + ":",
                                  reply_markup=mkb.manage_schedule_day_kb(user_day_schedule)
@@ -787,7 +790,7 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
         await dbuc.set_schedule_time(session, call.from_user.id, config_time)
         await call.answer(_("schedule_updated"), show_alert=True)
 
-    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
+    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.manage_schedule_kb())
     await state.clear()
 
 

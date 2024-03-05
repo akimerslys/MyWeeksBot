@@ -8,6 +8,7 @@ ENV POETRY_VERSION=1.8.2 \
     POETRY_HOME=/opt/poetry \
     POETRY_VENV=/opt/poetry-venv \
     POETRY_CACHE_DIR=/opt/.cache
+
     
 FROM python-base as poetry-base
 
@@ -27,11 +28,12 @@ COPY . .
 
 RUN poetry check && \
     poetry install --no-interaction --no-cache --no-root && \
+    apk add --no-cache make && \
     rm -rf home/bot/.cache && \
     rm -rf $POETRY_CACHE_DIR && \
-    poetry run pybabel compile -d bot/locales
-    
-CMD ["sh", "-c", "poetry run alembic upgrade head && \
-    poetry run python -m src.bot"]
+    poetry run pybabel compile -d src/bot/locales
+
+CMD ["poetry", "run", "make", "bot-run"]
+#CMD ["sh", "poetry", "run", "python", "-m", "src.bot"]
 
 

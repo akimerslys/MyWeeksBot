@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.i18n import gettext as _
 from loguru import logger
 
-from utils.states import Report
+from src.bot.utils.states import Report
 from src.core.config import settings
 
 router = Router(name="report")

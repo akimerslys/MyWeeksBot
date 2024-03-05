@@ -16,7 +16,7 @@ from src.bot.keyboards.inline.timezone import timezone_simple_keyboard
 from src.bot.services import users as dbuc
 from src.bot.services.notifs import add_notif, get_notif
 from src.bot.utils.time_localizer import localize_datetime_to_timezone
-from utils.states import NewUser
+from src.bot.utils.states import NewUser
 
 router = Router(name="start")
 

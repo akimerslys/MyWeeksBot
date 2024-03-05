@@ -180,7 +180,7 @@ msgstr ""
 
 #: handlers/menu.py:568
 msgid "premium_until"
-msgstr "🕔 Premium until:"
+msgstr "🕔 Premium until: "
 
 #: handlers/menu.py:578
 msgid "profile_delete_confirm"
@@ -188,7 +188,7 @@ msgstr "😩 Are you sure you want to leave us?"
 
 #: handlers/menu.py:609
 msgid "lang_changed"
-msgstr "🌐 Language changed to"
+msgstr "🌐 Language changed to "
 
 #: handlers/menu.py:609
 msgid "language"
@@ -241,11 +241,11 @@ msgstr "We will send your schedule everyday at {hrs}:{min}, right?"
 
 #: handlers/menu.py:799
 msgid "last_updates"
-msgstr "🗓 Last updates:"
+msgstr "🗓 Last updates: "
 
 #: handlers/premium.py:27
 msgid "premium_activated"
-msgstr "🎉 Your premium has been {status} for {days}"
+msgstr "🎉 Your premium has been {status} for {days} days"
 
 #: handlers/premium.py:27
 msgid "extended"
@@ -338,7 +338,7 @@ msgstr "Guide"
 
 #: keyboards/inline/guide.py:10
 msgid "complete_registration"
-msgstr "Complete Registration"
+msgstr "✅ Complete Registration"
 
 #: keyboards/inline/guide.py:20 keyboards/inline/menu.py:365
 msgid "more_lang"
@@ -387,7 +387,7 @@ msgstr "✅ Confirm"
 
 #: keyboards/inline/menu.py:56 keyboards/inline/menu.py:124
 msgid "show_schedule"
-msgstr "🗓 Your Schedule"
+msgstr "🗓  Your Schedule"
 
 #: keyboards/inline/menu.py:57
 msgid "update_schedule"
