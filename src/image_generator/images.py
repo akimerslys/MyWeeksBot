@@ -1,9 +1,8 @@
+import pytz
 from PIL import Image, ImageDraw, ImageFont
 import time
 from datetime import datetime
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
-from services import get_user_schedule_day_time_text, get_user_schedule_by_day
 from io import BytesIO
 
 
@@ -52,8 +51,7 @@ def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
     return wrapped_text
 
 
-async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> BytesIO:
-    user_list = await get_user_schedule_day_time_text(session, user_id)
+async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
     logger.debug(f"User list: {user_list}")
     start_time = time.time()
     image = Image.open("media/week.jpeg")
@@ -101,16 +99,17 @@ async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> By
     if total_time > 5:
         logger.warning(f"Too long generation: {total_time:.4f} seconds")
     image.show()
-    #image_buffer = BytesIO()
-    #image.save(image_buffer, format="JPEG")
-    #image_buffer.seek(0)
+    image_buffer = BytesIO()
+    image.save(image_buffer, format="JPEG")
+    image_buffer.seek(0)
 
-    #return image_buffer
+    return image_buffer
 
 
-async def generate_user_schedule_day(session: AsyncSession, user_id: int, day: int) -> None:
-    print(days_of_week('', day+1))
-    schedule_list = await get_user_schedule_by_day(session, user_id, days_of_week('', day+1))
+async def generate_user_schedule_day(schedule_list: list[tuple], daytime: datetime, tz: str) -> BytesIO:
+    dtime = daytime.astimezone(pytz.timezone(tz))
+    day = dtime.weekday()
+
     logger.debug(f"Schedule list: {schedule_list}")
     start_time = time.time()
     image = Image.open("media/day.jpeg")
@@ -128,7 +127,7 @@ async def generate_user_schedule_day(session: AsyncSession, user_id: int, day: i
     width = 372
     height = 105
     text_position = (width, height)
-    text = datetime.now().strftime("%d.%m")
+    text = dtime.strftime("%d.%m")
     draw.text(text_position, text=text, fill=text_color, font=font)
     # SCHEDULE
     text_color = (255, 255, 255)
@@ -145,32 +144,16 @@ async def generate_user_schedule_day(session: AsyncSession, user_id: int, day: i
         height += 40
         draw.text(text_position, text, fill=text_color, font=font)
 
-    image.save("one_with_text.jpeg")
+    #image.save("one_with_text.jpeg")
     total_time = time.time() - start_time
     logger.info(f"Generated image in: {total_time:.4f} seconds")
     if total_time > 5:
         logger.warning(f"Too long generation: {total_time:.4f} seconds")
-    image.show()
-    # image_buffer = BytesIO()
-    # image.save(image_buffer, format="JPEG")
-    # image_buffer.seek(0)
+    #image.show()
+    image_buffer = BytesIO()
+    image.save(image_buffer, format="JPEG")
+    image_buffer.seek(0)
 
-    # return image_buffer
+    return image_buffer
 
-
-
-
-
-if __name__ == '__main__':
-    from src.database import sessionmaker
-    import asyncio
-
-    async def main():
-        async with sessionmaker() as session:
-            await generate_user_schedule_week(session, 2111546062)
-            await asyncio.sleep(10)
-            await generate_user_schedule_day(session, 2111546062)
-
-
-    asyncio.run(main())
 

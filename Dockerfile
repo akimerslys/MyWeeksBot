@@ -31,8 +31,7 @@ RUN poetry check && \
     rm -rf $POETRY_CACHE_DIR && \
     poetry run pybabel compile -d bot/locales
     
-CMD ["sh", "-c", "poetry run alembic revision --autogenerate -m \"start v2\" && \
-    poetry run alembic upgrade head && \
-    poetry run python -m bot"]      
+CMD ["sh", "-c", "poetry run alembic upgrade head && \
+    poetry run python -m src.bot"]
 
 

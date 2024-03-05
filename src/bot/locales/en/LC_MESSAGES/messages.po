@@ -1,0 +1,727 @@
+# English translations for messages..
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the messages. project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: messages. VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-03-05 14:04+0000\n"
+"PO-Revision-Date: 2024-02-23 02:41+0000\n"
+"Last-Translator: AKM_SLS <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: handlers/menu.py:64 handlers/menu.py:100 handlers/menu.py:192
+#: handlers/menu.py:419 handlers/menu.py:455 handlers/menu.py:634
+#: handlers/menu.py:790 handlers/menu.py:827 handlers/start.py:58
+#: handlers/start.py:83 handlers/start.py:155 handlers/start.py:210
+#: handlers/start.py:231
+msgid "please_ch_button"
+msgstr "Please, choose button below ⤵️"
+
+#: handlers/menu.py:73 handlers/menu.py:749
+msgid "schedule_configure"
+msgstr ""
+"✍️ Lets configure your schedule\n"
+"🔔 When we should send your day schedule?"
+
+#: handlers/menu.py:85 handlers/start.py:216
+msgid "WAIT_MESSAGE"
+msgstr "⌛️ please, wait a moment..."
+
+#: handlers/menu.py:96 handlers/menu.py:418 handlers/menu.py:454
+#: handlers/menu.py:633 handlers/menu.py:676 handlers/menu.py:826
+#: handlers/start.py:40 handlers/start.py:154 handlers/start.py:177
+msgid "ERROR_MESSAGE"
+msgstr "⚙️ Error, please use /report"
+
+#: handlers/menu.py:129
+msgid "choose_days"
+msgstr "📅 Choose days"
+
+#: handlers/menu.py:136
+msgid "choose_one_day"
+msgstr "📅 Choose day"
+
+#: handlers/menu.py:138
+msgid "choose_hours"
+msgstr "🕔 Choose hours"
+
+#: handlers/menu.py:144 handlers/menu.py:327
+msgid "choose_minute"
+msgstr "🕔 Choose minute"
+
+#: handlers/menu.py:153
+msgid "add_text"
+msgstr "💬 Please, name your event (up to 30 characters)"
+
+#: handlers/menu.py:164 handlers/menu.py:347 keyboards/reply/skip.py:8
+msgid "Skip"
+msgstr "Skip"
+
+#: handlers/menu.py:169
+msgid "add_schedule_info"
+msgstr ""
+"📅 Days: {days}\n"
+"🕔 Time: {hours}:{minutes}\n"
+"💬 Text: {text}"
+
+#: handlers/menu.py:201 handlers/menu.py:433
+msgid "limit_notifs"
+msgstr "😔 Sorry, you are out of notifications limit"
+
+#: handlers/menu.py:210 handlers/menu.py:788
+msgid "schedule_updated"
+msgstr "✅ Schedule updated"
+
+#: handlers/menu.py:220
+msgid "no_schedule"
+msgstr "🤷‍♂️ You have no schedule yet"
+
+#: handlers/menu.py:223 handlers/menu.py:254
+msgid "your_schedule"
+msgstr "📝 Your schedule"
+
+#: handlers/menu.py:242
+msgid "manage_one_schedule"
+msgstr ""
+"🗓 {day}\n"
+"🕔 Time: {time}\n"
+"💬 Text: {text}"
+
+#: handlers/menu.py:253
+msgid "schedule_deleted"
+msgstr "✅ Delelted"
+
+#: handlers/menu.py:271
+msgid "choose_day"
+msgstr "📅 Choose day"
+
+#: handlers/menu.py:284
+msgid "select_date"
+msgstr "👇 Please, select date"
+
+#: handlers/menu.py:301 handlers/menu.py:313
+msgid "choose_time_for_date"
+msgstr ""
+"🕔 Your date {date}\n"
+"🕔 Please select a time:"
+
+#: handlers/menu.py:338 handlers/menu.py:503
+msgid "add_text_notif"
+msgstr "💬 Write name of your notification: (up to 30 characters)"
+
+#: handlers/menu.py:357
+msgid "add_notif_info"
+msgstr ""
+"📅 Date: {}\n"
+"⏰ Time: {}:{}\n"
+"💬 Text: {}"
+
+#: handlers/menu.py:425
+msgid "need_premium"
+msgstr "😔 Sorry, you need to buy premium to use this feature"
+
+#: handlers/menu.py:459 handlers/start.py:55
+msgid "notif_added"
+msgstr "✅ Notification added"
+
+#: handlers/menu.py:471
+msgid "share_notif_link"
+msgstr "🔗 Your link"
+
+#: handlers/menu.py:479
+msgid "no_notifs"
+msgstr "🤔 You have no notifications yet"
+
+#: handlers/menu.py:482 handlers/menu.py:554
+msgid "your_notifs"
+msgstr "📝 Your notifications"
+
+#: handlers/menu.py:491 handlers/menu.py:518 handlers/menu.py:539
+msgid "manage_one_notif"
+msgstr ""
+"{status}\n"
+"📅 Date: {date}\n"
+"⏰ Time: {time}\n"
+"📝 Text: {text}\n"
+"🔔 Repeat: {repeat}"
+
+#: handlers/menu.py:519 handlers/menu.py:540 handlers/menu.py:567
+#: keyboards/inline/menu.py:312
+msgid "active"
+msgstr "🟩 Active"
+
+#: handlers/menu.py:519 handlers/menu.py:540 handlers/menu.py:567
+#: keyboards/inline/menu.py:312
+msgid "inactive"
+msgstr "🟥 Inactive"
+
+#: handlers/menu.py:553
+msgid "notif_deleted"
+msgstr "✅ Notification deleted"
+
+#: handlers/menu.py:563
+msgid "profile_info"
+msgstr ""
+"👤 <b>{name}</b>:\n"
+"🔔 Notifications {active_notifs}/{max_notifs}\n"
+"⭐️ Extra features: {extra}\n"
+"{premium_until}🇬🇧 Language: {lang}\n"
+"🕔 Timezone: {tz}\n"
+"🕔 Schedule time: {sch_time}"
+
+#: handlers/menu.py:568
+msgid "premium_until"
+msgstr "🕔 Premium until:"
+
+#: handlers/menu.py:578
+msgid "profile_delete_confirm"
+msgstr "😩 Are you sure you want to leave us?"
+
+#: handlers/menu.py:609
+msgid "lang_changed"
+msgstr "🌐 Language changed to"
+
+#: handlers/menu.py:609
+msgid "language"
+msgstr "English 🇬🇧"
+
+#: handlers/menu.py:625
+msgid "choose_timezone"
+msgstr "🕔 Choose your timezone"
+
+#: handlers/menu.py:637 handlers/menu.py:713
+msgid "timezone_changed"
+msgstr "🕔 Timezone changed to {}"
+
+#: handlers/menu.py:648
+msgid "send_geo_location"
+msgstr ""
+"📍 Send your location or press the button below to send it\n"
+"<i>Important note: <u>We don't store your location!</u></i>"
+
+#: handlers/menu.py:684
+msgid "timezone_geo_confirm"
+msgstr ""
+"🕔 This timezone correct? {timezone_str}\n"
+"Your Time should be {dtime}"
+
+#: handlers/menu.py:694 handlers/menu.py:702 keyboards/inline/timezone.py:52
+msgid "cancel_location_btn"
+msgstr "Cancel"
+
+#: handlers/menu.py:717 handlers/start.py:51 handlers/start.py:75
+#: handlers/start.py:140 handlers/start.py:162 handlers/start.py:207
+msgid "start_menu"
+msgstr ""
+"👋 Hi, I'm MyWeeksBot!\n"
+"🇬🇧 Your language is <i>{lang}</i>\n"
+"🕔 Your timezone is <i>{tz}</i>\n"
+"✅ To start using me, please complete the registration below"
+
+#: handlers/menu.py:729
+msgid "timezone_not_changed"
+msgstr "📛 Timezone not changed"
+
+#: handlers/menu.py:737
+msgid "⚙️ This function is upgrading"
+msgstr ""
+
+#: handlers/menu.py:771
+msgid "schedule_configure_confirm"
+msgstr "We will send your schedule everyday at {hrs}:{min}, right?"
+
+#: handlers/menu.py:799
+msgid "last_updates"
+msgstr "🗓 Last updates:"
+
+#: handlers/premium.py:27
+msgid "premium_activated"
+msgstr "🎉 Your premium has been {status} for {days}"
+
+#: handlers/premium.py:27
+msgid "extended"
+msgstr "extended"
+
+#: handlers/premium.py:27
+msgid "activated"
+msgstr "activated"
+
+#: handlers/report.py:18
+msgid "report_start"
+msgstr "✍️ Please send your report:"
+
+#: handlers/report.py:34
+msgid "report_finish"
+msgstr "🥰 Thank you! Your report has been sent to the developers"
+
+#: handlers/start.py:44
+msgid "deeplink_got_notif"
+msgstr ""
+"💛 Got notification\n"
+"🗓 Date: {date} ({tz})\n"
+"💬 Text: {text}\n"
+"\n"
+"✅ <i>Complete the registration to add it!</i>"
+
+#: handlers/start.py:114
+msgid "choose_lang"
+msgstr "🇬🇧 Choose your language"
+
+#: handlers/start.py:119
+msgid "choose_tz"
+msgstr "🕔 Choose your timezone"
+
+#: handlers/start.py:124
+msgid "WAIT_MSG"
+msgstr "⌛️ please, wait a moment..."
+
+#: handlers/start.py:127
+msgid "pls_do_registration"
+msgstr "Please, complete the registration first"
+
+#: handlers/start.py:136
+msgid "lang_changed_to"
+msgstr "🌐 Language changed to"
+
+#: handlers/start.py:136
+msgid "lang"
+msgstr "English 🇬🇧"
+
+#: handlers/start.py:161
+msgid "tz_changed_answer"
+msgstr "🕔 Timezone changed to {}"
+
+#: handlers/start.py:174
+msgid "guide_page_1"
+msgstr ""
+
+#: handlers/start.py:187
+msgid "guide_page_2"
+msgstr ""
+
+#: handlers/start.py:196
+msgid "guide_page_3"
+msgstr ""
+
+#: handlers/start.py:203
+msgid "thank_you_guide"
+msgstr "😍 Thank you for completing the guide!"
+
+#: handlers/start.py:228
+msgid "deeplink_notif_added"
+msgstr "✅ Notification added"
+
+#: handlers/start.py:230
+msgid "reg_completed"
+msgstr "✅ Registration completed!"
+
+#: keyboards/inline/guide.py:7
+msgid "Language"
+msgstr "English 🇬🇧"
+
+#: keyboards/inline/guide.py:8
+msgid "Timezone"
+msgstr "🕔 Timezone"
+
+#: keyboards/inline/guide.py:9 keyboards/inline/menu.py:350
+msgid "guide"
+msgstr "Guide"
+
+#: keyboards/inline/guide.py:10
+msgid "complete_registration"
+msgstr "Complete Registration"
+
+#: keyboards/inline/guide.py:20 keyboards/inline/menu.py:365
+msgid "more_lang"
+msgstr ""
+
+#: keyboards/inline/guide.py:29
+msgid "Prev"
+msgstr "◀️ Prev"
+
+#: keyboards/inline/guide.py:32
+msgid "Next"
+msgstr "➡️ Next"
+
+#: keyboards/inline/guide.py:34
+msgid "Complete"
+msgstr "✅ Complete"
+
+#: keyboards/inline/menu.py:16
+msgid "notifications"
+msgstr "🔔 Notifications"
+
+#: keyboards/inline/menu.py:17
+msgid "schedule"
+msgstr "📈 Schedule"
+
+#: keyboards/inline/menu.py:18
+msgid "settings"
+msgstr "⚙️ Extra features"
+
+#: keyboards/inline/menu.py:30 keyboards/inline/menu.py:40
+#: keyboards/inline/menu.py:47 keyboards/inline/menu.py:59
+#: keyboards/inline/menu.py:80 keyboards/inline/menu.py:93
+#: keyboards/inline/menu.py:105 keyboards/inline/menu.py:137
+#: keyboards/inline/menu.py:148 keyboards/inline/menu.py:159
+#: keyboards/inline/menu.py:169 keyboards/inline/menu.py:192
+#: keyboards/inline/menu.py:207 keyboards/inline/menu.py:306
+#: keyboards/inline/menu.py:318 keyboards/inline/menu.py:352
+#: keyboards/inline/menu.py:370 keyboards/inline/menu.py:379
+#: keyboards/inline/timezone.py:24 keyboards/inline/timezone.py:41
+msgid "back"
+msgstr "🔙 Back"
+
+#: keyboards/inline/menu.py:48 keyboards/inline/timezone.py:60
+msgid "confirm"
+msgstr "✅ Confirm"
+
+#: keyboards/inline/menu.py:56 keyboards/inline/menu.py:124
+msgid "show_schedule"
+msgstr "🗓 Your Schedule"
+
+#: keyboards/inline/menu.py:57
+msgid "update_schedule"
+msgstr "🔄 Update Schedule"
+
+#: keyboards/inline/menu.py:58
+msgid "manage_schedule"
+msgstr "🗓 Manage Schedule"
+
+#: keyboards/inline/menu.py:69
+msgid "workdays"
+msgstr "👨‍💻 WorkDays"
+
+#: keyboards/inline/menu.py:79
+msgid "weekends"
+msgstr "🛌 Weekends"
+
+#: keyboards/inline/menu.py:81
+msgid "next"
+msgstr "➡️ Next"
+
+#: keyboards/inline/menu.py:113
+msgid "notify_off"
+msgstr "🔕 OFF"
+
+#: keyboards/inline/menu.py:115
+msgid "notify_on"
+msgstr "🔔 ON"
+
+#: keyboards/inline/menu.py:116 keyboards/inline/timezone.py:59
+msgid "cancel"
+msgstr "🗑 Cancel"
+
+#: keyboards/inline/menu.py:117 keyboards/inline/menu.py:229
+msgid "complete"
+msgstr "✅ Complete"
+
+#: keyboards/inline/menu.py:125
+msgid "add_another_schedule"
+msgstr "🔄 Update Schedule"
+
+#: keyboards/inline/menu.py:126 keyboards/inline/menu.py:281
+#: keyboards/inline/menu.py:292 keyboards/inline/menu.py:327
+#: keyboards/inline/menu.py:337
+msgid "back_main"
+msgstr "⬅️ Back to main menu"
+
+#: keyboards/inline/menu.py:155 keyboards/inline/menu.py:157
+msgid "change_day"
+msgstr "📅 Change day"
+
+#: keyboards/inline/menu.py:156
+msgid "change_time"
+msgstr "🕔 Change time"
+
+#: keyboards/inline/menu.py:158
+msgid "schedule_delete"
+msgstr "❌ Delete"
+
+#: keyboards/inline/menu.py:167 keyboards/inline/menu.py:279
+#: keyboards/inline/menu.py:291
+msgid "add_notif"
+msgstr "➕ Add Notification"
+
+#: keyboards/inline/menu.py:168
+msgid "notifs"
+msgstr "📊 Manage Notifications"
+
+#: keyboards/inline/menu.py:181
+msgid "Monday"
+msgstr "Monday"
+
+#: keyboards/inline/menu.py:181
+msgid "Tuesday"
+msgstr "Tuesday"
+
+#: keyboards/inline/menu.py:181
+msgid "Wednesday"
+msgstr "Wednesday"
+
+#: keyboards/inline/menu.py:181
+msgid "Thursday"
+msgstr "Thursday"
+
+#: keyboards/inline/menu.py:181
+msgid "Friday"
+msgstr "Friday"
+
+#: keyboards/inline/menu.py:181
+msgid "Saturday"
+msgstr "Saturday"
+
+#: keyboards/inline/menu.py:182
+msgid "Sunday"
+msgstr "Sunday"
+
+#: keyboards/inline/menu.py:188
+msgid "Today"
+msgstr "Today"
+
+#: keyboards/inline/menu.py:191
+msgid "calendar"
+msgstr "🗓 Calendar"
+
+#: keyboards/inline/menu.py:225
+msgid "repeat_none"
+msgstr "1️⃣ Once"
+
+#: keyboards/inline/menu.py:225
+msgid "repeat_day"
+msgstr "🔄 Every day"
+
+#: keyboards/inline/menu.py:225
+msgid "repeat_week"
+msgstr "🔄 Every week"
+
+#: keyboards/inline/menu.py:225
+msgid "repeat_month"
+msgstr "🔄 Every month"
+
+#: keyboards/inline/menu.py:280 keyboards/inline/menu.py:314
+msgid "share_notif"
+msgstr "✉️ Share"
+
+#: keyboards/inline/menu.py:290
+msgid "share"
+msgstr "✉️ Share"
+
+#: keyboards/inline/menu.py:316
+msgid "notif_text"
+msgstr ""
+"💬 Please, name your notification\n"
+"<i>Up to 30 symbols</i>"
+
+#: keyboards/inline/menu.py:317
+msgid "notif_delete"
+msgstr "❌ Delete"
+
+#: keyboards/inline/menu.py:336 keyboards/inline/menu.py:377
+msgid "buy_premium"
+msgstr "⭐️ Premium"
+
+#: keyboards/inline/menu.py:346
+msgid "set_lang"
+msgstr "🇬🇧 Language"
+
+#: keyboards/inline/menu.py:347
+msgid "set_timezone"
+msgstr "🕔 Timezone"
+
+#: keyboards/inline/menu.py:348
+msgid "profile"
+msgstr "👤 Profile"
+
+#: keyboards/inline/menu.py:349
+msgid "changelog"
+msgstr "📚 Changelog"
+
+#: keyboards/inline/menu.py:351
+msgid "buy_premium_donate"
+msgstr "⭐️ Premium"
+
+#: keyboards/inline/menu.py:378
+msgid "delete_all_info"
+msgstr "❌ Delete all your data"
+
+#: keyboards/inline/menu.py:392
+msgid "delete"
+msgstr "❌ Delete"
+
+#: keyboards/inline/menu.py:394
+msgid "🟢"
+msgstr ""
+
+#: keyboards/inline/menu.py:401
+msgid "loading"
+msgstr "loading..."
+
+#: keyboards/inline/timezone.py:14
+msgid "🇬🇧 London/UTC"
+msgstr ""
+
+#: keyboards/inline/timezone.py:15
+msgid "🇪🇺 Europe"
+msgstr ""
+
+#: keyboards/inline/timezone.py:16
+msgid "🇺🇦 Ukraine/Kyiv"
+msgstr ""
+
+#: keyboards/inline/timezone.py:17
+msgid "  ️ Moscow"
+msgstr ""
+
+#: keyboards/inline/timezone.py:18
+msgid "🌍 More timezones"
+msgstr ""
+
+#: keyboards/inline/timezone.py:19
+msgid "📍 Timezone by your Location(beta)"
+msgstr ""
+
+#: keyboards/inline/timezone.py:39
+msgid "Timezone by country (beta)"
+msgstr ""
+
+#: keyboards/inline/timezone.py:40
+msgid "All timezones"
+msgstr ""
+
+#: keyboards/inline/timezone.py:49
+msgid "send_location_btn"
+msgstr "📍 Send location"
+
+#: keyboards/inline/calendar/common.py:53
+msgid "calendar_late_date"
+msgstr "❗️The date have to be before {date}"
+
+#: keyboards/inline/calendar/common.py:59
+msgid "calendar_early_date"
+msgstr "❗️The date have to be later {date}"
+
+#~ msgid "newuser_deeplink"
+#~ msgstr ""
+
+#~ msgid "new_user_start"
+#~ msgstr ""
+
+#~ msgid "language_changed"
+#~ msgstr "🌐 Language changed to"
+
+#~ msgid "Mon"
+#~ msgstr "Mon"
+
+#~ msgid "Tue"
+#~ msgstr "Tue"
+
+#~ msgid "Wed"
+#~ msgstr "Wed"
+
+#~ msgid "Thu"
+#~ msgstr "Thu"
+
+#~ msgid "Fri"
+#~ msgstr "Fri"
+
+#~ msgid "Sat"
+#~ msgstr "Sat"
+
+#~ msgid "Sun"
+#~ msgstr "Sun"
+
+#~ msgid "add_lang"
+#~ msgstr "‼️Add language"
+
+#~ msgid "🌍 ShowAll timezones"
+#~ msgstr ""
+
+#~ msgid "Jan"
+#~ msgstr ""
+
+#~ msgid "Feb"
+#~ msgstr ""
+
+#~ msgid "Mar"
+#~ msgstr ""
+
+#~ msgid "Apr"
+#~ msgstr ""
+
+#~ msgid "May"
+#~ msgstr ""
+
+#~ msgid "Jun"
+#~ msgstr ""
+
+#~ msgid "Jul"
+#~ msgstr ""
+
+#~ msgid "Aug"
+#~ msgstr ""
+
+#~ msgid "Sep"
+#~ msgstr ""
+
+#~ msgid "Oct"
+#~ msgstr ""
+
+#~ msgid "Nov"
+#~ msgstr ""
+
+#~ msgid "Dec"
+#~ msgstr ""
+
+#~ msgid "⚙️ Error, please use /report"
+#~ msgstr ""
+
+#~ msgid "⤵️ Please choose an option from the menu below"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Got notification!\n"
+#~ "Date: {date} ({tz})\n"
+#~ "Text: {text}\n"
+#~ "\n"
+#~ "<i>Complete the registration to add it!</i>"
+#~ msgstr ""
+
+#~ msgid "ERROR_MSG"
+#~ msgstr "⚙️ Error, please use /report"
+
+#~ msgid "Thank you for Completing guide"
+#~ msgstr ""
+
+#~ msgid "Registration completed!"
+#~ msgstr ""
+
+#~ msgid "English"
+#~ msgstr ""
+
+#~ msgid "Русский"
+#~ msgstr ""
+
+#~ msgid "Українська"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Lets configure your schedule\n"
+#~ "When we should send your schedule? (everyday)"
+#~ msgstr ""
+
+#~ msgid "We will send your schedule everyday at {hrs}:{min}, right?"
+#~ msgstr ""
+
+#~ msgid "Guide"
+#~ msgstr "Guide"
+

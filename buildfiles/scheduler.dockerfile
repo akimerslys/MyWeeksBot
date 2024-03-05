@@ -23,13 +23,14 @@ ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR /app
 
-COPY bot/core/config.py bot/core/config.py
-COPY bot/core/redis_loader.py bot/core/redis_loader.py
-COPY bot/services bot/services
-COPY bot/image_generator bot/image_generator
-COPY bot/database bot/database
-COPY bot/cache bot/cache
-COPY scheduler/ scheduler/
+COPY fonts/ fonts/
+COPY media/ media/
+COPY src/core src/core
+COPY src/bot/services src/bot/services
+COPY src/image_generator src/image_generator
+COPY src/database src/database
+COPY src/cache src/cache
+COPY src/scheduler/ src/scheduler/
 COPY poetry.lock .
 COPY pyproject.toml .
 COPY Makefile .
@@ -39,6 +40,6 @@ RUN poetry check && \
     rm -rf home/bot/.cache && \
     rm -rf $POETRY_CACHE_DIR      
 
-CMD ["poetry", "run", "arq", "scheduler.main.WorkerSettings"]
+CMD ["poetry", "run", "arq", "src.scheduler.main.WorkerSettings"]
 
 

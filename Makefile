@@ -39,7 +39,11 @@ generate:
 migrate:
 	source .env
 	poetry run alembic upgrade head
-	
+
+#language utils
+.PHONY: update-locale
+update-locale:
+	cd src/bot && pybabel extract --input-dirs=. -o locales/messages.pot --project=messages. && pybabel update -i locales/messages.pot -d locales -D messages
 # Docker utils
 .PHONY: rebuild
 rebuild:
