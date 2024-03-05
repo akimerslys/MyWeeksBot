@@ -55,7 +55,9 @@ services:
       - app
 
   redis:
-    image: redis:7-alpine
+    build:
+      context: buildfiles
+      dockerfile: redis.dockerfile
     restart: on-failure
     container_name: redis
     env_file:
@@ -76,9 +78,8 @@ services:
   scheduler:
     build:
         context: .
-        dockerfile: scheduler.dockerfile
+        dockerfile: buildfiles/scheduler.dockerfile
     container_name: scheduler
-    command: sh -c "arq scheduler.main.WorkerSettings"
     restart: always
     env_file:
       - .env

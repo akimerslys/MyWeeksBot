@@ -245,3 +245,4 @@ __pycache__
 logs/myweeks.log
 ignore
 db_test.py
+buildfiles/redis.conf

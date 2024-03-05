@@ -17,18 +17,18 @@ COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR app
-COPY poetry.lock .
-COPY pyproject.toml .
-COPY Makefile .
+COPY ../poetry.lock .
+COPY ../pyproject.toml .
+COPY ../Makefile .
 
 RUN poetry check && \
     poetry install --no-interaction --no-cache --no-root
 
-COPY scheduler/ scheduler/
-COPY bot/services/ bot/services/
-COPY bot/database/ bot/database/
-COPY bot/core/ bot/core/
-COPY bot/image_generator/ bot/image_generator/
+COPY ../scheduler scheduler/
+COPY ../bot/services bot/services/
+COPY ../bot/database bot/database/
+COPY ../bot/core bot/core/
+COPY ../bot/image_generator bot/image_generator/
 
 # Run the application using poetry
 CMD ["make", "scheduler-run"]

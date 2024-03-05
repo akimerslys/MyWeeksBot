@@ -17,7 +17,7 @@ bot-run:
 
 .PHONY: scheduler-run
 scheduler-run:
-	poetry run python -m scheduler.main
+	poetry run arq scheduler.main.WorkerSettings
 .PHONY:
 # Poetry and environments utils
 REQUIREMENTS_FILE := requirements.txt
