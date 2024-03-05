@@ -78,7 +78,7 @@ services:
   scheduler:
     build:
         context: .
-        dockerfile: buildfiles/schedule.dockerfile
+        dockerfile: buildfiles/scheduler.dockerfile
     container_name: scheduler
     restart: always
     env_file:
