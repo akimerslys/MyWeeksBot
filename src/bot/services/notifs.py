@@ -75,6 +75,20 @@ async def get_user_notifs(session: AsyncSession, user_id: int) -> list[NotifMode
     return list(notifs)
 
 
+async def get_user_notifs_id(sessions: AsyncSession, user_id: int) -> list:
+    
+    query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
+
+    result = await session.execute(query)
+
+    logger.debug(f"got user notifs ids for {result}")
+
+    notif_list = result.scalars()
+	
+    notif_ids = [notif.id for notif in notif_list]
+
+    return list(notif_ids)
+
 async def get_user_notifs_sorted(session: AsyncSession, user_id: int) -> list[tuple]:
     query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
 
@@ -83,7 +97,7 @@ async def get_user_notifs_sorted(session: AsyncSession, user_id: int) -> list[tu
     notif_list = result.scalars()
     logger.debug(f"got user notifs {notif_list}")
 
-    notif_list_sorted = [(notif.date, notif.text, notif.id, notif.repeat_daily, notif.repeat_weekly) for notif in notif_list]
+    notif_list_sorted = [(notif.date, notif.text, notif.id) for notif in notif_list]
 
     return notif_list_sorted
 

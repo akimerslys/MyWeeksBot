@@ -26,44 +26,51 @@ router = Router(name="start")
 @router.message(CommandStart(deep_link=True))
 async def start_message_deeplink(message: Message, bot: Bot, command: CommandObject, session: AsyncSession,
                                   state: FSMContext):
+
+    if await state.get_state() is not NewUser.new_user:
+            await state.clear()
+            await state.set_state(NewUser.new_user)
+
     args = command.args
     logger.debug(f"got args {args}")
 
-    if args!="inline_new":
-       	payload = decode_payload(args)
-       	logger.debug(f"got payload {payload}")
+    if args != "inline_new":
+        payload = decode_payload(args)
+        logger.debug(f"got payload {payload}")
         notif_args: list = payload.split("_", 2)
         logger.debug(notif_args)
         try:
+
             shared_notif = await get_notif(session, int(notif_args[0]))
             notif_date: str = (await localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime("%d/%m/%Y %H:%M")
+
         except (IntegrityError, ProgrammingError) as e:
+
             logger.error(f"Error while getting notif from payload: {e}")
             await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
             return
 
+        await bot.send_message(message.from_user.id,
+                                   _("deeplink_got_notif").format(date=notif_date,
+                                                                  tz=notif_args[1],
+                                                                  text=shared_notif.text)
+                                   )
+
+        await state.update_data(tz='UTC', lang='en', notif_id=int(notif_args[0]))
+
+    data = await state.get_data()
+
     if not await dbuc.user_logged(session, message.from_user.id):
-	if args!="inline_new":
-		await bot.send_message(message.from_user.id,
-                               _("deeplink_got_notif").format(date=notif_date, tz=notif_args[1], text=shared_notif.text)
-                               )
-        if await state.get_state() is not NewUser.new_user:
-            await state.clear()
-            await state.set_state(NewUser.new_user)
-            await state.update_data(tz='UTC', lang='en', notif_id=int(notif_args[0]))
-        data = await state.get_data()
+
         await bot.send_message(message.from_user.id, _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
                                reply_markup=start_menu_kb())
     else:
-        logger.info(f"activating notif from deeplink")
-        await bot.send_message(message.from_user.id, _("notif_added"))
+        
         await bot.send_message(
             message.from_user.id,
             _("please_ch_button"),
             reply_markup=main_kb()
         )
-        await add_notif(session, shared_notif.date, message.from_user.id,
-                        shared_notif.text, shared_notif.repeat_daily, shared_notif.repeat_weekly)
 
 
 @router.message(CommandStart(deep_link=False))

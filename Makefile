@@ -64,6 +64,13 @@ startup:
 kill:
 	docker-compose down --remove-orphans ${MODE}
 
+.PHONY: rebuildbot
+rebuildbot:
+	docker stop $$(docker ps -qf "ancestor=myweeksbot_bot")
+	docker rm $$(docker ps -aqf "ancestor=myweeksbot_bot")
+	docker rmi myweeksbot_bot
+	docker-compose up --build bot
+
 .PHONY: mem
 mem:
 	@echo "DOCKER:"
