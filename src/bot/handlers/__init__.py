@@ -2,7 +2,7 @@ from aiogram import Router
 
 
 def get_handlers_router() -> Router:
-    from . import start, menu, report, premium
+    from . import start, menu, report, premium, inline
     from .admin import add_key, delete, block
 
     router = Router()
@@ -13,5 +13,6 @@ def get_handlers_router() -> Router:
     router.include_router(add_key.router)
     router.include_router(delete.router)
     router.include_router(block.router)
+    router.include_router(inline.router)
 
     return router

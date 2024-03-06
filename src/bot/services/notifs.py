@@ -70,9 +70,22 @@ async def get_user_notifs(session: AsyncSession, user_id: int) -> list[NotifMode
     query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
 
     result = await session.execute(query)
-    logger.debug(f"got user notifs {user_id}")
+    logger.debug(f"got user notifs for {result}")
     notifs = result.scalars()
     return list(notifs)
+
+
+async def get_user_notifs_sorted(session: AsyncSession, user_id: int) -> list[tuple]:
+    query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
+
+    result = await session.execute(query)
+
+    notif_list = result.scalars()
+    logger.debug(f"got user notifs {notif_list}")
+
+    notif_list_sorted = [(notif.date, notif.text, notif.id, notif.repeat_daily, notif.repeat_weekly) for notif in notif_list]
+
+    return notif_list_sorted
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))

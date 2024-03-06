@@ -21,26 +21,30 @@ from src.bot.utils.states import NewUser
 router = Router(name="start")
 
 
-# TODO OPTIMIZE DEEPLINK!!! !! !! !! ! !! !! OR GAY
+# TODO OPTIMIZE !!! !! !! !! ! !! !! OR GAY
 
 @router.message(CommandStart(deep_link=True))
-async def start_message_with_args(message: Message, bot: Bot, command: CommandObject, session: AsyncSession,
+async def start_message_deeplink(message: Message, bot: Bot, command: CommandObject, session: AsyncSession,
                                   state: FSMContext):
     args = command.args
-    payload = decode_payload(args)
-    logger.debug(f"got payload {payload}")
-    notif_args: list = payload.split("_", 2)
-    logger.debug(notif_args)
-    try:
-        shared_notif = await get_notif(session, int(notif_args[0]))
-        # Assuming `localize_datetime_to_timezone` is an asynchronous function
-        notif_date: str = (await localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime("%d/%m/%Y %H:%M")
-    except (IntegrityError, ProgrammingError) as e:
-        logger.error(f"Error while getting notif from payload: {e}")
-        await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
-        return
-    if not await dbuc.user_exists(session, message.from_user.id) or not await dbuc.get_user_active(session, message.from_user.id):
-        await bot.send_message(message.from_user.id,
+    logger.debug(f"got args {args}")
+
+    if args!="inline_new":
+       	payload = decode_payload(args)
+       	logger.debug(f"got payload {payload}")
+        notif_args: list = payload.split("_", 2)
+        logger.debug(notif_args)
+        try:
+            shared_notif = await get_notif(session, int(notif_args[0]))
+            notif_date: str = (await localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime("%d/%m/%Y %H:%M")
+        except (IntegrityError, ProgrammingError) as e:
+            logger.error(f"Error while getting notif from payload: {e}")
+            await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
+            return
+
+    if not await dbuc.user_logged(session, message.from_user.id):
+	if args!="inline_new":
+		await bot.send_message(message.from_user.id,
                                _("deeplink_got_notif").format(date=notif_date, tz=notif_args[1], text=shared_notif.text)
                                )
         if await state.get_state() is not NewUser.new_user:
@@ -64,7 +68,7 @@ async def start_message_with_args(message: Message, bot: Bot, command: CommandOb
 
 @router.message(CommandStart(deep_link=False))
 async def start_message(message: Message, bot: Bot, session: AsyncSession, state: FSMContext):
-    if not await dbuc.user_exists(session, message.from_user.id) or not await dbuc.get_user_active(session, message.from_user.id):
+    if not await dbuc.user_logged(session, message.from_user.id):
         if await state.get_state() is not NewUser.new_user:
             await state.clear()
             await state.set_state(NewUser.new_user)

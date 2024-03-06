@@ -68,6 +68,18 @@ async def user_exists(session: AsyncSession, user_id: int) -> bool:
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
+async def user_logged(session: AsyncSession, user_id: int) -> bool:
+    """Checks if the user registered ()"""
+    logger.debug(f"Checking if user {user_id} active")
+    query = select(UserModel.id).filter_by(user_id=user_id, active=False).limit(1)
+
+    result = await session.execute(query)
+
+    user = result.scalar_one_or_none()
+    return bool(user)
+
+
+@cached(key_builder=lambda session, user_id: build_key(user_id))
 async def get_user_active(session: AsyncSession, user_id: int) -> bool:
     query = select(UserModel.active).filter_by(user_id=user_id)
 
@@ -94,12 +106,15 @@ async def get_user(session: AsyncSession, user_id: int) -> UserModel:
     return user
 
 
+@cached(key_builder=lambda session, user_id: build_key(user_id))
 async def count_user_notifs(session: AsyncSession, user_id: int) -> int:
     query = select(func.count(UserModel.active_notifs)).filter_by(user_id=user_id)
 
     result = await session.execute(query)
 
-    count = result.scalar_one_or_none() or 0
+    count = result.scalar_one_or_none()
+    if not count:
+        return 0
     return int(count)
 
 
@@ -303,6 +318,7 @@ async def delete_user(session: AsyncSession, user_id: int) -> None:
     await clear_cache(get_language_code, user_id)
     await clear_cache(get_timezone, user_id)
     await clear_cache(is_premium, user_id)
+    await clear_cache(count_user_notifs, user_id)
     await clear_cache(get_user_max_notifs, user_id)
     await clear_cache(is_blocked, user_id)
     await clear_cache(get_user_active, user_id)

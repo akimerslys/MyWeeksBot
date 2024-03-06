@@ -11,6 +11,9 @@ from src.bot.keyboards.default_commands import remove_default_commands, set_defa
 from src.bot.middlewares import register_middlewares
 
 
+__version__ = "0.8 (pre-release)"
+
+
 async def startup() -> None:
     logger.info("bot starting...")
     register_middlewares(dp)
@@ -19,8 +22,7 @@ async def startup() -> None:
     await set_default_commands(bot)
     await bot.delete_webhook(drop_pending_updates=True)
 
-    bot_info = await bot.get_me()
-    logger.success(f"bot started as @{bot_info.username}")
+    logger.success(f"bot started {__version__}")
 
 
 async def shutdown() -> None:

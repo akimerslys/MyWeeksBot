@@ -12,12 +12,19 @@ services:
     networks:
       - app
     depends_on:
-      - postgres
-      - redis
-      - scheduler
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   postgres:
-    image: postgres:12-alpine
+    build:
+      context: buildfiles
+      dockerfile: postgres.dockerfile
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 3s
+      retries: 5
     container_name: postgres
     restart: always
     env_file:
@@ -68,6 +75,10 @@ services:
         - REDIS_PORT=${REDIS_PORT}
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
+    healthcheck:
+      test: [ "CMD", "redis-cli", "AUTH", "$REDIS_PASS", "ping"]
+      interval: 3s
+      retries: 5
     networks:
       - app
     volumes:

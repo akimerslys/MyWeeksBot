@@ -15,7 +15,6 @@ help:
 
 .PHONY: bot-run
 bot-run:
-	poetry run alembic revision --autogenerate -m "hey_db"
 	poetry run alembic upgrade head
 	poetry run python3 -m src.bot
 
@@ -58,20 +57,29 @@ rebuild:
 	docker-compose up --force-recreate --build
 
 .PHONY: start
-start:
+startup:
 	docker-compose up 
 
-.PHONY: stop
-stop:
-	docker-compose down
-
-.PHONY: dead
-dead:
+.PHONY: kill
+kill:
 	docker-compose down --remove-orphans ${MODE}
 
+.PHONY: mem
+mem:
+	@echo "DOCKER:"
+	docker system df
+	@echo " "
+	@echo "SSD:"
+	df -h
+	@echo " "
+	@echo " RAM:"
+	free -h
+
+
 .PHONY: clear
-clear:
-	rm -r ../.cache
-	mkdir ../.cache
+clear:	
+	docker buildx prune -f
+	docker image prune
+	docker network prune
 	sudo sync && echo 3 > /proc/sys/vm/drop_caches
-	echo sudo free -h
+	sudo free -h

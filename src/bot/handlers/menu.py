@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import time
-from datetime import datetime, timedelta, time
-import pytz
 from aiogram import Router, F, Bot
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.i18n import gettext as _
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
-from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from loguru import logger
+import time as time_
+from datetime import datetime, timedelta, time
+import pytz
 from timezonefinder import TimezoneFinder
 
 from src.core.config import settings
@@ -196,8 +197,7 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
         time = data.get('hours') + ":" + data.get('minutes')
         if data.get('notify'):
             user_notifs = await dbnc.count_user_notifs(session, call.from_user.id)
-	    if not user_notifs:
-		user_notifs = 0
+
             max_user_notifs = await dbuc.get_user_max_notifs(session, call.from_user.id)
             if max_user_notifs <= user_notifs + len(days):
                 await call.answer(_("limit_notifs"), show_alert=True)
