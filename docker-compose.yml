@@ -48,14 +48,16 @@ services:
     environment:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASS}
-      - DB_HOST=postgres
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
       - POOL_MODE=session
       - MAX_DB_CONNECTIONS=0
       - DEFAULT_POOL_SIZE=40
       - ADMIN_USERS=postgres,${DB_USER}
       - AUTH_TYPE=scram-sha-256
     ports:
-      - "5432:5432"
+      - ${DB_PORT}:${DB_PORT}
     depends_on:
       - postgres
     networks:
