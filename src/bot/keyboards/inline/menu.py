@@ -27,7 +27,7 @@ def config_schedule_hrs() -> InlineKeyboardMarkup:
     for i in range(4, 13):
         i_str = ('0' + str(i) if i < 10 else str(i))
         keyboard.button(text=i_str + ":00", callback_data=f"schedule_config_hrs_{i_str}")
-    keyboard.button(text=_("back"), callback_data="main_kb")
+    keyboard.button(text=_("back"), callback_data="schedule")
     keyboard.adjust(2, 2, 2, 2, 1, 1)
     return keyboard.as_markup(resize_keyboard=True)
 

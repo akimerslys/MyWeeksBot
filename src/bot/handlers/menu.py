@@ -588,7 +588,7 @@ async def delete_profile_confirm(call: CallbackQuery, session: AsyncSession):
         await dbuc.delete_user(session, call.from_user.id)
         await dbsc.delete_all_user_schedule(session, call.from_user.id)
         await dbnc.delete_all_user_notifs(session, call.from_user.id)
-        await call.answer("Profile deleted, Thank you! ❤️‍🔥", show_alert=True)
+        await call.answer(_("Profile deleted, hope to see you again! ❤️‍🔥"), show_alert=True)
     else:
         await call.answer("😳😳😳")
         await call.message.edit_reply_markup(reply_markup=mkb.profile_kb())
@@ -755,6 +755,7 @@ async def config_schedule(call: CallbackQuery, state: FSMContext):
     if not await state.get_state():
         await state.set_state(ConfigSchedule.hours)
 
+
 @router.callback_query(F.data.startswith("schedule_config_hrs_"))
 async def config_schedule_hrs(call: CallbackQuery, state: FSMContext):
     hrs = call.data.split("_")[-1]
@@ -790,7 +791,7 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
         await dbuc.set_schedule_time(session, call.from_user.id, config_time)
         await call.answer(_("schedule_updated"), show_alert=True)
 
-    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.manage_schedule_kb())
+    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.schedule_kb())
     await state.clear()
 
 

@@ -12,10 +12,11 @@ from datetime import datetime
 
 from loguru import logger
 
+
 router = Router(name="inline")
 
 
-@router.inline_query(F.query == "notifs")
+@router.inline_query()
 async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
     if not await user_logged(session, query.from_user.id):
         await query.answer(
@@ -25,7 +26,6 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
             switch_pm_parameter="inline_new"
         )
         return
-    logger.info("im here")
 
     user_notifs = await get_user_notifs_sorted(session, query.from_user.id)
     results = []
@@ -49,20 +49,5 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
             parse_mode="HTML",
             reply_markup=inline_add(link)
         ))
-	
+
     await query.answer(results, is_personal=True)
-
-@router.inline_query()
-async def show_inline_menu(query: InlineQuery, session: AsyncSession):
-    if not await user_logged(session, query.from_user.id):
-        await query.answer(
-            results=[],
-            is_personal=True,
-            switch_pm_text=_("You are not signed! Tap to sign in to @myweeksbot"),
-            switch_pm_parameter = "inline_new"
-        )
-        return
-
-
-
-

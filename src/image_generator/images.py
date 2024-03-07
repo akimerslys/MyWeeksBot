@@ -5,6 +5,8 @@ from datetime import datetime
 from loguru import logger
 from io import BytesIO
 
+from src.core.config import settings
+
 
 def days_of_week(day: str, num: int) -> int | str:
     days = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7}
@@ -56,14 +58,17 @@ async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
     start_time = time.time()
     image = Image.open("media/week.jpeg")
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=16)
+    font = ImageFont.truetype(settings.FONTS_DIR + "OPENSANS-SEMIBOLD.ttf", size=16)
+
     user_list_sorted = (
         [(day, times, status) for day, times, status in
          sorted(user_list, key=lambda x: (days_of_week(x[0], 0)))])
+
     text_color = (255, 255, 255)
     height = 205
     text_position = 30
     last_day = 'Monday'
+
     for day, times, text in user_list_sorted:
         if last_day != day:
             last_day = day
@@ -111,6 +116,7 @@ async def generate_user_schedule_day(schedule_list: list[tuple], daytime: dateti
     day = dtime.weekday()
 
     logger.debug(f"Schedule list: {schedule_list}")
+
     start_time = time.time()
     image = Image.open("media/day.jpeg")
     draw = ImageDraw.Draw(image)

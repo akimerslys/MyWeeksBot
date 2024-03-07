@@ -26,7 +26,7 @@ class DBSettings(EnvBaseSettings):
 
     @property
     def database_url(self):
-        return f"postgresql+asyncpg://{self.DB_USER}{''if not self.DB_PASS else ':' + self.DB_PASS}" \
+        return f"postgresql+asyncpg://{self.DB_USER}{':' + self.DB_PASS if self.DB_PASS else ''}" \
                f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
@@ -37,7 +37,6 @@ class KeyGenSettings(EnvBaseSettings):
 
 
 class CacheSettings(EnvBaseSettings):
-
     REDIS_HOST: str
     REDIS_PORT: int = 6379
     REDIS_PASS: str | None
@@ -61,6 +60,7 @@ class UserSettings(EnvBaseSettings):
 class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSettings):
     PATH_DIR: Path = Path(__file__).absolute().parent.parent.parent
     BOT_DIR: Path = Path(__file__).absolute().parent.parent / "bot"
+    FONTS_DIR: str = f"{BOT_DIR}/fonts"
     LOCALES_DIR: str = f"{BOT_DIR}/locales"
     I18N_DOMAIN: str = "messages"
 
