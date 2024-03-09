@@ -5,15 +5,19 @@ class NewUser(StatesGroup):
     new_user = State()
     ask_location = State()
     location_confirm = State()
-
+    ask_country = State()
 
 class Report(StatesGroup):
     text = State()
 
-
 class ConfigSchedule(StatesGroup):
     hours = State()
     minutes = State()
+
+
+class AskCountry(StatesGroup):
+    ask_country = State()
+    ask_country_confirm = State()
 
 class AskLocation(StatesGroup):
     ask_location = State()

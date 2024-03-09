@@ -20,13 +20,12 @@ from src.image_generator.images import generate_user_schedule_week
 from src.bot.keyboards.inline import menu as mkb
 from src.bot.keyboards.inline.calendar import SimpleCalendar, SimpleCalendarCallback
 from src.bot.keyboards.inline.guide import start_menu_kb
-from src.bot.keyboards.inline.timezone import timezone_simple_keyboard, timezone_advanced_keyboard, timezone_geo_reply, \
-    ask_location_confirm
+from src.bot.keyboards.inline import timezone as tzm
 from src.bot.keyboards.reply.skip import skip_kb
 from src.bot.services import users as dbuc, notifs as dbnc, schedule as dbsc
 from src.bot.utils.last_commits import get_changelog
-from src.bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser, ConfigSchedule
-from src.bot.utils import time_localizer as timecom          # timecommands
+from src.bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser, ConfigSchedule, AskCountry
+from src.bot.utils import time_localizer as timecom  # timecommands
 from src.bot.utils.notif_repeat import repeat_to_str
 
 router = Router(name="menu")
@@ -204,8 +203,10 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
                 await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
                 return
             for day in days:
-                dtime = await timecom.day_of_week_to_date(day, time, await dbuc.get_timezone(session, call.from_user.id))
-                dtime_to_utc = await timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session, call.from_user.id))
+                dtime = await timecom.day_of_week_to_date(day, time,
+                                                          await dbuc.get_timezone(session, call.from_user.id))
+                dtime_to_utc = await timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session,
+                                                                                                     call.from_user.id))
                 await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
         for day in days:
             await dbsc.add_schedule(session, call.from_user.id, day, time, data.get('text'))
@@ -230,7 +231,7 @@ async def manage_schedule(call: CallbackQuery, session: AsyncSession):
 @router.callback_query(F.data.startswith("manage_schedule_day_"))
 async def manage_schedule_day(call: CallbackQuery, session: AsyncSession):
     day = call.data.split("_")[-1]
-  
+
     user_day_schedule = await dbsc.get_user_schedule_by_day(session, call.from_user.id, day)
     await call.message.edit_text("📆 " + _(day) + ":",
                                  reply_markup=mkb.manage_schedule_day_kb(user_day_schedule)
@@ -315,7 +316,7 @@ async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext, session: As
     await state.set_state(AddNotif.hours)
     await call.message.edit_text(_("choose_time_for_date").format(date=call.data[14:]))
     if not await timecom.is_today(datetime.strptime(f"{call.data[14:]}", "%Y %m %d"),
-                          await dbuc.get_timezone(session, call.from_user.id)):
+                                  await dbuc.get_timezone(session, call.from_user.id)):
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb())
     else:
         date = await timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
@@ -564,15 +565,16 @@ async def send_profile(call: CallbackQuery, session: AsyncSession):
     user_info = await dbuc.get_user(session, call.from_user.id)
     await call.message.edit_text(
         _("profile_info").format(
-        name=user_info.first_name,
-        active_notifs=user_info.active_notifs,
-        max_notifs=user_info.max_notifs,
-        extra=_('active') if user_info.is_premium else _('inactive'),
-        premium_until=_('premium_until') + user_info.premium_until.strftime('%d %m %Y') + '\n' if user_info.is_premium else '',
-        lang=user_info.language_code,
-        tz=user_info.timezone,
-        sch_time=user_info.schedule_time if user_info.schedule_time else ''
-    ), reply_markup=mkb.profile_kb()
+            name=user_info.first_name,
+            active_notifs=user_info.active_notifs,
+            max_notifs=user_info.max_notifs,
+            extra=_('active') if user_info.is_premium else _('inactive'),
+            premium_until=_('premium_until') + user_info.premium_until.strftime(
+                '%d %m %Y') + '\n' if user_info.is_premium else '',
+            lang=user_info.language_code,
+            tz=user_info.timezone,
+            sch_time=user_info.schedule_time if user_info.schedule_time else ''
+        ), reply_markup=mkb.profile_kb()
     )
 
 
@@ -594,7 +596,6 @@ async def delete_profile_confirm(call: CallbackQuery, session: AsyncSession):
         await call.message.edit_reply_markup(reply_markup=mkb.profile_kb())
 
 
-
 # SETTINGS
 @router.callback_query(F.data == 'settings_kb')
 async def place_settings_kb(call: CallbackQuery):
@@ -608,6 +609,7 @@ async def choose_language_kb(call: CallbackQuery):
 
 @router.callback_query(F.data.startswith("set_lang_"))
 async def set_language_kb(call: CallbackQuery, session: AsyncSession):
+    await call.message.edit_text(_("WAIT_MESSAGE"))
     await call.message.edit_text(
         _("lang_changed") + ' ' + _("language"),
         reply_markup=mkb.setting_kb()
@@ -624,24 +626,30 @@ async def add_language_kb(call: CallbackQuery):
 
 
 @router.callback_query(F.data == "timezone_kb")
-async def choose_timezone_kb(call: CallbackQuery):
-    await call.message.edit_text(_("choose_timezone"), reply_markup=timezone_simple_keyboard(True))
+async def choose_timezone_kb(call: CallbackQuery, session: AsyncSession, state: FSMContext):
+    new_user: bool = await dbuc.user_logged(session, call.from_user.id)
+    if new_user:
+        await state.clear()
+
+    await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_simple_keyboard(new_user))
 
 
 @router.callback_query(F.data.startswith("set_timezone_"))
-async def set_timezone_kb(call: CallbackQuery, session: AsyncSession):
+async def set_timezone_kb(call: CallbackQuery, session: AsyncSession, state: FSMContext):
+    await state.clear()
     try:
         pytz.timezone(call.data[13:])
     except pytz.exceptions.UnknownTimeZoneError:
         await call.answer(_("ERROR_MESSAGE"), show_alert=True)
-        await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
         logger.critical(f"User {call.from_user.id} tried to set invalid timezone: {call.data[13:]}")
+        await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_simple_keyboard(True))
         return
     await call.message.edit_text(_("timezone_changed").format(call.data[13:]), reply_markup=mkb.setting_kb())
     if await dbuc.user_exists(session, call.from_user.id):
         await dbuc.set_timezone(session, call.from_user.id, call.data[13:])
     else:
-        await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, call.from_user.language_code)
+        await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, call.from_user.language_code,
+                            call.data[13:])
 
 
 @router.callback_query(F.data.startswith("timezone_send_geo_"))
@@ -649,7 +657,7 @@ async def ask_for_location(call: CallbackQuery, bot: Bot, state: FSMContext):
     geo_msg = await bot.send_message(
         call.message.chat.id,
         _("send_geo_location"),
-        reply_markup=timezone_geo_reply()
+        reply_markup=tzm.timezone_geo_reply()
     )
     if await state.get_state():
         await state.set_state(NewUser.ask_location)
@@ -677,7 +685,7 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
         tmp_msg = await bot.send_message(
             message.from_user.id,
             _("ERROR_MESSAGE"),
-            reply_markup=timezone_geo_reply()
+            reply_markup=tzm.timezone_geo_reply()
         )
         await state.update_data(tmp_msg=tmp_msg.message_id)
         return
@@ -686,7 +694,7 @@ async def handle_location(message: Message, bot: Bot, state: FSMContext):
         message.from_user.id,
         _("timezone_geo_confirm").format(
             timezone_str=timezone_str, dtime=datetime.now(pytz.timezone(timezone_str)).strftime('%H:%M')),
-        reply_markup=ask_location_confirm()
+        reply_markup=tzm.ask_location_confirm()
     )
     await state.update_data(tmp_msg=tmp_msg.message_id)
     await state.update_data(tz_pre=timezone_str)
@@ -735,14 +743,79 @@ async def cancel_location(call: CallbackQuery, bot: Bot, state: FSMContext):
         await state.clear()
 
 
-@router.callback_query(F.data == "timezone_show_adv")
+@router.callback_query(F.data.startswith("timezone_show_adv_"))
 async def show_all_timezone(call: CallbackQuery):
-    await call.answer(_("⚙️ This function is upgrading"), show_alert=True)
+    await call.asnwer("⚙️ Under construction", show_alert=True)
+    """fp = True
+    if call.data.split("_")[-1] == 2:
+        fp = False
+
+    await call.message.edit_reply_markup(reply_markup=tzm.timezone_advanced_keyboard(fp))"""
 
 
-@router.callback_query(F.data == "show_all")
-async def show_all_timezone(call: CallbackQuery):
-    await call.message.edit_reply_markup(reply_markup=timezone_advanced_keyboard())
+@router.callback_query(F.data == "timezone_country")
+async def show_country_timezone(call: CallbackQuery, state: FSMContext, session: AsyncSession):
+    msg = await call.message.edit_text(text=_("Please, write your country code (ex. US - United States, JP - Japan)\n\n"
+                                              "You can find your country code <a href=\"https://telegra.ph/country-codes-03-08\">here</a>"),
+                                       reply_markup=tzm.timezone_country_kb(),
+                                       disable_web_page_preview=True)
+
+    if await dbuc.user_logged(session, call.from_user.id):
+        await state.set_state(AskCountry.ask_country)
+    else:
+        data = await state.get_data()
+        await state.set_state(NewUser.ask_location)
+
+    await state.update_data(tmp_id=msg.message_id)
+
+
+# TODO DELETE DUPLICATES
+
+@router.callback_query(F.data.startswith("timezone_country_"))
+async def show_country_timezones(call: CallbackQuery, bot: Bot, state: FSMContext):
+    tz_list = []
+
+    try:
+        for tz in pytz.country_timezones(call.data.split("_")[-1]):
+            print(tz)
+            tz_list.append(tz)
+    except KeyError:
+        await bot.send_message(call.from_user.id,
+                               _("Invalid Country code\nFind Your code here https://telegra.ph/country-codes-03-08"))
+        return
+
+    new_user = False
+
+    if await state.get_state() == NewUser.ask_location:
+        new_user = True
+
+    await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_country_list_kb(tz_list, new_user))
+
+
+@router.message(AskCountry.ask_country)
+@router.message(NewUser.ask_location)
+async def show_country_timezones(message: Message, bot: Bot, state: FSMContext):
+    tz_list = []
+
+    try:
+        for tz in pytz.country_timezones(message.text):
+            tz_list.append(tz)
+    except KeyError:
+        await bot.send_message(message.from_user.id,
+                               _("Invalid Country code\nFind Your code here https://telegra.ph/country-codes-03-08"))
+        return
+
+    new_user = False
+
+    if await state.get_state() == NewUser.ask_location:
+        new_user = True
+
+    data = await state.get_data()
+
+    await bot.delete_message(message.from_user.id, message.message_id)
+
+    await bot.edit_message_text(_("choose_timezone"), message.from_user.id, data.get("tmp_id"),
+                                reply_markup=tzm.timezone_country_list_kb(tz_list, new_user))
 
 
 #config schedule
@@ -786,7 +859,7 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
 
         data = await state.get_data()
         config_time = await timecom.localize_time_to_utc(data.get('hours'), data.get('minutes'),
-                                                   await dbuc.get_timezone(session, call.from_user.id))
+                                                         await dbuc.get_timezone(session, call.from_user.id))
 
         await dbuc.set_schedule_time(session, call.from_user.id, config_time)
         await call.answer(_("schedule_updated"), show_alert=True)

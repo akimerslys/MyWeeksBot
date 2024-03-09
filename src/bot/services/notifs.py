@@ -184,8 +184,8 @@ async def get_all_notifs(session: AsyncSession) -> list[NotifModel]:
 
     result = await session.execute(query)
     logger.debug(f"got all notifs")
-    users = result.scalars()
-    return list(users)
+    notifs = result.scalars()
+    return list(notifs)
 
 
 async def count_notif(session: AsyncSession) -> int:

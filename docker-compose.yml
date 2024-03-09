@@ -45,7 +45,7 @@ services:
       - ADMIN_USERS=postgres,${DB_USER}
       - AUTH_TYPE=scram-sha-256
     ports:
-      - "5432:5432"
+      - ${DB_PORT}:${DB_PORT}
     depends_on:
       - postgres
     networks:
@@ -82,9 +82,6 @@ services:
       - .env
     networks:
       - app
-    depends_on:
-        - postgres
-        - redis
 
 
 networks:

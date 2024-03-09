@@ -2,7 +2,7 @@
 help:
 	@echo "  bot-run		Starts the bot (for docker-compose)"
 	@echo "  scheduler-run	Starts the scheduler (for docker-compose)"
-	@echo "  generate	Generate a new migration"
+	@echo "  generate	Generate a new migration with make generate m=msg  "
 	@echo "  migrate	Apply migrations"
 	@echo "  rebuild  	Rebuilding images"
 	@echo "  start 		Start with docker-compose"
@@ -35,12 +35,10 @@ requirements:
 # Alembic utils
 .PHONY: generate
 generate:
-	source .env
-	poetry run alembic revision --m="$(NAME)" --autogenerate
+	poetry run alembic revision --autogenerate -m "$(m)"
 
 .PHONY: migrate
 migrate:
-	source .env
 	poetry run alembic upgrade head
 
 #language utils
@@ -71,6 +69,15 @@ rebuildbot:
 	docker rmi myweeksbot_bot
 	docker-compose up --build bot
 
+
+.PHONY: rebuildscheduler
+rebuildscheduler:
+	docker stop $$(docker ps -qf "ancestor=myweeksbot_scheduler")
+	docker rm $$(docker ps -aqf "ancestor=myweeksbot_scheduler")
+	docker rmi myweeksbot_scheduler
+	docker-compose up --build scheduler
+
+
 .PHONY: mem
 mem:
 	@echo "DOCKER:"
@@ -84,9 +91,6 @@ mem:
 
 
 .PHONY: clear
-clear:	
-	docker buildx prune -f
-	docker image prune
-	docker network prune
+clear:
+	docker system prune -a
 	sudo sync && echo 3 > /proc/sys/vm/drop_caches
-	sudo free -h

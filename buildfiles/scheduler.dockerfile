@@ -27,6 +27,7 @@ COPY fonts/ fonts/
 COPY media/ media/
 COPY src/core src/core
 COPY src/bot/services src/bot/services
+COPY src/bot/utils/csv_converter.py src/bot/utils/csv_converter.py
 COPY src/image_generator src/image_generator
 COPY src/database src/database
 COPY src/cache src/cache

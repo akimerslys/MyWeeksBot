@@ -32,6 +32,7 @@ async def add_user(
     first_name: str,
     language_code: str | None = "en",
     timezone: str = "UTC",
+    active: bool = False,
 ) -> None:
     """Add a new user to the database."""
     user_id: int = user_id
@@ -47,7 +48,7 @@ async def add_user(
         language_code=language_code,
         timezone=timezone,
         is_blocked=False,
-        active=False
+        active=active
     )
 
     session.add(new_user)
@@ -69,14 +70,19 @@ async def user_exists(session: AsyncSession, user_id: int) -> bool:
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
 async def user_logged(session: AsyncSession, user_id: int) -> bool:
-    """Checks if the user registered ()"""
+    """Checks if the user exist and active ()"""
     logger.debug(f"Checking if user {user_id} active")
-    query = select(UserModel.id).filter_by(user_id=user_id, active=False).limit(1)
+    query = select(UserModel.active).filter_by(user_id=user_id).limit(1)
 
     result = await session.execute(query)
 
-    user = result.scalar_one_or_none()
-    return bool(user)
+    active = result.scalar_one_or_none()
+
+    active = bool(active)
+
+    logger.debug(f"user {user_id} is active: {active}")
+
+    return active
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
@@ -86,8 +92,11 @@ async def get_user_active(session: AsyncSession, user_id: int) -> bool:
     result = await session.execute(query)
 
     active = result.scalar_one_or_none()
-    return bool(active)
 
+    active = bool(active)
+    logger.debug("user active: " + str(active))
+
+    return active
 
 async def set_user_active(session: AsyncSession, user_id: int, active: bool) -> None:
     stmt = update(UserModel).where(UserModel.user_id == user_id).values(active=active)
@@ -270,6 +279,23 @@ async def get_schedule_time(session: AsyncSession, user_id: int) -> datetime.tim
     return schedule_time
 
 
+async def set_schedule_mode(session: AsyncSession, user_id: int, mode: bool) -> None:
+    stmt = update(UserModel).where(UserModel.user_id == user_id).values(schedule_mode=mode)
+
+    await session.execute(stmt)
+    await session.commit()
+    await clear_cache(get_schedule_mode, user_id)
+
+
+@cached(key_builder=lambda session, time: build_key(time))
+async def get_schedule_mode(session: AsyncSession, user_id: int) -> str | None:
+    query = select(UserModel.schedule_mode).filter_by(user_id=user_id)
+
+    result = await session.execute(query)
+
+    schedule_mode = result.scalar_one_or_none()
+    return bool(schedule_mode)
+
 async def get_schedule_users_by_time(session: AsyncSession, time: datetime.time) -> list[UserModel]:
     query = select(UserModel).filter_by(schedule_time=time)
 
@@ -320,6 +346,8 @@ async def delete_user(session: AsyncSession, user_id: int) -> None:
     await clear_cache(is_premium, user_id)
     await clear_cache(count_user_notifs, user_id)
     await clear_cache(get_user_max_notifs, user_id)
+    await clear_cache(get_schedule_time, user_id)
+    await clear_cache(get_schedule_mode, user_id)
     await clear_cache(is_blocked, user_id)
     await clear_cache(get_user_active, user_id)
 

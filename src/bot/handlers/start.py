@@ -120,6 +120,15 @@ async def guide_page(call: F.CallbackQuery):
     logger.info(f"User {call.from_user.id} switched to guide page {page}")"""
 
 
+@router.callback_query(F.data == "start_kb")
+async def start_kb(call: F.CallbackQuery, bot: Bot, state: FSMContext):
+    data = await state.get_data()
+    await call.message.edit_text(
+        text=_('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
+        reply_markup=start_menu_kb())
+    logger.info(f"User {call.from_user.id} switched to start menu")
+
+
 @router.callback_query(F.data == "new_lang_kb")
 async def new_lang(call: F.CallbackQuery):
     await call.message.edit_text(_("choose_lang"), reply_markup=new_lang_kb())
@@ -127,29 +136,36 @@ async def new_lang(call: F.CallbackQuery):
 
 @router.callback_query(F.data == "new_timezone_kb")
 async def new_timezone(call: F.CallbackQuery):
-    await call.message.edit_text(_("choose_tz"), reply_markup=timezone_simple_keyboard())
+    await call.message.edit_text(_("choose_tz"), reply_markup=timezone_simple_keyboard(False))
 
 
 @router.callback_query(F.data.startswith("set_new_lang_"))
 async def set_new_lang(call: F.CallbackQuery, bot: Bot, session: AsyncSession, state: FSMContext):
-    tmp_msg = await bot.send_message(call.from_user.id, _("WAIT_MSG"))
+    await call.message.edit_text(_("WAIT_MESSAGE"))
+    tmp_msg = await bot.send_message(call.from_user.id, _("WAIT_MESSAGE"))
     lang = call.data.split("_")[-1]
     if lang == "add":
         await call.answer(_("pls_do_registration"), show_alert=True)
         return
+
     await state.update_data(lang=lang)
+
     if not await dbuc.user_exists(session, call.from_user.id):
+
         await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, lang)
     else:
+
         await dbuc.set_language_code(session, call.from_user.id, lang)
 
     data = await state.get_data()
     await call.answer(_("lang_changed_to") + _("lang"))
+
     await bot.delete_messages(call.from_user.id, [tmp_msg.message_id, call.message.message_id])
     await bot.send_message(
         call.from_user.id,
         text=_('start_menu').format(lang=lang, tz=data.get('tz')),
         reply_markup=start_menu_kb())
+
     logger.info(f"New user {call.from_user.id} changed language to {lang}")
 
 
@@ -226,18 +242,29 @@ async def guide_complete(call: F.CallbackQuery, bot: Bot, state: FSMContext):
 async def complete_user_reg(call: F.CallbackQuery, session: AsyncSession, bot: Bot, state: FSMContext):
     id = await bot.send_message(call.from_user.id, _("WAIT_MESSAGE"))
     data = await state.get_data()
+
     if await dbuc.user_exists(session, call.from_user.id):
+
         await dbuc.set_user_active(session, call.from_user.id, True)
         await dbuc.set_language_code(session, call.from_user.id, data.get('lang'))
         await dbuc.set_timezone(session, call.from_user.id, data.get('tz'))
+
     else:
-        await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, data.get('lang'), data.get('tz'))
+        await dbuc.add_user(session, call.from_user.id, call.from_user.first_name,
+                            data.get('lang'), data.get('tz'), True)
+
     await bot.delete_messages(call.from_user.id, [id.message_id, call.message.message_id])
+
     if data.get('notif_id'):
+
         notif = await get_notif(session, data.get('notif_id'))
         await add_notif(session, notif.date, call.from_user.id, notif.text)
         await bot.send_message(call.from_user.id, _("deeplink_notif_added"))
+
     await state.clear()
+
     await call.answer(_("reg_completed"))
+
     await bot.send_message(call.from_user.id, _("please_ch_button"), reply_markup=main_kb())
+
     logger.info(f"User {call.from_user.id} completed registration")

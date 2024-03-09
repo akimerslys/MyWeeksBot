@@ -18,6 +18,7 @@ def new_lang_kb() -> InlineKeyboardMarkup:
     builder.add(InlineKeyboardButton(text="🇺🇦 Українська", callback_data="set_new_lang_ru"))
     builder.add(InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_new_lang_uk"))
     builder.add(InlineKeyboardButton(text=_("more_lang"), callback_data="set_new_lang_add"))
+    builder.add(InlineKeyboardButton(text=_("back"), callback_data="start_kb"))
     builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 

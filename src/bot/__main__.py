@@ -1,4 +1,5 @@
 import asyncio
+from datetime import timedelta
 
 from arq.connections import create_pool
 from loguru import logger
@@ -11,9 +12,6 @@ from src.bot.keyboards.default_commands import remove_default_commands, set_defa
 from src.bot.middlewares import register_middlewares
 
 
-__version__ = "0.8 (pre-release)"
-
-
 async def startup() -> None:
     logger.info("bot starting...")
     register_middlewares(dp)
@@ -22,7 +20,7 @@ async def startup() -> None:
     await set_default_commands(bot)
     await bot.delete_webhook(drop_pending_updates=True)
 
-    logger.success(f"bot started {__version__}")
+    logger.success(f"bot started")
 
 
 async def shutdown() -> None:
@@ -44,12 +42,14 @@ async def shutdown() -> None:
 
 
 async def main() -> None:
+
     logger.add(
         "logs/myweeks.log",
         level="DEBUG",
         format="{time} | {level} | {module}:{function}:{line} | {message}",
-        rotation="10 MB",
+        rotation="2:02",
         compression="zip",
+        backtrace=True
     )
 
     redis_pool = await create_pool(settings.redis_pool)

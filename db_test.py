@@ -1,10 +1,36 @@
 from PIL import Image, ImageDraw, ImageFont
+
+import pytz
 import time
 from datetime import datetime
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
-from services import get_user_schedule_day_time_text, get_user_schedule_by_day
+import pathlib
+import os
 from io import BytesIO
+
+from src.core.config import settings
+
+font_path = os.path.join(settings.FONTS_DIR, "OPENSANS-SEMIBOLD.ttf")
+
+usr_list = [
+    ("Monday", "10:00 AM", "Meeting with clients"),
+    ("Tuesday", "2:30 PM", "Project presentation"),
+    ("Wednesday", "11:00 AM", "Team brainstorming session"),
+    ("Thursday", "3:00 PM", "Training session"),
+    ("Friday", "9:00 AM", "Weekly review meeting"),
+    ("Saturday", "1:00 PM", "Lunch with colleagues"),
+    ("Sunday", "5:00 PM", "Personal time"),
+    ("Monday", "9:30 AM", "Project kickoff meeting"),
+    ("Tuesday", "4:00 PM", "Client follow-up call"),
+    ("Wednesday", "2:00 PM", "Deadline reminder"),
+    ("Thursday", "10:30 AM", "Team building activity"),
+    ("Friday", "11:30 AM", "Strategy planning session"),
+    ("Saturday", "12:00 PM", "Marketing campaign review"),
+    ("Sunday", "3:30 PM", "Family time"),
+    ("Monday", "8:00 AM", "Weekly progress report")
+]
+
+
 
 
 def days_of_week(day: str, num: int) -> int | str:
@@ -52,20 +78,24 @@ def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
     return wrapped_text
 
 
-async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> BytesIO:
-    user_list = await get_user_schedule_day_time_text(session, user_id)
+async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
     logger.debug(f"User list: {user_list}")
     start_time = time.time()
-    image = Image.open("media/week.jpeg")
+    image = Image.open(os.path.join(settings.MEDIA_DIR, "week.jpeg"))
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=16)
+    print(font_path)
+    print("/home/bot/MyWeeksBot/fonts/OPENSANS-SEMIBOLD.TTF")
+    font = ImageFont.truetype("/home/bot/MyWeeksBot/fonts/OPENSANS-SEMIBOLD.TTF", size=16, encoding="unic")
+
     user_list_sorted = (
         [(day, times, status) for day, times, status in
          sorted(user_list, key=lambda x: (days_of_week(x[0], 0)))])
+
     text_color = (255, 255, 255)
     height = 205
     text_position = 30
     last_day = 'Monday'
+
     for day, times, text in user_list_sorted:
         if last_day != day:
             last_day = day
@@ -108,27 +138,30 @@ async def generate_user_schedule_week(session: AsyncSession, user_id: int) -> By
     #return image_buffer
 
 
-async def generate_user_schedule_day(session: AsyncSession, user_id: int, day: int) -> None:
-    print(days_of_week('', day+1))
-    schedule_list = await get_user_schedule_by_day(session, user_id, days_of_week('', day+1))
+async def generate_user_schedule_day(schedule_list: list[tuple], daytime: datetime, tz: str) -> BytesIO:
+    dtime = daytime.astimezone(pytz.timezone(tz))
+    day = dtime.weekday()
+
     logger.debug(f"Schedule list: {schedule_list}")
+
     start_time = time.time()
-    image = Image.open("media/day.jpeg")
+    image = Image.open()
     draw = ImageDraw.Draw(image)
     text_color = (0, 0, 0)
 
     # DAY
-    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=44)
+    font = ImageFont.truetype(font_path, size=44, encoding="unic"
+)
     width = 130 if day in (2, 3, 5) else 155
     height = 56
     text_position = (width, height)
     draw.text(text_position, text=days_of_week('', day+1), fill=text_color, font=font)
     # DATE
-    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=20)
+    font = ImageFont.truetype(font_path, size=20)
     width = 372
     height = 105
     text_position = (width, height)
-    text = datetime.now().strftime("%d.%m")
+    text = dtime.strftime("%d.%m")
     draw.text(text_position, text=text, fill=text_color, font=font)
     # SCHEDULE
     text_color = (255, 255, 255)
@@ -145,31 +178,42 @@ async def generate_user_schedule_day(session: AsyncSession, user_id: int, day: i
         height += 40
         draw.text(text_position, text, fill=text_color, font=font)
 
-    image.save("one_with_text.jpeg")
+    #image.save("one_with_text.jpeg")
     total_time = time.time() - start_time
     logger.info(f"Generated image in: {total_time:.4f} seconds")
     if total_time > 5:
         logger.warning(f"Too long generation: {total_time:.4f} seconds")
-    image.show()
-    # image_buffer = BytesIO()
-    # image.save(image_buffer, format="JPEG")
-    # image_buffer.seek(0)
+    #image.show()
+    image_buffer = BytesIO()
+    image.save(image_buffer, format="JPEG")
+    image_buffer.seek(0)
 
-    # return image_buffer
-
-
-
+    return image_buffer
 
 
 if __name__ == '__main__':
-    from src.database import sessionmaker
     import asyncio
 
+    usr_list = [
+        ("Monday", "10:00 AM", "Meeting with clients"),
+        ("Tuesday", "2:30 PM", "Project presentation"),
+        ("Wednesday", "11:00 AM", "Team brainstorming session"),
+        ("Thursday", "3:00 PM", "Training session"),
+        ("Friday", "9:00 AM", "Weekly review meeting"),
+        ("Saturday", "1:00 PM", "Lunch with colleagues"),
+        ("Sunday", "5:00 PM", "Personal time"),
+        ("Monday", "9:30 AM", "Project kickoff meeting"),
+        ("Tuesday", "4:00 PM", "Client follow-up call"),
+        ("Wednesday", "2:00 PM", "Deadline reminder"),
+        ("Thursday", "10:30 AM", "Team building activity"),
+        ("Friday", "11:30 AM", "Strategy planning session"),
+        ("Saturday", "12:00 PM", "Marketing campaign review"),
+        ("Sunday", "3:30 PM", "Family time"),
+        ("Monday", "8:00 AM", "Weekly progress report")
+    ]
     async def main():
-        async with sessionmaker() as session:
-            await generate_user_schedule_week(session, 2111546062)
-            await asyncio.sleep(10)
-            await generate_user_schedule_day(session, 2111546062)
+        await generate_user_schedule_week(usr_list)
+
 
 
     asyncio.run(main())

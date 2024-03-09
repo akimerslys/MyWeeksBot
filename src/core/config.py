@@ -15,6 +15,8 @@ class BotSettings(EnvBaseSettings):
     RATE_LIMIT: float
     ADMINS_ID: list
     DEBUG: bool = True
+    BACKUP_CHAT_ID: int
+    LOGS_CHAT_ID: int
 
 
 class DBSettings(EnvBaseSettings):
@@ -58,9 +60,10 @@ class UserSettings(EnvBaseSettings):
 
 
 class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSettings):
-    PATH_DIR: Path = Path(__file__).absolute().parent.parent.parent
+    PROJ_DIR: Path = Path(__file__).absolute().parent.parent.parent
     BOT_DIR: Path = Path(__file__).absolute().parent.parent / "bot"
-    FONTS_DIR: str = f"{BOT_DIR}/fonts"
+    MEDIA_DIR: str = f"{PROJ_DIR}/media"
+    FONTS_DIR: str = f"{PROJ_DIR}/fonts"
     LOCALES_DIR: str = f"{BOT_DIR}/locales"
     I18N_DOMAIN: str = "messages"
 

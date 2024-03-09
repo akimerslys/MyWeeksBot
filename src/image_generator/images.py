@@ -1,11 +1,19 @@
-import pytz
+
 from PIL import Image, ImageDraw, ImageFont
+
+import pytz
 import time
 from datetime import datetime
 from loguru import logger
+
+import os
 from io import BytesIO
 
 from src.core.config import settings
+
+
+font_path = os.path.join(settings.FONTS_DIR, "OPENSANS-SEMIBOLD.TTF")
+media_path = settings.MEDIA_DIR
 
 
 def days_of_week(day: str, num: int) -> int | str:
@@ -56,9 +64,11 @@ def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
 async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
     logger.debug(f"User list: {user_list}")
     start_time = time.time()
-    image = Image.open("media/week.jpeg")
+    image = Image.open(os.path.join(settings.MEDIA_DIR, "week.jpeg"))
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(settings.FONTS_DIR + "OPENSANS-SEMIBOLD.ttf", size=16)
+    logger.debug(font_path)
+    font = ImageFont.truetype(font_path, size=16, encoding="unic")
+    #font = ImageFont.load_default()
 
     user_list_sorted = (
         [(day, times, status) for day, times, status in
@@ -118,18 +128,19 @@ async def generate_user_schedule_day(schedule_list: list[tuple], daytime: dateti
     logger.debug(f"Schedule list: {schedule_list}")
 
     start_time = time.time()
-    image = Image.open("media/day.jpeg")
+    image = Image.open(os.path.join(settings.MEDIA_DIR, "day.jpeg"))
     draw = ImageDraw.Draw(image)
     text_color = (0, 0, 0)
 
     # DAY
-    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=44)
+    font = ImageFont.truetype(font_path, size=44, encoding="unic"
+)
     width = 130 if day in (2, 3, 5) else 155
     height = 56
     text_position = (width, height)
     draw.text(text_position, text=days_of_week('', day+1), fill=text_color, font=font)
     # DATE
-    font = ImageFont.truetype("fonts/OPENSANS-SEMIBOLD.ttf", size=20)
+    font = ImageFont.truetype(font_path, size=20)
     width = 372
     height = 105
     text_position = (width, height)
@@ -163,3 +174,29 @@ async def generate_user_schedule_day(schedule_list: list[tuple], daytime: dateti
     return image_buffer
 
 
+"""if __name__ == '__main__':
+    import asyncio
+
+    usr_list = [
+        ("Monday", "10:00 AM", "Meeting with clients"),
+        ("Tuesday", "2:30 PM", "Project presentation"),
+        ("Wednesday", "11:00 AM", "Team brainstorming session"),
+        ("Thursday", "3:00 PM", "Training session"),
+        ("Friday", "9:00 AM", "Weekly review meeting"),
+        ("Saturday", "1:00 PM", "Lunch with colleagues"),
+        ("Sunday", "5:00 PM", "Personal time"),
+        ("Monday", "9:30 AM", "Project kickoff meeting"),
+        ("Tuesday", "4:00 PM", "Client follow-up call"),
+        ("Wednesday", "2:00 PM", "Deadline reminder"),
+        ("Thursday", "10:30 AM", "Team building activity"),
+        ("Friday", "11:30 AM", "Strategy planning session"),
+        ("Saturday", "12:00 PM", "Marketing campaign review"),
+        ("Sunday", "3:30 PM", "Family time"),
+        ("Monday", "8:00 AM", "Weekly progress report")
+    ]
+    async def main():
+        await generate_user_schedule_week(usr_list)
+
+
+
+    asyncio.run(main())"""

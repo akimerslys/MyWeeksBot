@@ -35,5 +35,3 @@ RUN poetry check && \
 
 CMD ["poetry", "run", "make", "bot-run"]
 #CMD ["sh", "poetry", "run", "python", "-m", "src.bot"]
-
-
