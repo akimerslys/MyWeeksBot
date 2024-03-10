@@ -41,7 +41,7 @@ async def send_message(ctx, chat_id, text):
 
 
 async def send_notif(ctx, chat_id, text):
-    await ctx["bot"].send_message(chat_id, f"Hey!\n{text}")
+    await ctx["bot"].send_message(chat_id, f"🔔 {text}")
     logger.success("SENT NOTIF TO USER {chat_id}")
 
 

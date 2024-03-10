@@ -3,7 +3,7 @@ import pytz
 from loguru import logger
 
 
-async def localize_datetime_to_utc(time: datetime, timezone: str) -> datetime:
+def localize_datetime_to_utc(time: datetime, timezone: str) -> datetime:
     """
     Convert time from user timezone to UTC
     :param timezone: str
@@ -14,7 +14,7 @@ async def localize_datetime_to_utc(time: datetime, timezone: str) -> datetime:
     return pytz.timezone(timezone).localize(time).astimezone(pytz.utc).replace(tzinfo=None)
 
 
-async def localize_datetimenow_to_timezone(timezone: str) -> datetime:
+def localize_datetimenow_to_timezone(timezone: str) -> datetime:
     """
     Convert current time to user timezone
     :param timezone: str
@@ -24,7 +24,7 @@ async def localize_datetimenow_to_timezone(timezone: str) -> datetime:
     return pytz.utc.localize(datetime.utcnow()).astimezone(pytz.timezone(timezone)).replace(tzinfo=None)
 
 
-async def localize_datetime_to_timezone(time: datetime, timezone: str) -> datetime:
+def localize_datetime_to_timezone(time: datetime, timezone: str) -> datetime:
     """
     Convert time to user timezone
     :param time: datetime
@@ -35,10 +35,9 @@ async def localize_datetime_to_timezone(time: datetime, timezone: str) -> dateti
     return pytz.utc.localize(time).astimezone(pytz.timezone(timezone)).replace(tzinfo=None)
 
 
-async def is_today(dtime: datetime, timezone: str) -> bool:
+def is_today(dtime: datetime, timezone: str) -> bool:
     """
     Check if time is today in user timezone
-    :param time: datetime
     :param timezone: str
     :return: bool
     """
@@ -47,7 +46,7 @@ async def is_today(dtime: datetime, timezone: str) -> bool:
     return datetime.today().astimezone(pytz.timezone(timezone)).strftime("%Y %m %d") == dtime.strftime("%Y %m %d")
 
 
-async def day_of_week_to_date(day, time, timezone):
+def day_of_week_to_date(day, time, timezone):
     """
     Convert day of week and time to datetime with user's timezone
     :param day:
@@ -77,7 +76,7 @@ async def day_of_week_to_date(day, time, timezone):
     return target_datetime_with_timezone.replace(tzinfo=None)
 
 
-async def localize_time_to_utc(hrs: str, minutes: str, timezone: str) -> time:
+def localize_time_to_utc(hrs: str, minutes: str, timezone: str) -> time:
     """
     Convert time from user timezone to UTC
     :param hrs: str

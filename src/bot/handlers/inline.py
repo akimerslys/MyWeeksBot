@@ -1,3 +1,5 @@
+from typing import Any
+
 from aiogram import Router, F, Bot, html
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineQueryResultCachedPhoto
 from aiogram.utils.i18n import gettext as _
@@ -8,6 +10,7 @@ from src.bot.services.notifs import get_user_notifs_sorted
 from src.bot.services.schedule import count_user_schedule
 from src.bot.services.users import user_logged, get_timezone
 from src.bot.keyboards.inline.inline import inline_add
+from src.bot.utils.time_localizer import localize_datetime_to_timezone
 
 from datetime import datetime
 
@@ -41,8 +44,18 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
             thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
             parse_mode="HTML"
         ))
-
         results.append(InlineQueryResultArticle(
+            id="0",
+            title=_("share_my_schedule"),
+            description=_("schedule_description_day"),
+            input_message_content=InputTextMessageContent(
+                message_text=_("generated with @myweeksbot")
+            ),
+            thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
+            parse_mode="HTML"
+        ))
+
+        """results.append(InlineQueryResultArticle(
             id="1",
             title=_("share_my_today_schedule"),
             description=_("schedule_description"),
@@ -51,7 +64,7 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
             ),
             thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
             parse_mode="HTML"
-        ))
+        ))"""
 
     user_notifs = await get_user_notifs_sorted(session, query.from_user.id)
 
@@ -62,15 +75,15 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
         logger.debug("payload: " + payload)
 
         link = await create_start_link(bot, payload, encode=True)
-        date_str = date.strftime("%d/%m/%Y %H:%M")
-        text_str = text
+        date_str: str = (localize_datetime_to_timezone(date, tz)).strftime("%d/%m/%Y %H:%M")
+        text_str: str = text
 
         results.append(InlineQueryResultArticle(
             id=str(id),            # may cause problems, so idk
             title=date_str,
-            description=text_str + _("Share"),
+            description=text_str,
             input_message_content=InputTextMessageContent(
-                message_text=_("🗓 <b>{date}</b> ({tz})\n\n💬 {text}").format(date=date_str, tz=tz, text=text_str)
+                message_text=_("inline_notif").format(date=date_str, tz=tz, text=text_str)
             ),
             thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
             parse_mode="HTML",

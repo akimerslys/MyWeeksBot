@@ -17,55 +17,77 @@ from src.bot.services import users as dbuc
 from src.bot.services.notifs import add_notif, get_notif
 from src.bot.utils.time_localizer import localize_datetime_to_timezone
 from src.bot.utils.states import NewUser
+from src.database.models import NotifModel
 
 router = Router(name="start")
 
 
 # TODO OPTIMIZE !!! !! !! !! ! !! !! OR GAY
+# TRAAASH CODDEEEEEEEEEEEEEEEE REWRITE IT
+
 
 @router.message(CommandStart(deep_link=True))
 async def start_message_deeplink(message: Message, bot: Bot, command: CommandObject, session: AsyncSession,
-                                  state: FSMContext):
-
-    if await state.get_state() is not NewUser.new_user:
-            await state.clear()
-            await state.set_state(NewUser.new_user)
-
+                                 state: FSMContext):
     args = command.args
     logger.debug(f"got args {args}")
 
-    if args != "inline_new":
+    payload = args
+
+    if args[0] or args != '_':
         payload = decode_payload(args)
-        logger.debug(f"got payload {payload}")
-        notif_args: list = payload.split("_", 2)
-        logger.debug(notif_args)
-        try:
 
-            shared_notif = await get_notif(session, int(notif_args[0]))
-            notif_date: str = (await localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime("%d/%m/%Y %H:%M")
+    logger.debug(f"got payload {payload}")
+    notif_args: list = payload.split("_", 2)
+    logger.debug(notif_args)
 
-        except (IntegrityError, ProgrammingError) as e:
+    shared_notif: NotifModel | None
+    notif_date: str
 
-            logger.error(f"Error while getting notif from payload: {e}")
+    try:
+
+        shared_notif = await get_notif(session, int(notif_args[0]))
+
+        if not shared_notif:
+            logger.error(f"Error while getting notif from payload: {payload}")
             await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
             return
 
-        await bot.send_message(message.from_user.id,
-                                   _("deeplink_got_notif").format(date=notif_date,
-                                                                  tz=notif_args[1],
-                                                                  text=shared_notif.text)
-                                   )
+    except (IntegrityError, ProgrammingError) as e:
 
-        await state.update_data(tz='UTC', lang='en', notif_id=int(notif_args[0]))
-
-    data = await state.get_data()
+        logger.error(f"Error while getting notif from payload: {e}")
+        await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
+        return
 
     if not await dbuc.user_logged(session, message.from_user.id):
+
+        await bot.send_message(message.from_user.id,
+                               _("deeplink_got_notif").format(
+                                   date=(localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime(
+                                       "%d/%m/%Y %H:%M"),
+                                   tz=notif_args[1],
+                                   text=shared_notif.text)
+                               )
+        if await state.get_state() is not NewUser.new_user:
+            await state.clear()
+            await state.set_state(NewUser.new_user)
+            await state.update_data(tz='UTC', lang='en', notif_id=int(notif_args[0]))
+
+        data = await state.get_data()
 
         await bot.send_message(message.from_user.id, _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
                                reply_markup=start_menu_kb())
     else:
-        
+        tz_usr: str = await dbuc.get_timezone(session, message.from_user.id)
+        await bot.send_message(message.from_user.id,
+                               _("notif_deeplink_logged").format(
+                                   date_usr=(localize_datetime_to_timezone(shared_notif.date, tz_usr)).strftime(
+                                       "%d/%m/%Y %H:%M"),
+                                   tz_usr=tz_usr,
+                                   date=shared_notif.date.strftime("%d/%m/%Y %H:%M"),
+                                   tz=notif_args[1],
+                                   text=shared_notif.text))
+        await add_notif(session, shared_notif.date, message.from_user.id, shared_notif.text)
         await bot.send_message(
             message.from_user.id,
             _("please_ch_button"),
@@ -79,8 +101,10 @@ async def start_message(message: Message, bot: Bot, session: AsyncSession, state
         if await state.get_state() is not NewUser.new_user:
             await state.clear()
             await state.set_state(NewUser.new_user)
-        await state.update_data(tz='UTC', lang='en')
+            await state.update_data(tz='UTC', lang='en')
+
         data = await state.get_data()
+
         await bot.send_message(
             message.from_user.id,
             _('start_menu').format(
@@ -121,7 +145,7 @@ async def guide_page(call: F.CallbackQuery):
 
 
 @router.callback_query(F.data == "start_kb")
-async def start_kb(call: F.CallbackQuery, bot: Bot, state: FSMContext):
+async def start_kb(call: F.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await call.message.edit_text(
         text=_('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
@@ -256,7 +280,6 @@ async def complete_user_reg(call: F.CallbackQuery, session: AsyncSession, bot: B
     await bot.delete_messages(call.from_user.id, [id.message_id, call.message.message_id])
 
     if data.get('notif_id'):
-
         notif = await get_notif(session, data.get('notif_id'))
         await add_notif(session, notif.date, call.from_user.id, notif.text)
         await bot.send_message(call.from_user.id, _("deeplink_notif_added"))

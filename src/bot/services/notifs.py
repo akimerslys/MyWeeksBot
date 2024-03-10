@@ -55,9 +55,9 @@ async def add_notif(
     #await clear_cache()
 
 
-async def get_notif(session: AsyncSession, id: int) -> NotifModel:
-    logger.debug(f"selected notif {id}")
-    query = select(NotifModel).filter_by(id=id)
+async def get_notif(session: AsyncSession, id_: int) -> NotifModel:
+    logger.debug(f"selected notif {id_}")
+    query = select(NotifModel).filter_by(id=id_)
 
     result = await session.execute(query)
 

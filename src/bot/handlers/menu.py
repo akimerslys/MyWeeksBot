@@ -203,9 +203,9 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
                 await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
                 return
             for day in days:
-                dtime = await timecom.day_of_week_to_date(day, time,
+                dtime = timecom.day_of_week_to_date(day, time,
                                                           await dbuc.get_timezone(session, call.from_user.id))
-                dtime_to_utc = await timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session,
+                dtime_to_utc = timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session,
                                                                                                      call.from_user.id))
                 await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
         for day in days:
@@ -296,7 +296,7 @@ async def process_simple_calendar(call: CallbackQuery, state: FSMContext, callba
     calendar = SimpleCalendar(
         locale=await dbuc.get_language_code(session, call.from_user.id), show_alerts=True
     )
-    user_time = await timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
+    user_time = timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
     calendar.set_dates_range(user_time - timedelta(days=1),
                              user_time + timedelta(days=365))
     selected, date = await calendar.process_selection(call, callback_data)
@@ -315,11 +315,11 @@ async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext, session: As
     await state.update_data(date=call.data[14:])
     await state.set_state(AddNotif.hours)
     await call.message.edit_text(_("choose_time_for_date").format(date=call.data[14:]))
-    if not await timecom.is_today(datetime.strptime(f"{call.data[14:]}", "%Y %m %d"),
+    if not timecom.is_today(datetime.strptime(f"{call.data[14:]}", "%Y %m %d"),
                                   await dbuc.get_timezone(session, call.from_user.id)):
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb())
     else:
-        date = await timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
+        date = timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb(int(date.strftime("%H"))))
 
 
@@ -440,7 +440,7 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
 
     try:
         id = await dbnc.add_notif(session,
-                                  await timecom.localize_datetime_to_utc(
+                                  timecom.localize_datetime_to_utc(
                                       datetime.strptime(f"{data.get('date')} {data.get('hours')} {data.get('minutes')}",
                                                         # converts user's time to utc format
                                                         "%Y %m %d %H %M"),
@@ -490,12 +490,13 @@ async def manage_notification(call: CallbackQuery, session: AsyncSession):
 
 @router.callback_query(F.data.startswith("notif_set_"))
 async def manage_notif(call: CallbackQuery, session: AsyncSession):
-    user_notif = await dbnc.get_notif(session, int(call.data[10:]))
+    user_notif = await dbnc.get_notif(session, int(call.data.split("_")[-1]))
     await call.message.edit_text(
         _("manage_one_notif").format(
             date=user_notif.date.strftime('%d %m %Y'),
             time=user_notif.date.strftime('%H:%M'),
             text=user_notif.text,
+            repeat=repeat_to_str(user_notif.repeat_daily, user_notif.repeat_weekly)
         ),
         reply_markup=mkb.notif_info_kb(user_notif)
     )
@@ -755,8 +756,7 @@ async def show_all_timezone(call: CallbackQuery):
 
 @router.callback_query(F.data == "timezone_country")
 async def show_country_timezone(call: CallbackQuery, state: FSMContext, session: AsyncSession):
-    msg = await call.message.edit_text(text=_("Please, write your country code (ex. US - United States, JP - Japan)\n\n"
-                                              "You can find your country code <a href=\"https://telegra.ph/country-codes-03-08\">here</a>"),
+    msg = await call.message.edit_text(text=_("timezone_contry_menu"),
                                        reply_markup=tzm.timezone_country_kb(),
                                        disable_web_page_preview=True)
 
@@ -781,7 +781,7 @@ async def show_country_timezones(call: CallbackQuery, bot: Bot, state: FSMContex
             tz_list.append(tz)
     except KeyError:
         await bot.send_message(call.from_user.id,
-                               _("Invalid Country code\nFind Your code here https://telegra.ph/country-codes-03-08"))
+                               _("timezone_country_invalide_code"), disable_web_page_preview=True)
         return
 
     new_user = False
@@ -802,7 +802,7 @@ async def show_country_timezones(message: Message, bot: Bot, state: FSMContext):
             tz_list.append(tz)
     except KeyError:
         await bot.send_message(message.from_user.id,
-                               _("Invalid Country code\nFind Your code here https://telegra.ph/country-codes-03-08"))
+                               _("timezone_country_invalide_code"), disable_web_page_preview=True)
         return
 
     new_user = False
@@ -858,13 +858,16 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
         await call.message.edit_reply_markup(reply_markup=mkb.loading())
 
         data = await state.get_data()
-        config_time = await timecom.localize_time_to_utc(data.get('hours'), data.get('minutes'),
+        config_time = timecom.localize_time_to_utc(data.get('hours'), data.get('minutes'),
                                                          await dbuc.get_timezone(session, call.from_user.id))
 
         await dbuc.set_schedule_time(session, call.from_user.id, config_time)
         await call.answer(_("schedule_updated"), show_alert=True)
+        await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.schedule_kb())
+    else:
 
-    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.schedule_kb())
+        await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
+
     await state.clear()
 
 

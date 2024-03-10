@@ -4,7 +4,7 @@ from aiogram.utils.i18n import gettext as _
 
 def inline_add(link: str):
     buttons = [
-        [InlineKeyboardButton(text=_("Add notification!"), url=link)]
+        [InlineKeyboardButton(text=_("add_notif_inline"), url=link)]
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)

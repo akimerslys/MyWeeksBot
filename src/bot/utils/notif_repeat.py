@@ -1,8 +1,10 @@
-async def repeat_to_str(daily: bool, weekly: bool) -> str:
+from aiogram.utils.i18n import gettext as _
+
+def repeat_to_str(daily: bool, weekly: bool) -> str:
     if daily and weekly:
-        return "Monthly"
+        return ("repeat_month")
     if daily:
-        return "Daily"
+        return ("repeat_day")
     if weekly:
-        return "Weekly"
-    return "One time"
+        return ("repeat_week")
+    return ("repeat_none")
