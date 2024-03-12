@@ -1,12 +1,11 @@
-import pytz
 from aiogram import Router, Bot, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, MessageEntity
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.utils.i18n import gettext as _
 from aiogram.utils.payload import decode_payload
 from aiogram.exceptions import TelegramBadRequest
-from loguru import logger
+from aiogram.utils.formatting import Spoiler, Text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 
@@ -15,9 +14,14 @@ from src.bot.keyboards.inline.menu import main_kb
 from src.bot.keyboards.inline.timezone import timezone_simple_keyboard
 from src.bot.services import users as dbuc
 from src.bot.services.notifs import add_notif, get_notif
-from src.bot.utils.time_localizer import localize_datetime_to_timezone
+from src.bot.utils.time_localizer import localize_datetime_to_timezone, localize_datetime_to_utc, is_past, is_future
 from src.bot.utils.states import NewUser
 from src.database.models import NotifModel
+from src.bot.utils import error_manager as err
+
+from datetime import datetime
+import pytz
+from loguru import logger
 
 router = Router(name="start")
 
@@ -25,17 +29,98 @@ router = Router(name="start")
 # TODO OPTIMIZE !!! !! !! !! ! !! !! OR GAY
 # TRAAASH CODDEEEEEEEEEEEEEEEE REWRITE IT
 
+async def send_menu(bot, id):
+    await bot.send_message(
+        id,
+        _("please_ch_button"),
+        reply_markup=main_kb()
+    )
 
-@router.message(CommandStart(deep_link=True))
-async def start_message_deeplink(message: Message, bot: Bot, command: CommandObject, session: AsyncSession,
-                                 state: FSMContext):
-    args = command.args
-    logger.debug(f"got args {args}")
 
-    payload = args
+async def check_state(state: FSMContext):
+    if await state.get_state() is not NewUser.new_user:
+        await state.clear()
+        await state.set_state(NewUser.new_user)
+        await state.update_data(tz='UTC', lang='en')
 
-    if args[0] or args != '_':
+
+async def send_start_menu(bot: Bot, state: FSMContext, id):
+    data = await state.get_data()
+    await bot.send_message(id,
+                           _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
+                           reply_markup=start_menu_kb())
+
+
+async def new_user_menu(bot: Bot, state: FSMContext, id):
+    await check_state(state)
+    await send_start_menu(bot, state, id)
+
+
+async def send_deeplink_notif(bot: Bot, state: FSMContext, session: AsyncSession, id, date: datetime, text, tz='UTC'):
+    logger.debug(f"tz = {tz}, date = {date}")
+    if not await dbuc.user_logged(session, id):
+        await bot.send_message(id,
+                               _("deeplink_got_notif").format(
+                                   date=(localize_datetime_to_timezone(date, tz)).strftime("%d/%m/%Y %H:%M"),
+                                   tz=tz,
+                                   text=text))
+        await check_state(state)
+        await new_user_menu(bot, state, id)
+    else:
+        tz_usr = await dbuc.get_timezone(session, id)
+        if tz != tz_usr:
+            date = localize_datetime_to_timezone(date, tz_usr)
+            tz = tz_usr
+
+        await bot.send_message(id,
+                               _("notif_deeplink_logged").format(
+                                   date=date.strftime("%d/%m/%Y %H:%M"),
+                                   tz=tz,
+                                   text=text,
+                               ))
+
+        await add_notif(session, date, id, text)
+        await send_menu(bot, id)
+
+
+async def process_deeplink_date(bot, state, session, args, id):
+    # _date_text_tz
+    args_list = args.split("_", 4)
+    logger.debug(f"got args list {args_list}")
+    date_utc: datetime
+    date_: datetime
+    text: str = ''
+    tz: str = 'UTC'
+
+    if not await err.check_date(args_list[1], bot, id): return
+
+    date_ = datetime.strptime(args_list[1], '%Y-%m-%d-%H-%M')
+
+    # rounding minute to 0 or 5
+    minute = (date_.minute + 2) // 5 * 5
+    date_.replace(minute=minute)
+
+    if len(args_list) > 2:          #checking for text
+        text = args_list[2]
+        if len(args_list) > 3:      #checking for tz
+            if await err.check_tz(args_list[3], bot, id): return
+        tz = args_list[3]
+
+    logger.debug(date_)
+    if not await err.check_date_ranges(date_, bot, id, tz): return
+
+    await send_deeplink_notif(bot, state, session, id, date_, text, tz)
+    logger.debug(f"deeplink sended for {id}")
+    await state.update_data(notif_date=date_.timestamp(), notif_text=text)
+    return
+
+
+async def process_deeplink_shared(bot, state, session, args, id):
+    try:
         payload = decode_payload(args)
+    except ValueError:
+        await bot.send_message(id, "Invalid link")
+        return
 
     logger.debug(f"got payload {payload}")
     notif_args: list = payload.split("_", 2)
@@ -44,80 +129,39 @@ async def start_message_deeplink(message: Message, bot: Bot, command: CommandObj
     shared_notif: NotifModel | None
     notif_date: str
 
-    try:
+    shared_notif: bool | NotifModel = await err.check_notif(session, bot, id, int(notif_args[0]))
+    if not shared_notif or not await err.check_date_ranges(shared_notif.date, bot, id): return
 
-        shared_notif = await get_notif(session, int(notif_args[0]))
+    await send_deeplink_notif(bot, state, session, id, shared_notif.date, shared_notif.text, notif_args[1])
+    await state.update_data(notif_id=shared_notif.id)
+    return
 
-        if not shared_notif:
-            logger.error(f"Error while getting notif from payload: {payload}")
-            await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
-            return
 
-    except (IntegrityError, ProgrammingError) as e:
+@router.message(CommandStart(deep_link=True))
+async def start_message_deeplink(message: Message, bot: Bot, command: CommandObject, session: AsyncSession,
+                                 state: FSMContext):
+    id = message.from_user.id
+    args = command.args
+    logger.debug(f"got args {args}")
 
-        logger.error(f"Error while getting notif from payload: {e}")
-        await bot.send_message(message.from_user.id, _("ERROR_MESSAGE"))
+    if args == 'inline_new':
+        await check_state(state)
+        await send_start_menu()
         return
 
-    if not await dbuc.user_logged(session, message.from_user.id):
-
-        await bot.send_message(message.from_user.id,
-                               _("deeplink_got_notif").format(
-                                   date=(localize_datetime_to_timezone(shared_notif.date, notif_args[1])).strftime(
-                                       "%d/%m/%Y %H:%M"),
-                                   tz=notif_args[1],
-                                   text=shared_notif.text)
-                               )
-        if await state.get_state() is not NewUser.new_user:
-            await state.clear()
-            await state.set_state(NewUser.new_user)
-            await state.update_data(tz='UTC', lang='en', notif_id=int(notif_args[0]))
-
-        data = await state.get_data()
-
-        await bot.send_message(message.from_user.id, _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
-                               reply_markup=start_menu_kb())
+    if args[0] == '_':
+        await process_deeplink_date(bot, state, session, args, id)
     else:
-        tz_usr: str = await dbuc.get_timezone(session, message.from_user.id)
-        await bot.send_message(message.from_user.id,
-                               _("notif_deeplink_logged").format(
-                                   date_usr=(localize_datetime_to_timezone(shared_notif.date, tz_usr)).strftime(
-                                       "%d/%m/%Y %H:%M"),
-                                   tz_usr=tz_usr,
-                                   date=shared_notif.date.strftime("%d/%m/%Y %H:%M"),
-                                   tz=notif_args[1],
-                                   text=shared_notif.text))
-        await add_notif(session, shared_notif.date, message.from_user.id, shared_notif.text)
-        await bot.send_message(
-            message.from_user.id,
-            _("please_ch_button"),
-            reply_markup=main_kb()
-        )
+        await process_deeplink_shared(bot, state, session, args, id)
 
 
 @router.message(CommandStart(deep_link=False))
 async def start_message(message: Message, bot: Bot, session: AsyncSession, state: FSMContext):
-    if not await dbuc.user_logged(session, message.from_user.id):
-        if await state.get_state() is not NewUser.new_user:
-            await state.clear()
-            await state.set_state(NewUser.new_user)
-            await state.update_data(tz='UTC', lang='en')
-
-        data = await state.get_data()
-
-        await bot.send_message(
-            message.from_user.id,
-            _('start_menu').format(
-                lang=data.get('lang'), tz=data.get('tz')),
-            reply_markup=start_menu_kb()
-        )
-
+    if await dbuc.user_logged(session, message.from_user.id):
+        await send_menu(bot, message.from_user.id)
     else:
-        await bot.send_message(
-            message.from_user.id,
-            _("please_ch_button"),
-            reply_markup=main_kb()
-        )
+        await check_state(state)
+        await send_start_menu(bot, state, message.from_user.id)
 
 
 """@router.callback_query(F.data.startswith("set_new_lang_"))
@@ -175,10 +219,8 @@ async def set_new_lang(call: F.CallbackQuery, bot: Bot, session: AsyncSession, s
     await state.update_data(lang=lang)
 
     if not await dbuc.user_exists(session, call.from_user.id):
-
         await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, lang)
     else:
-
         await dbuc.set_language_code(session, call.from_user.id, lang)
 
     data = await state.get_data()
@@ -282,6 +324,13 @@ async def complete_user_reg(call: F.CallbackQuery, session: AsyncSession, bot: B
     if data.get('notif_id'):
         notif = await get_notif(session, data.get('notif_id'))
         await add_notif(session, notif.date, call.from_user.id, notif.text)
+        await bot.send_message(call.from_user.id, _("deeplink_notif_added"))
+
+    elif data.get('notif_date'):
+        dt_ts = datetime.fromtimestamp(data.get('notif_date'))
+        logger.debug(f"notif ts = {dt_ts}, notif date = {datetime.fromtimestamp(data.get('notif_date'))}")
+        await add_notif(session, datetime.fromtimestamp(data.get('notif_date')), call.from_user.id,
+                        data.get('notif_text'))
         await bot.send_message(call.from_user.id, _("deeplink_notif_added"))
 
     await state.clear()

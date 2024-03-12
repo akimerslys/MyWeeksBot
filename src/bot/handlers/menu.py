@@ -60,8 +60,22 @@ router = Router(name="menu")
 
 # MAIN
 @router.callback_query(F.data == "main_kb")
-async def menu_back(call: CallbackQuery):
-    await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
+async def menu_back(call: CallbackQuery, session: AsyncSession, state: FSMContext):
+    if state.get_state:
+        await state.clear()
+    user = await dbuc.get_user(session, call.from_user.id)
+
+    await call.message.edit_text(_("👤 <b>{name}</b>:\n"
+                                   "🔔 Notifications {active_notifs}/{max_notifs}\n"
+                                   "⏰ Upcoming notification: {upcoming_notif}\n"
+                                   "🗓 {status}\n"
+                                   ).format(name=user.first_name,
+                                            active_notifs=user.active_notifs,
+                                            max_notifs=user.max_notifs,
+                                            upcoming_notif='',
+                                            status=_("🔓 Premium") if user.is_premium else _("🔒 Free")
+                                            ),
+                                 reply_markup=mkb.main_kb())
 
 
 # MY WEEKS
@@ -166,7 +180,7 @@ async def schedule_text_complete(message: Message, bot: Bot, state: FSMContext):
     await state.update_data(text=message.text[:31])
     await bot.send_message(
         message.from_user.id,
-        _("add_schedule_info").format(days=data.get('days'),
+        _("add_schedule_info").format(days=', '.join(map(str, data.get('days'))),
                                       hours=data.get('hours'),
                                       minutes=data.get('minutes'),
                                       text=message.text),
@@ -188,28 +202,35 @@ async def add_notifs_to_schedule(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.startswith("schedule_add_complete"))
 async def schedule_complete(call: CallbackQuery, state: FSMContext, session: AsyncSession):
     await call.message.edit_reply_markup(reply_markup=mkb.loading())
+
     if call.data[22:] == "no":
         await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.schedule_kb())
     else:
         data = await state.get_data()
-        days = data.get('days')
-        time = data.get('hours') + ":" + data.get('minutes')
-        if data.get('notify'):
-            user_notifs = await dbnc.count_user_notifs(session, call.from_user.id)
+        days: list | None = data.get('days')
+        time_ = data.get('hours') + ":" + data.get('minutes')
 
-            max_user_notifs = await dbuc.get_user_max_notifs(session, call.from_user.id)
-            if max_user_notifs <= user_notifs + len(days):
+        if data.get('notify'):
+            user_notifs: int = await dbuc.count_user_notifs(session, call.from_user.id)
+            max_user_notifs: int = await dbuc.get_user_max_notifs(session, call.from_user.id)
+            logger.debug(f"type - {type(days)}")
+            user_notifs = user_notifs + len(days)
+            logger.debug(f"got: {user_notifs})")
+            #logger.debug(f"should be {user_notifs}/{max_user_notifs} ({max_user_notifs}<={user_notifs} + {len(days)}")
+            #logger.debug(f"{}({type(user_notifs + len(days))} and {max_user_notifs}({type(max_user_notifs)}"
+            if max_user_notifs <= user_notifs:
                 await call.answer(_("limit_notifs"), show_alert=True)
                 await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
                 return
+
             for day in days:
-                dtime = timecom.day_of_week_to_date(day, time,
-                                                          await dbuc.get_timezone(session, call.from_user.id))
-                dtime_to_utc = timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session,
-                                                                                                     call.from_user.id))
+                dtime = timecom.day_of_week_to_date(day, time_, await dbuc.get_timezone(session, call.from_user.id))
+                dtime_to_utc = timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session, call.from_user.id))
                 await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
+
         for day in days:
-            await dbsc.add_schedule(session, call.from_user.id, day, time, data.get('text'))
+            await dbsc.add_schedule(session, call.from_user.id, day, time_, data.get('text'))
+
         await call.answer(_("schedule_updated"), show_alert=True)
         await call.message.edit_reply_markup(reply_markup=mkb.back_main_schedule())
     await state.clear()
@@ -316,7 +337,7 @@ async def add_notif_ask_hour(call: CallbackQuery, state: FSMContext, session: As
     await state.set_state(AddNotif.hours)
     await call.message.edit_text(_("choose_time_for_date").format(date=call.data[14:]))
     if not timecom.is_today(datetime.strptime(f"{call.data[14:]}", "%Y %m %d"),
-                                  await dbuc.get_timezone(session, call.from_user.id)):
+                            await dbuc.get_timezone(session, call.from_user.id)):
         await call.message.edit_reply_markup(reply_markup=mkb.hours_kb())
     else:
         date = timecom.localize_datetimenow_to_timezone(await dbuc.get_timezone(session, call.from_user.id))
@@ -425,18 +446,6 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
     data = await state.get_data()
     repeat_daily = data.get('repeat_daily')
     repeat_weekly = data.get('repeat_weekly')
-    if not await dbuc.is_premium(session, call.from_user.id) and repeat_daily and not repeat_weekly:
-        await call.answer(_("need_premium"), show_alert=True)
-        await state.clear()
-        await call.message.edit_reply_markup(reply_markup=mkb.add_notif_repeat_kb(0))
-        return
-
-    user_notifs_len = await dbuc.count_user_notifs(session, call.from_user.id)
-    max_user_notifs = await dbuc.get_user_max_notifs(session, call.from_user.id)
-    if user_notifs_len >= max_user_notifs:
-        await call.answer(_("limit_notifs"), show_alert=True)
-        await call.message.edit_reply_markup(reply_markup=mkb.back_main_premium())
-        return
 
     try:
         id = await dbnc.add_notif(session,
@@ -449,7 +458,11 @@ async def add_notification_finish(call: CallbackQuery, state: FSMContext, sessio
                                   data.get('text'),
                                   repeat_daily,
                                   repeat_weekly)
-
+        if not id:
+            await call.answer(_("limit_notifs"), show_alert=True)
+            await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
+            await state.clear()
+            return
     # TODO IF REPEAT_WEEK ASK TO ADD TO SCHEDULE
 
     except Exception as e:
@@ -491,6 +504,9 @@ async def manage_notification(call: CallbackQuery, session: AsyncSession):
 @router.callback_query(F.data.startswith("notif_set_"))
 async def manage_notif(call: CallbackQuery, session: AsyncSession):
     user_notif = await dbnc.get_notif(session, int(call.data.split("_")[-1]))
+    if not user_notif:
+        await call.answer("Notification does not exist")
+        return
     await call.message.edit_text(
         _("manage_one_notif").format(
             date=user_notif.date.strftime('%d %m %Y'),
@@ -554,7 +570,7 @@ async def manage_notif_active(call: CallbackQuery, session: AsyncSession):
 @router.callback_query(F.data.startswith("notif_delete_"))
 async def manage_notif_delete(call: CallbackQuery, session: AsyncSession):
     notif_id = int(call.data[13:])
-    await dbnc.delete_notif_fake(session, notif_id)
+    await dbnc.delete_notif(session, notif_id, call.from_user.id)
     await call.answer(_("notif_deleted"), show_alert=True)
     await call.message.edit_text(_("your_notifs"), reply_markup=mkb.manage_notifs_kb(
         await dbnc.get_user_notifs(session, call.from_user.id)))
@@ -859,7 +875,7 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
 
         data = await state.get_data()
         config_time = timecom.localize_time_to_utc(data.get('hours'), data.get('minutes'),
-                                                         await dbuc.get_timezone(session, call.from_user.id))
+                                                   await dbuc.get_timezone(session, call.from_user.id))
 
         await dbuc.set_schedule_time(session, call.from_user.id, config_time)
         await call.answer(_("schedule_updated"), show_alert=True)

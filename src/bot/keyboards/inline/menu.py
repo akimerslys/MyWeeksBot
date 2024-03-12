@@ -1,5 +1,7 @@
 import logging
 from datetime import datetime, timedelta
+
+from loguru import logger
 from pytz import timezone as tz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -139,12 +141,12 @@ def manage_schedule_kb() -> InlineKeyboardMarkup:
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def manage_schedule_day_kb(user_list: list):
+def manage_schedule_day_kb(user_list: list[tuple]):
     keyboard = InlineKeyboardBuilder()
-    print(user_list)
-    for user_sch in user_list:
-        keyboard.button(text=f"{user_sch.time} | {user_sch.text[:7] if user_sch.text else ''}",
-                        callback_data=f"manage_schedule_id_{user_sch.id}")
+    logger.debug(user_list)
+    for time, text, id_ in user_list:
+        keyboard.button(text=f"{time} | {text[:7] if text else ''}",
+                        callback_data=f"manage_schedule_id_{id_}")
     keyboard.button(text=_("back"), callback_data="manage_schedule")
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)

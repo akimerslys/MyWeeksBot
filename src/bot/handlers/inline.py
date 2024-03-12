@@ -45,7 +45,7 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
             parse_mode="HTML"
         ))
         results.append(InlineQueryResultArticle(
-            id="0",
+            id="1",
             title=_("share_my_schedule"),
             description=_("schedule_description_day"),
             input_message_content=InputTextMessageContent(

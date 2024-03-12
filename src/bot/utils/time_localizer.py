@@ -26,7 +26,7 @@ def localize_datetimenow_to_timezone(timezone: str) -> datetime:
 
 def localize_datetime_to_timezone(time: datetime, timezone: str) -> datetime:
     """
-    Convert time to user timezone
+    Convert utc time to user timezone
     :param time: datetime
     :param timezone: str
     :return: datetime
@@ -91,3 +91,23 @@ def localize_time_to_utc(hrs: str, minutes: str, timezone: str) -> time:
     result = timezone.localize(config_datetime).astimezone(pytz.utc).replace(tzinfo=None)
     logger.debug(f"localize_time_to_utc: timezone={timezone}, time={time}")
     return result.time()
+
+def is_past(date: datetime, timezone: str = 'UTC') -> bool:
+    """
+    Check if time is in the past in user timezone
+    :param timezone: str
+    :return: bool
+    """
+
+    logger.debug(f"running if_past_time, date: {date}, timezone: {timezone}")
+    return localize_datetimenow_to_timezone(timezone) > date + timedelta(minutes=5)
+
+
+def is_future(date: datetime) -> bool:
+    """
+    Check if time is in more than a year of now
+    :param date: datetime
+    :return: bool
+    """
+    logger.debug(f"running if_future_time, date: {date}")
+    return date > datetime.now() + timedelta(days=365)

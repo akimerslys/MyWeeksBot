@@ -1,4 +1,5 @@
 from __future__ import annotations
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -147,8 +148,9 @@ async def get_user_max_notifs(session: AsyncSession, user_id: int) -> int:
     query = select(UserModel.max_notifs).filter_by(user_id=user_id)
 
     result = await session.execute(query)
-
+    logger.debug(result)
     max_notifs = result.scalar_one_or_none()
+    logger.debug(f"counted max notif for user {user_id}, {max_notifs}")
     return max_notifs or None
 
 
@@ -159,6 +161,10 @@ async def update_max_notifs(session: AsyncSession, user_id: int, max_notifs: int
         stmt = update(UserModel).where(UserModel.user_id == user_id).values(max_notifs=UserModel.max_notifs + max_notifs)
     elif operator == "sub":
         stmt = update(UserModel).where(UserModel.user_id == user_id).values(max_notifs=UserModel.max_notifs - max_notifs)
+    else:
+        logger.error(f"Invalid operator {operator}, {user_id}")
+        return
+
     await session.execute(stmt)
     await session.commit()
 

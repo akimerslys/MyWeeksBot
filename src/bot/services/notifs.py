@@ -7,7 +7,7 @@ from sqlalchemy import func, select, update, asc, delete
 from src.cache.redis import build_key, cached, clear_cache
 from src.database.models import NotifModel
 
-from src.bot.services.users import inc_user_notifs, dec_user_notifs
+from src.bot.services.users import inc_user_notifs, dec_user_notifs, get_user_max_notifs
 
 from datetime import datetime, timedelta
 
@@ -33,14 +33,22 @@ async def add_notif(
     text: str | None = "",
     repeat_daily: bool | None = False,
     repeat_weekly: bool | None = False,
-) -> None:
+) -> bool | int:
     """Add a new user to the database."""
     date: datetime
     user_id: int = user_id
     text: str | None = text
     repeat_daily: bool | None = repeat_daily
     repeat_weekly: bool | None = repeat_weekly
+
     logger.info(f"adding notification for user {user_id}")
+
+    user_notifs_count = await count_user_notifs(session, user_id)
+    max_user_notifs = await get_user_max_notifs(session, user_id)
+
+    if user_notifs_count >= max_user_notifs:
+        return False
+
     new_notif = NotifModel(
         date=date,
         user_id=user_id,
@@ -48,11 +56,11 @@ async def add_notif(
         repeat_daily=repeat_daily,
         repeat_weekly=repeat_weekly,
     )
+
     await inc_user_notifs(session, user_id)
     session.add(new_notif)
     await session.commit()
     return new_notif.id
-    #await clear_cache()
 
 
 async def get_notif(session: AsyncSession, id_: int) -> NotifModel:
@@ -75,7 +83,7 @@ async def get_user_notifs(session: AsyncSession, user_id: int) -> list[NotifMode
     return list(notifs)
 
 
-async def get_user_notifs_id(sessions: AsyncSession, user_id: int) -> list:
+async def get_user_notifs_id(session: AsyncSession, user_id: int) -> list:
     
     query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
 
@@ -104,11 +112,11 @@ async def get_user_notifs_sorted(session: AsyncSession, user_id: int) -> list[tu
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
 async def count_user_notifs(session: AsyncSession, user_id: int) -> int:
-    query = select(NotifModel).filter_by(user_id=user_id)
+    query = select(func.count(NotifModel.id)).select_from(NotifModel).filter_by(user_id=user_id, active=True)
 
     result = await session.execute(query)
-    logger.debug(f"counted user notifs {user_id}")
-    count = result.scalar_one_or_none() or 0
+    count = result.scalar()
+    logger.debug(f"counted user notifs {user_id} | {count}")
     return count
 
 
@@ -135,19 +143,18 @@ async def update_notif_active(session: AsyncSession, id: int, active: bool) -> N
     await session.commit()
 
 
-async def delete_notif_fake(session: AsyncSession, id: int) -> None:
-    user_notif = await get_notif(session, id)
-    tmp_id = int("0" + str(user_notif.user_id))
-    stmt = update(NotifModel).where(NotifModel.id == id).values(user_id=tmp_id, active=False)
-    logger.debug(f"deleted notification {id}")
-    await dec_user_notifs(session, user_notif.user_id)
+async def delete_notif(session: AsyncSession, id: int, user_id) -> None:
+    logger.debug(f"deletin notification {id}")
+    stmt = delete(NotifModel).where(NotifModel.id == id)
+    await dec_user_notifs(session, user_id)
     await session.execute(stmt)
     await session.commit()
     await clear_cache(get_notif, id)
+    logger.debug(f"deleted notification {id}")
 
 
 async def get_notifs_by_date(session: AsyncSession, dtime: datetime):
-    query = select(NotifModel).filter_by(date=dtime)
+    query = select(NotifModel).filter_by(date=dtime, active=True)
 
     result = await session.execute(query)
     logger.debug(f"got notifs by date {dtime}")
@@ -177,6 +184,16 @@ async def update_notif_auto(session: AsyncSession,
     await session.execute(stmt)
     await session.commit()
     await clear_cache(get_notif, id)
+
+
+async def get_next_notif(session: AsyncSession, user_id: int) -> NotifModel:
+    query = select(NotifModel).filter_by(user_id=user_id, active=True).order_by(asc(NotifModel.date)).limit(1)
+
+    result = await session.execute(query)
+
+    notif = result.scalar_one_or_none()
+    logger.debug(f"got next notif for user {user_id}\n{notif}")
+    return notif
 
 
 async def get_all_notifs(session: AsyncSession) -> list[NotifModel]:

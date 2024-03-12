@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.utils.deep_linking import create_start_link
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select, func
 
@@ -48,3 +51,10 @@ async def export_tables(message: Message, bot: Bot, session: AsyncSession) -> No
 
     time_end = round(time.time() - start_time, 4)
     logger.success(f"exported all in {time_end} seconds")
+
+
+@router.message(Command(commands="test"), IsAdmin(settings.ADMINS_ID))
+async def test(message: Message, bot: Bot) -> None:
+    now = datetime.now()
+    link = await create_start_link(bot, now.strftime("_%Y-%m-%d-%H-%M"), encode=False)
+    await bot.send_message(settings.ADMINS_ID[0], link)

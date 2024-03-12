@@ -79,11 +79,14 @@ async def get_user_schedule_day_time_text(session: AsyncSession, user_id: int) -
 
 @cached(key_builder=lambda session, id: build_key(id))
 async def count_user_schedule(session: AsyncSession, user_id: int) -> int:
-    query = select(ScheduleModel).filter_by(user_id=user_id)
+    query = select(func.count()).where(ScheduleModel.user_id == user_id)
 
     result = await session.execute(query)
-    logger.debug(f"counted user schedule {user_id}")
+
     count = result.scalar_one_or_none() or 0
+
+    logger.debug(f"counted user schedule {user_id}: {count}")
+
     return count
 
 
@@ -117,7 +120,7 @@ async def get_user_schedule_by_day(session: AsyncSession, user_id: int, day: str
     result = await session.execute(query)
     logger.debug(f"got user schedule by day {day}")
     notifs = result.scalars()
-    schedule_list = [(schedule.time, schedule.text) for schedule in notifs]
+    schedule_list = [(schedule.time, schedule.text, schedule.id) for schedule in notifs]
     return list(schedule_list)
 
 

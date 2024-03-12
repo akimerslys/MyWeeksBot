@@ -25,3 +25,5 @@ async def generating_key(message: Message, bot: Bot, session: AsyncSession):
     await bot.send_message(
         message.from_user.id, f"{'' + await add_key(session) if not days else '' + await add_key(session, int(days))}")
     logger.info(f"@{message.from_user.username}({message.from_user.id}) created new key")
+
+
