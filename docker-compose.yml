@@ -13,7 +13,7 @@ services:
       - app
 
   postgres:
-    image: postgres:16
+    image: postgres:14-alpine
     container_name: postgres
     restart: always
     env_file:

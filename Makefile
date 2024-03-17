@@ -51,7 +51,7 @@ update-locale:
 # Docker utils
 .PHONY: rebuild
 rebuild:
-	docker-compose down --remove-orphans
+	docker-compose down --remove-orphans ${MODE}
 	docker-compose up --force-recreate --build
 
 .PHONY: start

@@ -28,6 +28,8 @@ arq = "^0.25.0"
 pipenv = "^2023.12.1"
 loguru = "^0.7.2"
 pydantic-settings = "^2.2.1"
+pip = "^24.0"
+psycopg2-binary = "^2.9.9"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -23,13 +23,13 @@ class DBSettings(EnvBaseSettings):
     DB_HOST: str
     DB_USER: str
     DB_PASS: str
-    DB_PORT: str
+    DB_PORT: int = 5432
     DB_NAME: str
 
     @property
     def database_url(self):
         return f"postgresql+asyncpg://{self.DB_USER}{':' + self.DB_PASS if self.DB_PASS else ''}" \
-               f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+               f"@{self.DB_HOST}:{str(self.DB_PORT)}/{self.DB_NAME}"
 
 
 class KeyGenSettings(EnvBaseSettings):

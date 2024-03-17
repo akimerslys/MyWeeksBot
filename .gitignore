@@ -245,5 +245,5 @@ logs/myweeks.log
 ignore
 db_test.py
 buildfiles/redis.conf
-
+alembic.ini
 alembic_copy.ini
