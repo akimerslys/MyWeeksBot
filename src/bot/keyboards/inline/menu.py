@@ -198,7 +198,6 @@ def add_notif_first_kb(timezone_str: str = "UTC") -> InlineKeyboardMarkup:
 
 
 def hours_kb(hour: int = 0) -> InlineKeyboardMarkup:
-    hour += 1  # TODO CHANGE TO +1
     builder = InlineKeyboardBuilder()
     if hour < 23:
         for index in range(hour, 24):

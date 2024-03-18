@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from sqlalchemy import func, select, update, delete
 
+from src.bot.services.notifs import get_all_notifs
 from src.cache.redis import build_key, cached, clear_cache
 from src.database.models import ScheduleModel
 

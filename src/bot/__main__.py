@@ -4,6 +4,7 @@ from datetime import timedelta
 from arq.connections import create_pool
 from loguru import logger
 
+from src.bot.scheduler.main import WorkerSettings
 from src.core.config import settings
 from src.bot.loader import dp, bot
 
@@ -47,7 +48,7 @@ async def main() -> None:
         "logs/myweeks.log",
         level="DEBUG",
         format="{time} | {level} | {module}:{function}:{line} | {message}",
-        rotation="2:02",
+        rotation="00:03",
         compression="zip",
         backtrace=True
     )
@@ -57,6 +58,9 @@ async def main() -> None:
     dp.startup.register(startup)
 
     dp.shutdown.register(shutdown)
+
+    #worker = WorkerSettings()
+    #await worker.run(redis_pool)
 
     await dp.start_polling(bot, arqredis=redis_pool)
 

@@ -33,7 +33,7 @@ async def error_handler(event: ErrorEvent, bot: Bot):
 
     await bot.send_message(userid, "An error occurred while processing your request. We have been notified")
 
-    log_dir = os.path.join(settings.PROJ_DIR, "logs/myweeks.log")
+    log_dir = os.path.join(settings.LOGS_CHAT_ID, "logs/myweeks.log")
     document = FSInputFile(path=log_dir, filename="myweeks.log")
 
     for admin in settings.ADMINS_ID:

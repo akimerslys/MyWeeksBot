@@ -5,6 +5,8 @@ help:
 	@echo "  generate	Generate a new migration with make generate m=msg  "
 	@echo "  migrate	Apply migrations"
 	@echo "  rebuild  	Rebuilding images"
+	@echo "  kill  		Stop and delete docker-compose"
+	@echo "  rebuildbot  Rebuilding bot image"
 	@echo "  start 		Start with docker-compose"
 	@echo "  stop  		Stop docker-compose"
 	@echo "  dead  		Deleting Images"

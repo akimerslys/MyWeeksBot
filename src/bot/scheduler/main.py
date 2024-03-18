@@ -1,5 +1,5 @@
+import os
 import time
-from email.message import Message
 from typing import TYPE_CHECKING
 
 from aiogram.types import BufferedInputFile, FSInputFile
@@ -9,16 +9,15 @@ from src.bot.utils.csv_converter import convert_to_csv
 from src.database.models import UserModel, NotifModel, ScheduleModel
 
 if TYPE_CHECKING:
-    pass
-
-import asyncio
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import datetime
 from aiogram import Bot
-from arq import cron
+from arq import cron, run_worker
 from loguru import logger
 from src.core.config import settings
-from src.database.engine import sessionmaker
+from src.bot.loader import lock
+from src.core.redis_loader import redis_client
 from src.image_generator.images import generate_user_schedule_day
 from src.bot.services.users import get_schedule_users_by_time
 from src.bot.services.schedule import get_user_schedule_by_day
@@ -26,10 +25,9 @@ from src.bot.services.notifs import get_notifs_by_date, update_notif_auto
 
 
 async def startup(ctx):
-    ctx["bot"] = Bot(token=settings.TOKEN)
-    async with sessionmaker() as session:
-        ctx["session"] = session
-    ctx["lock"] = asyncio.Lock()
+
+    ctx["bot"] = Bot
+    ctx["session"] = AsyncSession
 
 
 async def shutdown(ctx):
@@ -78,7 +76,7 @@ async def generate_and_send_schedule(ctx):
     users_list = await get_schedule_users_by_time(session, dtime.time())
     for user in users_list:
         schedule_list = await get_user_schedule_by_day(session, user.user_id, days_of_week[dtime.weekday()])
-        async with ctx["lock"]:
+        async with lock:
             image_bytes = await generate_user_schedule_day(schedule_list, dtime, user.timezone)
             await ctx["bot"].send_photo(user.user_id,
                                  BufferedInputFile(image_bytes.getvalue(),
@@ -86,8 +84,16 @@ async def generate_and_send_schedule(ctx):
     logger.info(f"generated and sent schedules in {round(time.time() - start, 4)} seconds")
 
 
-async def backup_tables(ctx) -> None:
+async def send_logs(ctx) -> None:
+    logger.info(f"everyday log backup started")
+    log_dir = os.path.join(settings.LOGS_CHAT_ID, "logs/myweeks.log")
+    document = FSInputFile(path=log_dir, filename="myweeks.log")
+    await ctx["bot"].send_document(settings.LOGS_CHAT_ID,
+                                   document=document,
+                                   caption=f"logs {datetime.date(datetime.now())}")
 
+
+async def backup_tables(ctx) -> None:
     types = {
         "users": UserModel,
         "notifs": NotifModel,
@@ -127,13 +133,20 @@ async def backup_tables(ctx) -> None:
 
 class WorkerSettings:
     logger.info('initializing scheduler')
-    redis_settings = settings.redis_pool
+    redis_settings = redis_client
     on_startup = startup
     on_shutdown = shutdown
-    functions = [send_message, fetch_and_send_notifications, generate_and_send_schedule, backup_tables]
+    functions = [send_message, fetch_and_send_notifications, generate_and_send_schedule, backup_tables, send_logs]
     cron_jobs = [
         cron(fetch_and_send_notifications, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second=1),
         cron(generate_and_send_schedule, minute={0, 15, 30, 45}, second=55),
-        cron(backup_tables, hour=0, minute=1, second=0)
+        cron(backup_tables, hour=0, minute=1, second=0),
+        cron(send_logs, hour=0, minute=2, second=55)
     ]
+    logger.success('scheduler initialized')
 
+
+if __name__ == "main":
+    worker_settings = WorkerSettings()
+    run_worker(functions=worker_settings.functions, settings_cls=worker_settings.redis_settings,
+               on_startup=worker_settings.on_startup, on_shutdown=worker_settings.on_shutdown, cron_jobs=worker_settings.cron_jobs)

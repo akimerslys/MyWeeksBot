@@ -72,17 +72,6 @@ services:
     depends_on:
       - postgres
 
-  scheduler:
-    build:
-        context: .
-        dockerfile: buildfiles/scheduler.dockerfile
-    container_name: scheduler
-    restart: always
-    env_file:
-      - .env
-    networks:
-      - app
-
 
 networks:
   app:
