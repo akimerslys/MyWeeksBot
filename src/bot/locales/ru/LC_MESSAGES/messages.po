@@ -9,27 +9,29 @@ msgstr ""
 
 #: handlers/inline.py:29
 msgid "sign_in_inline"
-msgstr "вход в систему"
+msgstr "🔐 Регистрировать"
 
 #: handlers/inline.py:39 handlers/inline.py:49
 msgid "share_my_schedule"
-msgstr "поделиться_моим_расписанием"
+msgstr "Поделиться расписанием"
 
 #: handlers/inline.py:40
 msgid "schedule_description"
-msgstr "расписание_описание"
+msgstr "Поделитесь своим недельным расписанием!"
 
 #: handlers/inline.py:42 handlers/inline.py:52
 msgid "generated with @myweeksbot"
-msgstr "сгенерированный с помощью @myweeksbot"
+msgstr "Сгенерировано из @myweeksbot ❤️"
 
 #: handlers/inline.py:50
 msgid "schedule_description_day"
-msgstr "расписание_описание_дня"
+msgstr "Поделитесь сегодняшним расписанием!"
 
 #: handlers/inline.py:86
 msgid "inline_notif"
-msgstr "inline_notif"
+msgstr "🗓 <b>{дата}</b> ({tz})\n"
+"\n"
+"💬 {текст}"
 
 #: handlers/menu.py:68
 msgid "👤 <b>{name}</b>:\n"
@@ -37,318 +39,345 @@ msgid "👤 <b>{name}</b>:\n"
 "⏰ Upcoming notification: {upcoming_notif}\n"
 "🗓 {status}\n"
 ""
-msgstr "👤 <b>{имя}</b>:\n"
-"🔔 Уведомления {active_notifs}/{max_notifs}\n"
-"⏰ Предстоящее уведомление: {upcoming_notif}\n"
-"🗓 {status}\n"
-""
+msgstr ""
 
 #: handlers/menu.py:76
 msgid "🔓 Premium"
-msgstr "🔓 Премиум"
+msgstr "⭐️ Премия"
 
 #: handlers/menu.py:76
 msgid "🔒 Free"
-msgstr "🔒 Бесплатно"
+msgstr ""
 
 #: handlers/menu.py:87 handlers/menu.py:846
 msgid "schedule_configure"
-msgstr "расписание_конфигурации"
+msgstr "✍️ Давайте настроим ваше расписание\n"
+"🔔 Когда мы отправляем ваше ежедневное расписание?"
 
 #: handlers/menu.py:99 handlers/menu.py:634 handlers/start.py:222
 #: handlers/start.py:223 handlers/start.py:321
 msgid "WAIT_MESSAGE"
-msgstr "WAIT_MESSAGE"
+msgstr "⌛️ Подождите..."
 
 #: handlers/menu.py:110 handlers/menu.py:443 handlers/menu.py:479
 #: handlers/menu.py:665 handlers/menu.py:709 handlers/menu.py:927
 #: handlers/start.py:149 handlers/start.py:259 handlers/start.py:282
 msgid "ERROR_MESSAGE"
-msgstr "ERROR_MESSAGE"
+msgstr "⚙️ Ошибка, пожалуйста, используйте /report"
 
 #: handlers/menu.py:114 handlers/menu.py:207 handlers/menu.py:444
 #: handlers/menu.py:480 handlers/menu.py:887 handlers/menu.py:890
 #: handlers/menu.py:928 handlers/start.py:145 handlers/start.py:172
 #: handlers/start.py:260 handlers/start.py:315 handlers/start.py:349
 msgid "please_ch_button"
-msgstr "кнопка_кнопка"
+msgstr "Выберите один из вариантов ниже ⤵️"
 
 #: handlers/menu.py:143
 msgid "choose_days"
-msgstr "выбирать_дни"
+msgstr "📅 Выберите дни"
 
 #: handlers/menu.py:150
 msgid "choose_one_day"
-msgstr "выбрать_один_день"
+msgstr "📅 Выберите день"
 
 #: handlers/menu.py:152
 msgid "choose_hours"
-msgstr "выбрать_часы"
+msgstr "🕔 Выберите часы работы"
 
 #: handlers/menu.py:158 handlers/menu.py:352
 msgid "choose_minute"
-msgstr "выбрать_минуту"
+msgstr "🕔 Выберите минуту"
 
 #: handlers/menu.py:167
 msgid "add_text"
-msgstr "добавить_текст"
+msgstr "💬 Придумать название (до 30 символов)"
 
 #: handlers/menu.py:178 handlers/menu.py:372 keyboards/reply/skip.py:8
 msgid "Skip"
-msgstr "пропуск"
+msgstr "Мисс"
 
 #: handlers/menu.py:183
 msgid "add_schedule_info"
-msgstr "добавить_расписание_инфо"
+msgstr "📅 Дни: {дней}\n"
+"🕔 Время: {часы}:{минуты}\n"
+"💬 Текст: {text}"
 
 #: handlers/menu.py:222 handlers/menu.py:458
 msgid "limit_notifs"
-msgstr "лимит_notifs"
+msgstr "😔 Извините, вы исчерпали лимит уведомлений"
 
 #: handlers/menu.py:234 handlers/menu.py:886
 msgid "schedule_updated"
-msgstr "расписание_обновлённый"
+msgstr "✅ Расписание обновлено"
 
 #: handlers/menu.py:244
 msgid "no_schedule"
-msgstr "без_расписания"
+msgstr "🤷 ♂️ У вас еще нет расписания"
 
 #: handlers/menu.py:247 handlers/menu.py:279
 msgid "your_schedule"
-msgstr "ваш_расписание"
+msgstr "📝 Ваше расписание"
 
 #: handlers/menu.py:267
 msgid "manage_one_schedule"
-msgstr "управлять_одним_расписанием"
+msgstr "🗓 {день}\n"
+"🕔 Время: {time}\n"
+"💬 Текст: {text}"
 
 #: handlers/menu.py:278
 msgid "schedule_deleted"
-msgstr "расписание_удалено"
+msgstr "✅ Уничтоженный"
 
 #: handlers/menu.py:296
 msgid "choose_day"
-msgstr "выбирать_день"
+msgstr "📅 Выберите день"
 
 #: handlers/menu.py:309
 msgid "select_date"
-msgstr "дата выбора"
+msgstr "👇 Пожалуйста, выберите дату"
 
 #: handlers/menu.py:326 handlers/menu.py:338
 msgid "choose_time_for_date"
-msgstr "выбрать_время_для_даты"
+msgstr "🕔 Дата: {date}\n"
+"🕔 Выберите время:"
 
 #: handlers/menu.py:363 handlers/menu.py:529
 msgid "add_text_notif"
-msgstr "добавить_text_notif"
+msgstr "💬 Придумать название (до 30 символов)"
 
 #: handlers/menu.py:382
 msgid "add_notif_info"
-msgstr "добавить_notif_info"
+msgstr "📅 Дата: {}\n"
+"⏰ Время: {}:{}\n"
+"💬 Текст: {}"
 
 #: handlers/menu.py:450
 msgid "need_premium"
-msgstr "потребность_премиум"
+msgstr "😔 Извините, для того, чтобы воспользоваться этой функцией, вам необходимо приобрести премиум"
 
 #: handlers/menu.py:484
 msgid "notif_added"
-msgstr "уведомление_добавление"
+msgstr "✅ Добавлены уведомления"
 
 #: handlers/menu.py:496
 msgid "share_notif_link"
-msgstr "share_notif_link"
+msgstr "🔗 Ваша ссылка"
 
 #: handlers/menu.py:504
 msgid "no_notifs"
-msgstr "нет_notifs"
+msgstr "🤔 У вас еще нет уведомлений"
 
 #: handlers/menu.py:507 handlers/menu.py:580
 msgid "your_notifs"
-msgstr "ваши_notifs"
+msgstr "📝 Ваши уведомления"
 
 #: handlers/menu.py:516 handlers/menu.py:544 handlers/menu.py:565
 msgid "manage_one_notif"
-msgstr "управлять_одной_нотой"
+msgstr "📅 Дата: {date}\n"
+"⏰ Время: {time}\n"
+"📝 Текст: {text}\n"
+"{повтор}"
 
 #: handlers/menu.py:545 handlers/menu.py:566 handlers/menu.py:593
 #: keyboards/inline/menu.py:316
 msgid "active"
-msgstr "активный"
+msgstr "🟩 Активный"
 
 #: handlers/menu.py:545 handlers/menu.py:566 handlers/menu.py:593
 #: keyboards/inline/menu.py:316
 msgid "inactive"
-msgstr "неактивный"
+msgstr "🟥 Неактивный"
 
 #: handlers/menu.py:579
 msgid "notif_deleted"
-msgstr "уведомление_удалено"
+msgstr "✅ Уведомления удалены"
 
 #: handlers/menu.py:589
 msgid "profile_info"
-msgstr "информация о профиле"
+msgstr "👤 <b>{имя}</b>:\n"
+"🔔 Оповещения {active_notifs}/{max_notifs}\n"
+"⭐️ Дополнительные возможности: {extra}\n"
+"{premium_until} 🇬🇧 Язык: {lang}\n"
+"🕔 Часовой пояс: {tz}\n"
+"🕔 Расписание: {sch_time}"
 
 #: handlers/menu.py:594
 msgid "premium_until"
-msgstr "премиум_до тех пор, пока"
+msgstr "🕔 Премиум до:"
 
 #: handlers/menu.py:605
 msgid "profile_delete_confirm"
-msgstr "профиль_удалить_подтвердить"
+msgstr "😩 Вы уверены, что хотите уйти от нас?"
 
 #: handlers/menu.py:615
 msgid "Profile deleted, hope to see you again! ❤️‍🔥"
-msgstr "Профиль удален, надеюсь увидеть тебя снова! ❤️‍🔥"
+msgstr "Профиль удален, надеемся увидеть вас снова! ❤️‍🔥"
 
 #: handlers/menu.py:636
 msgid "lang_changed"
-msgstr "изменённый язык"
+msgstr "🌐 Язык изменен на"
 
 #: handlers/menu.py:636
 msgid "language"
-msgstr "язык"
+msgstr "🇺🇦 Украинский"
 
 #: handlers/menu.py:656 handlers/menu.py:667 handlers/menu.py:813
 #: handlers/menu.py:838
 msgid "choose_timezone"
-msgstr "выбрать_временную зону"
+msgstr "🕔 Выберите часовой пояс"
 
 #: handlers/menu.py:669 handlers/menu.py:746
 msgid "timezone_changed"
-msgstr "изменённый часовой пояс"
+msgstr "🕔 Часовой пояс изменен на {}"
 
 #: handlers/menu.py:681
 msgid "send_geo_location"
-msgstr "отправить_геолокацию"
+msgstr "📍 Отправьте геолокацию или нажмите кнопку ниже, чтобы отправить ее\n"
+"<i>Важное замечание: <u>Мы не храним геолокацию!</u></i>"
 
 #: handlers/menu.py:717
 msgid "timezone_geo_confirm"
-msgstr "timezone_geo_confirm"
+msgstr "🕔 Правильный ли этот часовой пояс? {timezone_str}\n"
+"Ваше время должно быть {dtime}"
 
 #: handlers/menu.py:727 handlers/menu.py:735 keyboards/inline/timezone.py:61
 msgid "cancel_location_btn"
-msgstr "отменить_location_btn"
+msgstr "Отменять"
 
 #: handlers/menu.py:750 handlers/start.py:52 handlers/start.py:121
 #: handlers/start.py:164 handlers/start.py:205 handlers/start.py:244
 #: handlers/start.py:267 handlers/start.py:312
 msgid "start_menu"
-msgstr "старт_меню"
+msgstr "👋 Привет, я MyWeeksBot!\n"
+"🇬🇧 Ваш язык <i>{lang}</i>\n"
+"🕔 Ваш часовой пояс <i>{tz}</i>\n"
+"✅ Чтобы начать пользоваться мной, пожалуйста, заполните регистрационную форму ниже"
 
 #: handlers/menu.py:762
 msgid "timezone_not_changed"
-msgstr "часовой пояс_не_изменён"
+msgstr "📛 Часовой пояс не изменился"
 
 #: handlers/menu.py:780
 msgid "timezone_contry_menu"
-msgstr "timezone_contry_menu"
+msgstr "🙏 Пожалуйста, выберите страну из меню\n"
+"или напишите код вашей страны (например, UA - Украина, cz - Чехия)\n"
+"\n"
+""
 
 #: handlers/menu.py:805 handlers/menu.py:826
 msgid "timezone_country_invalide_code"
-msgstr "timezone_country_invalide_code"
+msgstr "Неверный код страны\n"
+"С кодом страны можно ознакомиться, перейдя по ссылке https://telegra.ph/country-codes-03-08"
 
 #: handlers/menu.py:869
 msgid "schedule_configure_confirm"
-msgstr "schedule_configure_confirm"
+msgstr "✍️ Мы будем отправлять ваше ежедневное расписание каждый день в {hrs}:{min}, хорошо?"
 
 #: handlers/menu.py:900
 msgid "last_updates"
-msgstr "последние_обновления"
+msgstr "🗓 Последние обновления:"
 
 #: handlers/premium.py:27
 msgid "premium_activated"
-msgstr "премиум_активированный"
+msgstr "🎉 Ваш премиум {статус} на {дней} дней"
 
 #: handlers/premium.py:27
 msgid "extended"
-msgstr "расширенный"
+msgstr "Продвинутый"
 
 #: handlers/premium.py:27
 msgid "activated"
-msgstr "активированный"
+msgstr "Активированный"
 
 #: handlers/report.py:18
 msgid "report_start"
-msgstr "отчет_старт"
+msgstr "✍️ Отправьте отчет:"
 
 #: handlers/report.py:34
 msgid "report_finish"
-msgstr "завершение отчёта"
+msgstr "🥰 Спасибо! Ваш отчет отправлен разработчикам"
 
 #: handlers/start.py:113
 msgid "deeplink_got_notif"
-msgstr "deeplink_got_notif"
+msgstr "💛 Получено уведомление\n"
+"🗓 Дата: {date} ({tz})\n"
+"💬 Текст: {text}\n"
+"\n"
+"✅ <i>Завершите регистрацию, чтобы добавить его!</i>"
 
 #: handlers/start.py:137
 msgid "notif_deeplink_logged"
-msgstr "notif_deeplink_logged"
+msgstr "🗓 Уведомления {date_usr} ({tz_usr})\n"
+"(<i>{дата} ({tz})</i>)\n"
+"💬 {текст}"
 
 #: handlers/start.py:212
 msgid "choose_lang"
-msgstr "выбирать_язык"
+msgstr "🇺🇦 Выберите язык"
 
 #: handlers/start.py:217
 msgid "choose_tz"
-msgstr "выбирать_ц"
+msgstr "🕔 Выберите свой часовой пояс"
 
 #: handlers/start.py:226
 msgid "pls_do_registration"
-msgstr "pls_do_registration"
+msgstr "🙏 Пожалуйста, сначала завершите регистрацию"
 
 #: handlers/start.py:239
 msgid "lang_changed_to"
-msgstr "lang_changed_to"
+msgstr "🌐 Язык изменен на"
 
 #: handlers/start.py:239
 msgid "lang"
-msgstr "язык"
+msgstr "🇺🇦 Украинский"
 
 #: handlers/start.py:266
 msgid "tz_changed_answer"
-msgstr "tz_изменённый_ответ"
+msgstr "🕔 Часовой пояс изменен на {}"
 
 #: handlers/start.py:279
 msgid "guide_page_1"
-msgstr "руководство_страница_1"
+msgstr ""
 
 #: handlers/start.py:292
 msgid "guide_page_2"
-msgstr "руководство_страница_2"
+msgstr ""
 
 #: handlers/start.py:301
 msgid "guide_page_3"
-msgstr "руководство_страница_3"
+msgstr ""
 
 #: handlers/start.py:308
 msgid "thank_you_guide"
-msgstr "спасибо_вам_гид"
+msgstr "😍 Спасибо, что дочитали гайд!"
 
 #: handlers/start.py:339 handlers/start.py:343
 msgid "deeplink_notif_added"
-msgstr "deeplink_notif_added"
+msgstr "✅ Добавлены уведомления"
 
 #: handlers/start.py:347
 msgid "reg_completed"
-msgstr "рег_завершённый"
+msgstr "✅ Регистрация закрыта!"
 
 #: keyboards/inline/guide.py:7
 msgid "Language"
-msgstr "язык"
+msgstr "🇺🇦 Язык"
 
 #: keyboards/inline/guide.py:8
 msgid "Timezone"
-msgstr "Часовой пояс"
+msgstr "🕔 Часовой пояс"
 
 #: keyboards/inline/guide.py:9 keyboards/inline/menu.py:352
 msgid "guide"
-msgstr "руководство"
+msgstr "📖 Вручную"
 
 #: keyboards/inline/guide.py:10
 msgid "complete_registration"
-msgstr "полная_регистрация"
+msgstr "✅ Завершите регистрацию"
 
 #: keyboards/inline/guide.py:20 keyboards/inline/menu.py:367
 msgid "more_lang"
-msgstr "ещё_язык"
+msgstr ""
 
 #: keyboards/inline/guide.py:21 keyboards/inline/menu.py:32
 #: keyboards/inline/menu.py:42 keyboards/inline/menu.py:49
@@ -364,138 +393,138 @@ msgstr "ещё_язык"
 #: keyboards/inline/timezone.py:48 keyboards/inline/timezone.py:82
 #: keyboards/inline/timezone.py:94
 msgid "back"
-msgstr "обратно"
+msgstr "🔙 Назад"
 
 #: keyboards/inline/guide.py:30
 msgid "Prev"
-msgstr "Предварительно"
+msgstr "◀️ Предыдущий"
 
 #: keyboards/inline/guide.py:33
 msgid "Next"
-msgstr "Следующий"
+msgstr "➡️ Следующий"
 
 #: keyboards/inline/guide.py:35
 msgid "Complete"
-msgstr "Полный"
+msgstr "✅ Полный"
 
 #: keyboards/inline/inline.py:7
 msgid "add_notif_inline"
-msgstr "добавить_notif_inline"
+msgstr "🔔 Добавление уведомлений"
 
 #: keyboards/inline/menu.py:18
 msgid "notifications"
-msgstr "уведомления"
+msgstr "🔔 Уведомления"
 
 #: keyboards/inline/menu.py:19
 msgid "schedule"
-msgstr "график"
+msgstr "📈 Расписание"
 
 #: keyboards/inline/menu.py:20
 msgid "settings"
-msgstr "настройки"
+msgstr "⚙️ Дополнительные функции"
 
 #: keyboards/inline/menu.py:50 keyboards/inline/timezone.py:69
 msgid "confirm"
-msgstr "подтверждение"
+msgstr "✅ Подтверждать"
 
 #: keyboards/inline/menu.py:58 keyboards/inline/menu.py:126
 msgid "show_schedule"
-msgstr "показать_расписание"
+msgstr "🗓 Ваше расписание"
 
 #: keyboards/inline/menu.py:59
 msgid "update_schedule"
-msgstr "обновление_расписания"
+msgstr "🔄 График обновлений"
 
 #: keyboards/inline/menu.py:60
 msgid "manage_schedule"
-msgstr "управлять_расписанием"
+msgstr "🗓 Управление расписанием"
 
 #: keyboards/inline/menu.py:71
 msgid "workdays"
-msgstr "рабочие дни"
+msgstr "👨 💻 Будни"
 
 #: keyboards/inline/menu.py:81
 msgid "weekends"
-msgstr "выходные дни"
+msgstr "🛌 Выходные"
 
 #: keyboards/inline/menu.py:83
 msgid "next"
-msgstr "следующий"
+msgstr "➡️ Следующий"
 
 #: keyboards/inline/menu.py:115
 msgid "notify_off"
-msgstr "уведомление_выключение"
+msgstr "🔕 ОТ"
 
 #: keyboards/inline/menu.py:117
 msgid "notify_on"
-msgstr "уведомление_включение"
+msgstr "🔔 НА"
 
 #: keyboards/inline/menu.py:118 keyboards/inline/timezone.py:68
 msgid "cancel"
-msgstr "отмена"
+msgstr "🗑 Отменять"
 
 #: keyboards/inline/menu.py:119 keyboards/inline/menu.py:231
 msgid "complete"
-msgstr "полный"
+msgstr "✅ Завершённый"
 
 #: keyboards/inline/menu.py:127
 msgid "add_another_schedule"
-msgstr "добавить_другой_расписание"
+msgstr "🔄 Подробнее об обновлении расписания"
 
 #: keyboards/inline/menu.py:128 keyboards/inline/menu.py:283
 #: keyboards/inline/menu.py:294 keyboards/inline/menu.py:329
 #: keyboards/inline/menu.py:339
 msgid "back_main"
-msgstr "задняя часть"
+msgstr "⬅️ Вернуться в главное меню"
 
 #: keyboards/inline/menu.py:157 keyboards/inline/menu.py:159
 msgid "change_day"
-msgstr "день перемены"
+msgstr "📅 Изменить день"
 
 #: keyboards/inline/menu.py:158
 msgid "change_time"
-msgstr "время изменения"
+msgstr "🕔 Время изменения"
 
 #: keyboards/inline/menu.py:160
 msgid "schedule_delete"
-msgstr "расписание_удаления"
+msgstr "❌ Удалить"
 
 #: keyboards/inline/menu.py:169 keyboards/inline/menu.py:281
 #: keyboards/inline/menu.py:293
 msgid "add_notif"
-msgstr "добавить_notif"
+msgstr "➕ Добавление уведомлений"
 
 #: keyboards/inline/menu.py:170
 msgid "notifs"
-msgstr "уведомления"
+msgstr "📊 Управление уведомлениями"
 
 #: keyboards/inline/menu.py:183
 msgid "Monday"
-msgstr "понедельник"
+msgstr "Понедельник"
 
 #: keyboards/inline/menu.py:183
 msgid "Tuesday"
-msgstr "вторник"
+msgstr "Вторник"
 
 #: keyboards/inline/menu.py:183
 msgid "Wednesday"
-msgstr "среда"
+msgstr "Среда"
 
 #: keyboards/inline/menu.py:183
 msgid "Thursday"
-msgstr "четверг"
+msgstr "Четверг"
 
 #: keyboards/inline/menu.py:183
 msgid "Friday"
-msgstr "пятница"
+msgstr "Пятница"
 
 #: keyboards/inline/menu.py:183
 msgid "Saturday"
-msgstr "суббота"
+msgstr "Суббота"
 
 #: keyboards/inline/menu.py:184
 msgid "Sunday"
-msgstr "воскресенье"
+msgstr "Воскресенье"
 
 #: keyboards/inline/menu.py:190
 msgid "Today"
@@ -503,105 +532,105 @@ msgstr "Сегодня"
 
 #: keyboards/inline/menu.py:193
 msgid "calendar"
-msgstr "календарь"
+msgstr "🗓 Календарь"
 
 #: keyboards/inline/menu.py:227
 msgid "repeat_none"
-msgstr "повторяться_нет"
+msgstr "1️⃣ Одноразовый"
 
 #: keyboards/inline/menu.py:227
 msgid "repeat_day"
-msgstr "повтор_дня"
+msgstr "🔄 Каждый день"
 
 #: keyboards/inline/menu.py:227
 msgid "repeat_week"
-msgstr "повтор_недели"
+msgstr "🔄 Каждую неделю"
 
 #: keyboards/inline/menu.py:227
 msgid "repeat_month"
-msgstr "повторяющийся_месяц"
+msgstr "🔄 Каждый месяц"
 
 #: keyboards/inline/menu.py:282 keyboards/inline/menu.py:315
 msgid "share_notif"
-msgstr "уведомление о совместном использовании"
+msgstr "✉️ Предоставить общий доступ"
 
 #: keyboards/inline/menu.py:292
 msgid "share"
-msgstr "доля"
+msgstr "✉️ Предоставить общий доступ"
 
 #: keyboards/inline/menu.py:318
 msgid "notif_text"
-msgstr "текст уведомления"
+msgstr "💬 Изменить текст"
 
 #: keyboards/inline/menu.py:319
 msgid "notif_delete"
-msgstr "уведомление_удаление"
+msgstr "❌ Удалить"
 
 #: keyboards/inline/menu.py:338 keyboards/inline/menu.py:381
 msgid "buy_premium"
-msgstr "купить_премиум"
+msgstr "⭐️ Премия"
 
 #: keyboards/inline/menu.py:348
 msgid "set_lang"
-msgstr "set_lang"
+msgstr "🇺🇦 Язык"
 
 #: keyboards/inline/menu.py:349
 msgid "set_timezone"
-msgstr "установить_временную зону"
+msgstr "🕔 Часовой пояс"
 
 #: keyboards/inline/menu.py:350
 msgid "profile"
-msgstr "профиль"
+msgstr "👤 Профиль"
 
 #: keyboards/inline/menu.py:351
 msgid "changelog"
-msgstr "список изменений"
+msgstr "📚 Список изменений"
 
 #: keyboards/inline/menu.py:353
 msgid "buy_premium_donate"
-msgstr "купить_премиум_пожертвование"
+msgstr "⭐️ Премия"
 
 #: keyboards/inline/menu.py:382
 msgid "delete_all_info"
-msgstr "удалить_всю_информацию"
+msgstr "❌ Удалите все свои данные"
 
 #: keyboards/inline/menu.py:396
 msgid "delete"
-msgstr "удаление"
+msgstr "❌ Удалить"
 
 #: keyboards/inline/menu.py:398
 msgid "🟢"
-msgstr "🟢"
+msgstr ""
 
 #: keyboards/inline/menu.py:405
 msgid "loading"
-msgstr "погрузка"
+msgstr "Ботинок..."
 
 #: keyboards/inline/timezone.py:18
 msgid "timezone_by_location"
-msgstr "часовой пояс_по_месту"
+msgstr "📍 По местоположению"
 
 #: keyboards/inline/timezone.py:20
 msgid "timezone_country"
-msgstr "часовой пояс_страны"
+msgstr "🇺🇦 По странам"
 
 #: keyboards/inline/timezone.py:21
 msgid "timezone_adv"
-msgstr "часовой пояс_адв"
+msgstr "🕔 Больше часовых поясов"
 
 #: keyboards/inline/timezone.py:47
 msgid "timezones_all"
-msgstr "часовые пояса_все"
+msgstr "🕔 Все часовые пояса"
 
 #: keyboards/inline/timezone.py:58
 msgid "send_location_btn"
-msgstr "send_location_btn"
+msgstr "📍 Отправить геолокацию"
 
 #: keyboards/inline/calendar/common.py:53
 msgid "calendar_late_date"
-msgstr "календарь_поздняя дата"
+msgstr "❗️Дата должна быть раньше, чем {date}"
 
 #: keyboards/inline/calendar/common.py:59
 msgid "calendar_early_date"
-msgstr "календарь_ранней_даты"
+msgstr "❗️Дата должна быть позже, чем {date}"
 
