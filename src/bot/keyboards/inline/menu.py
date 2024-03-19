@@ -312,8 +312,8 @@ def manage_notifs_kb(user_notifs):
 def notif_info_kb(user_notif):
     buttons = [
         [InlineKeyboardButton(text=_("share_notif"), callback_data=f"share_notif_{user_notif.id}")],
-        [InlineKeyboardButton(text=_("active") if user_notif.active else _("inactive"),
-                              callback_data=f"notif_active_{user_notif.id}")],
+        #[InlineKeyboardButton(text=_("active") if user_notif.active else _("inactive"),
+        #                     callback_data=f"notif_active_{user_notif.id}")],
         [InlineKeyboardButton(text=_("notif_text"), callback_data=f"notif_text_{user_notif.id}")],
         [InlineKeyboardButton(text=_("notif_delete"), callback_data=f"notif_delete_{user_notif.id}")],
         [InlineKeyboardButton(text=_("back"), callback_data="notifications")],

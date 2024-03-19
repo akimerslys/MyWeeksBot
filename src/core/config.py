@@ -65,6 +65,7 @@ class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSetti
     MEDIA_DIR: str = f"{PROJ_DIR}/media"
     FONTS_DIR: str = f"{PROJ_DIR}/fonts"
     LOCALES_DIR: str = f"{BOT_DIR}/locales"
+    LOGS_DIR: str = f"{PROJ_DIR}/logs"
     I18N_DOMAIN: str = "messages"
 
 

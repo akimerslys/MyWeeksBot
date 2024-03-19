@@ -10,7 +10,8 @@ from src.bot.services.notifs import get_user_notifs_sorted
 from src.bot.services.schedule import count_user_schedule
 from src.bot.services.users import user_logged, get_timezone
 from src.bot.keyboards.inline.inline import inline_add
-from src.bot.utils.time_localizer import localize_datetime_to_timezone
+from src.bot.utils.time_localizer import localize_datetime_to_timezone, is_past, is_future
+#from src.bot.utils import error_manager as err
 
 from datetime import datetime
 
@@ -20,22 +21,133 @@ from loguru import logger
 router = Router(name="inline")
 
 
-@router.inline_query()
-async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
-    if not await user_logged(session, query.from_user.id):
-        await query.answer(
+async def invalid_date(query: InlineQuery) -> None:
+    results = [InlineQueryResultArticle(
+        id="0",
+        title=_("wrong_date"),
+        description=_("inline_create_notif_description"),
+        input_message_content=InputTextMessageContent(
+            message_text=_("inline_create_notif_description")
+        ),
+        thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
+    )]
+
+    await query.answer(results, is_personal=True, cache_time=15)
+    return
+
+
+async def invalid_text(query: InlineQuery) -> None:
+    results = [InlineQueryResultArticle(
+        id="0",
+        title=_("Wrong text"),
+        description=_("inline_wrong_text_description"),
+        input_message_content=InputTextMessageContent(
+            message_text=_("inline_wrong_text_description")
+        ),
+        thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
+    )]
+
+    await query.answer(results, is_personal=True, cache_time=15)
+    return
+
+async def send_sign_in(query: InlineQuery) -> None:
+    await query.answer(
             results=[],
             is_personal=True,
             switch_pm_text=_("sign_in_inline"),
-            switch_pm_parameter="inline_new"
+            switch_pm_parameter="inline_new",
+            cache_time=30,
         )
+
+
+@router.inline_query(F.query.regexp(r"^\d{2}/\d{2}/\d{4} \d{2}:\d{2} .+"))
+async def show_created_notif(query: InlineQuery, bot: Bot, session: AsyncSession):
+    if not await user_logged(session, query.from_user.id):
+        await send_sign_in(query)
         return
 
     results = []
 
+    tz = await get_timezone(session, query.from_user.id)
+
+    #25/12/2025 00:00 Merry Christmas!
+    query_ = query.query.split(" ", 2)
+
+    date_str = query_[0]
+    logger.info(f"Inline date str: <{date_str}>")
+    time_str = query_[1]
+    logger.info(f"Inline time str: <{time_str}>")
+    text_str = query_[2][:32]
+    logger.info(f"Inline text str: <{text_str}>")
+
+    try :
+        date = datetime.strptime(date_str + time_str, "%d/%m/%Y%H:%M")
+        date_str = date.strftime("%d/%m/%Y %H:%M")
+    except ValueError:
+        await invalid_date(query)
+        return
+
+    if is_past(date, tz) or is_future(date):
+        await invalid_date(query)
+        return
+
+    tz_mod = tz
+    if '/' in tz:
+        tz_mod = tz.replace('/', '-')
+
+    text_mod = text_str
+    if ' ' in text_str:
+        text_mod = text_str.replace(' ', '_')
+
+    payload = f"_{date.strftime('%Y-%m-%d-%H-%M')}_{tz_mod}_{text_mod}"
+    logger.info(f"payload: {payload}")
+    link: str
+
+    try:
+        link = await create_start_link(bot, payload=payload)
+    except Exception:
+        logger.info(f"user {query.from_user.id} tried to create a inline notif with a wrong text")
+        await invalid_text(query)
+        return
+
+    results.append(InlineQueryResultArticle(
+        id="0",
+        title=date_str,
+        description=text_str,
+        input_message_content=InputTextMessageContent(
+            message_text=_("inline_notif").format(date=date_str, tz=tz, text=text_str)
+        ),
+        thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
+        parse_mode="HTML",
+        reply_markup=inline_add(link)
+    ))
+
+    await query.answer(results, is_personal=True)
+
+
+@router.inline_query()
+async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
+    if not await user_logged(session, query.from_user.id):
+        await send_sign_in(query)
+        return
+
+    results = []
+
+
+    results.append(InlineQueryResultArticle(
+        id="0",
+        title=_("inline_create_notif"),
+        description=_("inline_create_notif_description"),
+        input_message_content=InputTextMessageContent(
+            message_text=_("inline_create_notif_description")
+        ),
+        thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
+        parse_mode="HTML"
+    ))
+
     if await count_user_schedule(session, query.from_user.id) != 0:
         results.append(InlineQueryResultArticle(
-            id="0",
+            id="1",
             title=_("share_my_schedule"),
             description=_("schedule_description"),
             input_message_content=InputTextMessageContent(
@@ -45,7 +157,7 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
             parse_mode="HTML"
         ))
         results.append(InlineQueryResultArticle(
-            id="1",
+            id="2",
             title=_("share_my_schedule"),
             description=_("schedule_description_day"),
             input_message_content=InputTextMessageContent(

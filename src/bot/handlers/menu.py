@@ -23,7 +23,6 @@ from src.bot.keyboards.inline.guide import start_menu_kb
 from src.bot.keyboards.inline import timezone as tzm
 from src.bot.keyboards.reply.skip import skip_kb
 from src.bot.services import users as dbuc, notifs as dbnc, schedule as dbsc
-from src.bot.utils.last_commits import get_changelog
 from src.bot.utils.states import AddNotif, AskLocation, ChangeNotif, AddSchedule, NewUser, ConfigSchedule, AskCountry
 from src.bot.utils import time_localizer as timecom  # timecommands
 from src.bot.utils.notif_repeat import repeat_to_str
@@ -509,10 +508,11 @@ async def manage_notif(call: CallbackQuery, session: AsyncSession):
         return
     await call.message.edit_text(
         _("manage_one_notif").format(
+            status=_('active') if user_notif.active else _('inactive'),
             date=user_notif.date.strftime('%d %m %Y'),
             time=user_notif.date.strftime('%H:%M'),
             text=user_notif.text,
-            repeat=repeat_to_str(user_notif.repeat_daily, user_notif.repeat_weekly)
+            #repeat=repeat_to_str(user_notif.repeat_daily, user_notif.repeat_weekly)
         ),
         reply_markup=mkb.notif_info_kb(user_notif)
     )
@@ -531,7 +531,7 @@ async def manage_notif_text_finish(message: Message, bot: Bot, state: FSMContext
     data = await state.get_data()
     notif_id = data.get('repeat_daily')
     await dbnc.update_notif_text(session, notif_id, message.text)
-    await bot.delete_messages(message.from_user.id, data.get('tmp_msg'), message.message_id)
+    await bot.delete_messages(message.from_user.id, [data.get('tmp_msg'), message.message_id])
     await state.clear()
     user_notif = await dbnc.get_notif(session, notif_id)
     await bot.send_message(
@@ -541,7 +541,7 @@ async def manage_notif_text_finish(message: Message, bot: Bot, state: FSMContext
             date=user_notif.date.strftime('%d %m %Y'),
             time=user_notif.date.strftime('%H:%M'),
             text=user_notif.text[:31],
-            repeat=_(repeat_to_str(user_notif.repeat_daily, user_notif.repeat_weekly))
+            #repeat=_(repeat_to_str(user_notif.repeat_daily, user_notif.repeat_weekly))
         ),
         reply_markup=mkb.notif_info_kb(user_notif))
 
@@ -890,7 +890,8 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
 # CHANGELOG
 @router.callback_query(F.data == "show_changelog")
 async def send_changelog(call: CallbackQuery):
-    message_changelog = "".join(await get_changelog(5))
+    #get_updates = await
+    message_changelog = ''
     await call.message.edit_text(
         _("last_updates") + "\n\n" + message_changelog,
         reply_markup=mkb.back_main()

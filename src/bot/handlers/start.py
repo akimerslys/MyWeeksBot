@@ -85,7 +85,8 @@ async def send_deeplink_notif(bot: Bot, state: FSMContext, session: AsyncSession
 
 async def process_deeplink_date(bot, state, session, args, id):
     # _date_text_tz
-    args_list = args.split("_", 4)
+    args_list = args.split("_", 3)
+    #["", "date", "text", "tz"]
     logger.debug(f"got args list {args_list}")
     date_utc: datetime
     date_: datetime
@@ -100,11 +101,17 @@ async def process_deeplink_date(bot, state, session, args, id):
     minute = (date_.minute + 2) // 5 * 5
     date_.replace(minute=minute)
 
-    if len(args_list) > 2:          #checking for text
-        text = args_list[2]
-        if len(args_list) > 3:      #checking for tz
-            if await err.check_tz(args_list[3], bot, id): return
-        tz = args_list[3]
+    if len(args_list) > 2:          # checking for tz
+        tz = args_list[2]
+        if '-' in tz:
+            tz = tz.replace('-', '/')
+        logger.debug(f"tz: {tz}")
+        if not await err.check_tz(tz, bot, id): return
+
+        if len(args_list) > 3:      # checking for text
+            text = args_list[3]
+            if '_' in text:
+                text = text.replace('_', ' ')
 
     logger.debug(date_)
     if not await err.check_date_ranges(date_, bot, id, tz): return
@@ -146,7 +153,7 @@ async def start_message_deeplink(message: Message, bot: Bot, command: CommandObj
 
     if args == 'inline_new':
         await check_state(state)
-        await send_start_menu()
+        await send_start_menu(bot, state, id)
         return
 
     if args[0] == '_':

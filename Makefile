@@ -45,10 +45,15 @@ migrate:
 
 #language utils
 .PHONY: update-locale
-update-locale:
+update-lang:
 	cd src/bot
 	pybabel extract --input-dirs=. -o locales/messages.pot --project=messages.
 	pybabel update -i locales/messages.pot -d locales -D messages
+
+.PHONY: compile
+compile:
+
+	pybabel compile -d src/bot/locales -D messages --statistics
 
 # Docker utils
 .PHONY: rebuild

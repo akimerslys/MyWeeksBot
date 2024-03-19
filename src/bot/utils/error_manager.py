@@ -43,6 +43,7 @@ async def check_date_ranges(dt, bot, id_, tz: str = 'UTC'):
         return False
     return True
 
+
 async def check_notif(session: AsyncSession, bot: Bot, id_: int, notif_id: int):
     logger.debug(f"checking notif for user {id_}")
     try:

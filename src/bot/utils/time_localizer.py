@@ -94,7 +94,7 @@ def localize_time_to_utc(hrs: str, minutes: str, timezone: str) -> time:
 
 def is_past(date: datetime, timezone: str = 'UTC') -> bool:
     """
-    Check if time is in the past in user timezone
+    Check if time is in the past in users timezone
     :param timezone: str
     :return: bool
     """

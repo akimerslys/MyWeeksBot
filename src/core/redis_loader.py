@@ -7,7 +7,7 @@ logger.info("loading redis")
 
 
 redis_client = Redis(
-    connection_pool=ConnectionPool.from_url(settings.redis_url)
-)
+        connection_pool=ConnectionPool.from_url(settings.redis_url),
+    )
 
 logger.success("redis loaded")

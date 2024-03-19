@@ -1,10 +1,9 @@
 import asyncio
 from datetime import timedelta
 
-from arq.connections import create_pool
+from arq import create_pool
 from loguru import logger
 
-from src.bot.scheduler.main import WorkerSettings
 from src.core.config import settings
 from src.bot.loader import dp, bot
 
@@ -22,6 +21,18 @@ async def startup() -> None:
     await bot.delete_webhook(drop_pending_updates=True)
 
     logger.success(f"bot started")
+
+"""    logger.info('initializing scheduler')
+
+    w = Worker(functions=WorkerSettings.functions,
+               cron_jobs=WorkerSettings.cron_jobs,
+               redis_settings=WorkerSettings.redis_settings,
+               on_startup=WorkerSettings.on_startup,
+               on_shutdown=WorkerSettings.on_shutdown,
+               max_jobs=1000)
+    w.run()
+
+    logger.success('scheduler initialized')"""
 
 
 async def shutdown() -> None:
@@ -62,7 +73,7 @@ async def main() -> None:
     #worker = WorkerSettings()
     #await worker.run(redis_pool)
 
-    await dp.start_polling(bot, arqredis=redis_pool)
+    await dp.start_polling(bot, skip_updates=True, arqredis=redis_pool)
 
 if __name__ == "__main__":
     try:
