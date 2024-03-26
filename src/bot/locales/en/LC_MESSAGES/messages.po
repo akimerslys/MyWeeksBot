@@ -361,7 +361,7 @@ msgstr "Please, complete the registration first"
 
 #: handlers/start.py:234
 msgid "lang_changed_to"
-msgstr "🌐 Language changed to"
+msgstr "🌐 Language changed to "
 
 #: handlers/start.py:234
 msgid "lang"

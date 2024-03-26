@@ -15,8 +15,8 @@ def start_menu_kb() -> InlineKeyboardMarkup:
 def new_lang_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="🇬🇧 English", callback_data="set_new_lang_en"))
-    builder.add(InlineKeyboardButton(text="🇺🇦 Українська", callback_data="set_new_lang_ru"))
-    builder.add(InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_new_lang_uk"))
+    builder.add(InlineKeyboardButton(text="🇺🇦 Українська", callback_data="set_new_lang_uk"))
+    builder.add(InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_new_lang_ru"))
     builder.add(InlineKeyboardButton(text=_("more_lang"), callback_data="set_new_lang_add"))
     builder.add(InlineKeyboardButton(text=_("back"), callback_data="start_kb"))
     builder.adjust(1)

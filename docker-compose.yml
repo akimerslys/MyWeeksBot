@@ -12,6 +12,9 @@ services:
     networks:
       - app
 
+
+
+
   postgres:
     image: postgres:14-alpine
     container_name: postgres
@@ -83,6 +86,22 @@ services:
     networks:
       - app
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    env_file:
+      - .env
+    environment:
+      NGROK_AUTHTOKEN: ${WEBHOOK_SECRET}
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    command: ["http", "d4444"]
+    ports:
+      - 4040:4040
+    networks:
+      - app
+
+
 
 networks:
   app:
@@ -91,3 +110,4 @@ networks:
 volumes:
   postgres-data: {}
   redis-data: {}
+  ngrok-data: {}

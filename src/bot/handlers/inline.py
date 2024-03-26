@@ -1,14 +1,12 @@
-from typing import Any
-
-from aiogram import Router, F, Bot, html
-from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineQueryResultCachedPhoto
+from aiogram import Router, F, Bot
+from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
 from aiogram.utils.i18n import gettext as _
 from aiogram.utils.deep_linking import create_start_link
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.bot.services.notifs import get_user_notifs_sorted
-from src.bot.services.schedule import count_user_schedule
-from src.bot.services.users import user_logged, get_timezone
+from src.database.services.notifs import get_user_notifs_sorted
+from src.database.services.schedule import count_user_schedule
+from src.database.services.users import user_logged, get_timezone
 from src.bot.keyboards.inline.inline import inline_add
 from src.bot.utils.time_localizer import localize_datetime_to_timezone, is_past, is_future
 #from src.bot.utils import error_manager as err
@@ -32,7 +30,7 @@ async def invalid_date(query: InlineQuery) -> None:
         thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
     )]
 
-    await query.answer(results, is_personal=True, cache_time=15)
+    await query.answer(results, is_personal=True, cache_time=5)
     return
 
 
@@ -47,7 +45,7 @@ async def invalid_text(query: InlineQuery) -> None:
         thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
     )]
 
-    await query.answer(results, is_personal=True, cache_time=15)
+    await query.answer(results, is_personal=True, cache_time=5)
     return
 
 async def send_sign_in(query: InlineQuery) -> None:
@@ -56,7 +54,7 @@ async def send_sign_in(query: InlineQuery) -> None:
             is_personal=True,
             switch_pm_text=_("sign_in_inline"),
             switch_pm_parameter="inline_new",
-            cache_time=30,
+            cache_time=5,
         )
 
 

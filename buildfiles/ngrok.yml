@@ -1,0 +1,18 @@
+authtoken: 2dxDUcsTOo1lyzOCEw5K0Ur1law_6sfTN5WSc1iM6Wrg7TyQ1
+connect_timeout: 30s
+console_ui: true
+console_ui_color: transparent
+dns_resolver_ips:
+  - 1.1.1.1
+  - 8.8.8.8
+heartbeat_interval: 1m
+heartbeat_tolerance: 5s
+log_level: info
+log_format: json
+region: eu
+remote_management: false
+root_cas: trusted
+update_channel: stable
+update_check: false
+version: 2
+web_addr: localhost:4444

@@ -3,12 +3,12 @@ from datetime import datetime
 
 from aiocache import logger
 from aiogram import Bot
+from aiogram.types import CallbackQuery
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.bot.services.notifs import get_notif
+from src.database.services.notifs import get_notif
 from src.bot.utils import time_localizer as tl
-from src.database.models import NotifModel
 
 
 async def check_date(date: str, bot, id_):
@@ -23,13 +23,13 @@ async def check_date(date: str, bot, id_):
     return True
 
 
-async def check_tz(tz, bot, id_):
+async def check_tz(tz, query: Bot | CallbackQuery, id_):
     logger.debug(f"checking tz for user {id_}")
     try:
         pytz.timezone(tz)
     except pytz.exceptions.UnknownTimeZoneError:
         logger.error(f"Error while getting timezone from payload: {tz}")
-        await bot.send_message(id_, "Invalid Timezone\n")
+        await query.answer("Invalid Timezone\n")
         return False
 
     return True

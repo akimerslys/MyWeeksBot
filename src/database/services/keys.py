@@ -5,7 +5,7 @@ from loguru import logger
 from sqlalchemy import select, update
 
 from src.database.models import KeyModel
-from src.bot.services.users import set_user_premium
+from src.database.services.users import set_user_premium
 
 from key_generator.key_generator import generate
 from src.core.config import settings

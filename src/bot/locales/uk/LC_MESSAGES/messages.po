@@ -216,7 +216,7 @@ msgstr ""
 "📅 Дата: {date}\n"
 "⏰ Час: {time}\n"
 "📝 Текст: {text}\n"
-"{repeat}"
+
 
 #: handlers/menu.py:511 handlers/menu.py:540 handlers/menu.py:561
 #: handlers/menu.py:588
@@ -256,7 +256,7 @@ msgstr "Профіль видалено, сподіваємося знову п�
 
 #: handlers/menu.py:631
 msgid "lang_changed"
-msgstr "🌐 Мову змінено на"
+msgstr "🌐 Мову змінено на "
 
 #: handlers/menu.py:631
 msgid "language"

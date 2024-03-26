@@ -3,8 +3,8 @@ from aiogram.filters import Command
 from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.bot.services.users import set_user_premium, is_premium
-from src.bot.services.keys import use_key, get_key_days
+from src.database.services.users import set_user_premium, is_premium
+from src.database.services.keys import use_key, get_key_days
 from src.bot.utils.command import find_command_argument
 
 from loguru import logger

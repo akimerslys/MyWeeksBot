@@ -63,7 +63,11 @@ rebuild:
 
 .PHONY: start
 startup:
-	docker-compose up 
+	docker-compose up
+
+.PHONY: startbot
+startbot:
+	docker-compose up --build bot
 
 .PHONY: kill
 kill:

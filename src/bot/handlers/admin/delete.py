@@ -1,15 +1,13 @@
 from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.types import Message
-from aiogram.methods import get_chat
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.bot.utils.command import find_command_argument
 from src.bot.filters.admin import IsAdmin
 from src.core.config import settings
-from src.bot.services.users import delete_user
+from src.database.services.users import delete_user
 
-from loguru import logger
 
 
 router = Router(name="delete")

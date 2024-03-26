@@ -17,7 +17,25 @@ class BotSettings(EnvBaseSettings):
     DEBUG: bool = True
     BACKUP_CHAT_ID: int
     LOGS_CHAT_ID: int
+    MAX_NOTIFS: int = 5
+    MAX_NOTIFS_PREMIUM: int = 10
 
+
+class ProBotSettings(EnvBaseSettings):
+    PROBOT_TOKEN: str
+
+
+class WebhookSettings(EnvBaseSettings):
+    WEBHOOK_BASE_URL: str
+    WEBHOOK_SECRET: str
+    WEBHOOK_HOST: str = "localhost"
+    WEBHOOK_PORT: int
+
+    @property
+    def webhook_uri(self) -> str:
+        return f"{self.WEBHOOK_BASE_URL}{self.WEBHOOK_PATH}"
+
+    USE_WEBHOOK: bool = False
 
 class DBSettings(EnvBaseSettings):
     DB_HOST: str
@@ -54,19 +72,19 @@ class CacheSettings(EnvBaseSettings):
         return f"redis://:{self.REDIS_PASS + '@' if self.REDIS_PASS else ''}{self.REDIS_HOST}:{self.REDIS_PORT}"
 
 
-class UserSettings(EnvBaseSettings):
-    MAX_NOTIFS: int = 5
-    MAX_NOTIFS_PREMIUM: int = 10
-
-
-class Settings(BotSettings, DBSettings, KeyGenSettings, CacheSettings, UserSettings):
+class Settings(BotSettings, WebhookSettings, DBSettings, KeyGenSettings, CacheSettings, ProBotSettings):
     PROJ_DIR: Path = Path(__file__).absolute().parent.parent.parent
     BOT_DIR: Path = Path(__file__).absolute().parent.parent / "bot"
     MEDIA_DIR: str = f"{PROJ_DIR}/media"
     FONTS_DIR: str = f"{PROJ_DIR}/fonts"
-    LOCALES_DIR: str = f"{BOT_DIR}/locales"
+    LOCALES_DIR: str = f"{PROJ_DIR}/src/bot/locales"
     LOGS_DIR: str = f"{PROJ_DIR}/logs"
+
+    PROBOT_DIR: Path = Path(__file__).absolute().parent.parent / "probot"
     I18N_DOMAIN: str = "messages"
+    I18N_DOMAIN_PRO: str = "messages_pro"
+
+    WEBHOOK_PATH: str = f"/bot/"
 
 
 settings = Settings()

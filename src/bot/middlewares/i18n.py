@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 from aiogram.utils.i18n.middleware import I18nMiddleware
 
-from src.bot.services.users import get_language_code
+from src.database.services.users import get_language_code
 
 if TYPE_CHECKING:
     from aiogram.types import CallbackQuery, InlineQuery, Message

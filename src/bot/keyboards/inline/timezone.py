@@ -1,3 +1,4 @@
+import pytz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from aiogram.utils.i18n import gettext as _
@@ -71,14 +72,21 @@ def ask_location_confirm() -> InlineKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def timezone_country_kb() -> InlineKeyboardMarkup:
+def timezone_country_kb(country_code: str = "", extended: bool = False) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="🇺🇸 United States", callback_data="timezone_country_US")
-    builder.button(text="Kazakhstan", callback_data="timezone_country_KZ")
-    builder.button(text="🇨🇳 China", callback_data="timezone_country_CN")
-    builder.button(text="Brazil", callback_data="timezone_country_BR")
-    builder.button(text="🇮🇳 India", callback_data="timezone_country_IN")
-    builder.button(text="🇦🇺 Australia", callback_data="timezone_country_AU")
+
+
+    if country_code != "":
+        builder.button(text=f"{country_code}", callback_data=f"timezone_country_{country_code}")
+    if extended:
+        builder.button(text="🇺🇸 United States", callback_data="timezone_country_US")
+        builder.button(text="Kazakhstan", callback_data="timezone_country_KZ")
+        builder.button(text="🇨🇳 China", callback_data="timezone_country_CN")
+        builder.button(text="Brazil", callback_data="timezone_country_BR")
+        builder.button(text="🇮🇳 India", callback_data="timezone_country_IN")
+        builder.button(text="🇦🇺 Australia", callback_data="timezone_country_AU")
+    else:
+        builder.button(text=_("🏳️ More"), callback_data="timezone_country_extended")
     builder.button(text=_("back"), callback_data="timezone_kb")
     builder.adjust(2, 2, 2, 1)
     return builder.as_markup(resize_keyboard=True)

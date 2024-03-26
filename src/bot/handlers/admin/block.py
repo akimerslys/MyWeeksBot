@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.bot.utils.command import find_command_argument
 from src.bot.filters.admin import IsAdmin
 from src.core.config import settings
-from src.bot.services.users import block_user, unblock_user
+from src.database.services.users import block_user, unblock_user
 
 from loguru import logger
 

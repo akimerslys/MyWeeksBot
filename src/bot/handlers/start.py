@@ -1,32 +1,30 @@
 from aiogram import Router, Bot, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, MessageEntity
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.utils.i18n import gettext as _
 from aiogram.utils.payload import decode_payload
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.utils.formatting import Spoiler, Text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError, ProgrammingError
 
 from src.bot.keyboards.inline.guide import guide_start_kb, start_menu_kb, new_lang_kb
 from src.bot.keyboards.inline.menu import main_kb
 from src.bot.keyboards.inline.timezone import timezone_simple_keyboard
-from src.bot.services import users as dbuc
-from src.bot.services.notifs import add_notif, get_notif
-from src.bot.utils.time_localizer import localize_datetime_to_timezone, localize_datetime_to_utc, is_past, is_future
+from src.database.services import users as dbuc
+from src.database.services.notifs import add_notif, get_notif
+from src.bot.utils.time_localizer import localize_datetime_to_timezone
 from src.bot.utils.states import NewUser
 from src.database.models import NotifModel
 from src.bot.utils import error_manager as err
 
 from datetime import datetime
-import pytz
 from loguru import logger
 
 router = Router(name="start")
 
 
 # TODO OPTIMIZE !!! !! !! !! ! !! !! OR GAY
+#  NOT GAY, EZ
 # TRAAASH CODDEEEEEEEEEEEEEEEE REWRITE IT
 
 async def send_menu(bot, id):
@@ -49,6 +47,14 @@ async def send_start_menu(bot: Bot, state: FSMContext, id):
     await bot.send_message(id,
                            _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
                            reply_markup=start_menu_kb())
+
+
+async def edit_start_menu(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await call.message.edit_text(
+        _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
+        reply_markup=start_menu_kb()
+    )
 
 
 async def new_user_menu(bot: Bot, state: FSMContext, id):
@@ -172,7 +178,7 @@ async def start_message(message: Message, bot: Bot, session: AsyncSession, state
 
 
 """@router.callback_query(F.data.startswith("set_new_lang_"))
-async def set_new_lang(call: F.CallbackQuery, bot: Bot, session: AsyncSession):
+async def set_new_lang(call: CallbackQuery, bot: Bot, session: AsyncSession):
     lang = call.data.split("_")[-1]
     await call.answer(_("lang_changed_to{}").format(lang))
     await set_language_code(session, call.from_user.id, lang)
@@ -185,7 +191,7 @@ async def set_new_lang(call: F.CallbackQuery, bot: Bot, session: AsyncSession):
 
 
 @router.callback_query(F.data.startswith("guide_page_"))
-async def guide_page(call: F.CallbackQuery):
+async def guide_page(call: CallbackQuery):
     page = int(call.data.split("_")[-1])
     if page == 2:
         await call.message.edit_media(media=InputMediaAnimation(
@@ -196,27 +202,23 @@ async def guide_page(call: F.CallbackQuery):
 
 
 @router.callback_query(F.data == "start_kb")
-async def start_kb(call: F.CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    await call.message.edit_text(
-        text=_('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
-        reply_markup=start_menu_kb())
+async def start_kb(call: CallbackQuery, state: FSMContext):
+    await edit_start_menu(call, state)
     logger.info(f"User {call.from_user.id} switched to start menu")
 
 
 @router.callback_query(F.data == "new_lang_kb")
-async def new_lang(call: F.CallbackQuery):
+async def new_lang(call: CallbackQuery):
     await call.message.edit_text(_("choose_lang"), reply_markup=new_lang_kb())
 
 
 @router.callback_query(F.data == "new_timezone_kb")
-async def new_timezone(call: F.CallbackQuery):
+async def new_timezone(call: CallbackQuery):
     await call.message.edit_text(_("choose_tz"), reply_markup=timezone_simple_keyboard(False))
 
 
 @router.callback_query(F.data.startswith("set_new_lang_"))
-async def set_new_lang(call: F.CallbackQuery, bot: Bot, session: AsyncSession, state: FSMContext):
-    await call.message.edit_text(_("WAIT_MESSAGE"))
+async def set_new_lang(call: CallbackQuery, bot: Bot, session: AsyncSession, state: FSMContext):
     tmp_msg = await bot.send_message(call.from_user.id, _("WAIT_MESSAGE"))
     lang = call.data.split("_")[-1]
     if lang == "add":
@@ -230,89 +232,72 @@ async def set_new_lang(call: F.CallbackQuery, bot: Bot, session: AsyncSession, s
     else:
         await dbuc.set_language_code(session, call.from_user.id, lang)
 
-    data = await state.get_data()
-    await call.answer(_("lang_changed_to") + _("lang"))
+    await bot.delete_messages(call.from_user.id, [tmp_msg.message_id])
+    #await call.answer(_("Changes updated, Please Restart Menu"), show_alert=True)
 
-    await bot.delete_messages(call.from_user.id, [tmp_msg.message_id, call.message.message_id])
-    await bot.send_message(
-        call.from_user.id,
-        text=_('start_menu').format(lang=lang, tz=data.get('tz')),
-        reply_markup=start_menu_kb())
-
+    #await edit_start_menu(call, state)
+    await call.message.edit_text("Please, Restart the menu (/start)")
     logger.info(f"New user {call.from_user.id} changed language to {lang}")
 
 
 # TODO SPLIT TO GUIDE ROUTER
 
 @router.callback_query(F.data.startswith("set_new_timezone_"))
-async def set_new_lang(call: F.CallbackQuery, state: FSMContext):
+async def set_new_lang(call: CallbackQuery, state: FSMContext):
     tz = call.data.split("_")[-1]
 
-    try:
-        pytz.timezone(tz)
-    except pytz.exceptions.UnknownTimeZoneError:
-        await call.answer(_("ERROR_MESSAGE"), show_alert=True)
-        await call.message.edit_text(_("please_ch_button"), reply_markup=start_menu_kb())
-        logger.error(f"User {call.from_user.id} tried to set invalid timezone: {tz}")
-        return
+    await err.check_tz(tz, call, call.from_user.id)
 
     await state.update_data(tz=tz)
-    data = await state.get_data()
+
     await call.answer(_("tz_changed_answer").format(tz))
-    await call.message.edit_text(text=_('start_menu').format(
-        lang=data.get('lang'), tz=tz),
-        reply_markup=start_menu_kb())
+
+    await edit_start_menu(call, state)
+
     logger.info(f"New user {call.from_user.id} changed tz to {tz}")
 
 
-@router.callback_query(F.data == "guide_page_1")
-async def guide_pg_1(call: F.CallbackQuery, bot: Bot):
-    await call.message.delete()
+@router.callback_query(F.data.startswith("guide_page_"))
+async def guide_pg_1(call: CallbackQuery, bot: Bot):
+
+    anims = [
+        "",
+        "CgACAgIAAxkBAAIOHmXgwmym4477hQdjneMJ0q_7GuFxAAJIBQACKeEJSgSS9v79LudONAQ",
+        "CgACAgIAAxkBAAIOIGXgwm7gUBseAfejgmnR29UB1AwpAAIHQAACpeZxSuw82reLdn6DNAQ",
+        "CgACAgIAAxkBAAIOHGXgwlwN11Qmbsd5hCOpy4KU9CiOAAIIFwAC_F8BSt4eEtjPnDroNAQ",
+    ]
+
+    page: str = (call.data.split("_")[-1])
+
     try:
+        caption = "guide_page_" + page
         await bot.send_animation(call.from_user.id,
-                                 animation="CgACAgIAAxkBAAIOHmXgwmym4477hQdjneMJ0q_7GuFxAAJIBQACKeEJSgSS9v79LudONAQ",
-                                 caption=_("guide_page_1"), reply_markup=guide_start_kb(1))
+                                 animation=anims[int(page)],
+                                 caption=_(caption),
+                                 reply_markup=guide_start_kb(int(page)))
     except TelegramBadRequest as e:
         logger.error(f"Error while sending animation: {e}")
         await bot.send_message(call.from_user.id, _("ERROR_MESSAGE"))
         return
-    logger.info(f"User {call.from_user.id} switched to guide page 1")
 
-
-@router.callback_query(F.data == "guide_page_2")
-async def guide_pg_2(call: F.CallbackQuery, bot: Bot):
-    await call.message.delete()
-    await bot.send_animation(call.from_user.id,
-                             animation="CgACAgIAAxkBAAIOIGXgwm7gUBseAfejgmnR29UB1AwpAAIHQAACpeZxSuw82reLdn6DNAQ",
-                             caption=_("guide_page_2"), reply_markup=guide_start_kb(2))
-    logger.info(f"User {call.from_user.id} switched to guide page 2")
-
-
-@router.callback_query(F.data == "guide_page_3")
-async def guide_pg_3(call: F.CallbackQuery, bot: Bot):
-    await call.message.delete()
-    await bot.send_animation(call.from_user.id,
-                             animation="CgACAgIAAxkBAAIOHGXgwlwN11Qmbsd5hCOpy4KU9CiOAAIIFwAC_F8BSt4eEtjPnDroNAQ",
-                             caption=_("guide_page_3"), reply_markup=guide_start_kb(3))
-    logger.info(f"User {call.from_user.id} switched to guide page 3")
+    logger.info(f"User {call.from_user.id} switched to guide page {page}")
 
 
 @router.callback_query(F.data == "guide_complete")
-async def guide_complete(call: F.CallbackQuery, bot: Bot, state: FSMContext):
+async def guide_complete(call: CallbackQuery, bot: Bot, state: FSMContext, session: AsyncSession):
     await call.message.delete()
     await call.answer(_("thank_you_guide"))
-    if await state.get_state():
-        data = await state.get_data()
-        await bot.send_message(call.from_user.id,
-                               text=_("start_menu").format(lang=data.get('lang'), tz=data.get('tz')),
-                               reply_markup=start_menu_kb())
+
+    if await dbuc.get_user_active(session, call.from_user.id):
+        await send_menu(bot, call.from_user.id)
     else:
-        await bot.send_message(call.from_user.id, text=_("please_ch_button"), reply_markup=main_kb())
+        await send_start_menu(bot, state, call.from_user.id)
+
     logger.info(f"New user {call.from_user.id} completed guide")
 
 
 @router.callback_query(F.data == "reg_complete")
-async def complete_user_reg(call: F.CallbackQuery, session: AsyncSession, bot: Bot, state: FSMContext):
+async def complete_user_reg(call: CallbackQuery, session: AsyncSession, bot: Bot, state: FSMContext):
     id = await bot.send_message(call.from_user.id, _("WAIT_MESSAGE"))
     data = await state.get_data()
 
@@ -344,6 +329,6 @@ async def complete_user_reg(call: F.CallbackQuery, session: AsyncSession, bot: B
 
     await call.answer(_("reg_completed"))
 
-    await bot.send_message(call.from_user.id, _("please_ch_button"), reply_markup=main_kb())
+    await send_menu(bot, call.from_user.id)
 
     logger.info(f"User {call.from_user.id} completed registration")

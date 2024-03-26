@@ -5,7 +5,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message, InlineQuery, CallbackQuery
 from loguru import logger
 
-from src.bot.services.users import is_blocked
+from src.database.services.users import is_blocked
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

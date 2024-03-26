@@ -353,7 +353,7 @@ def setting_kb() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=_("back"), callback_data="main_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
-    keyboard.adjust(1)
+    keyboard.adjust(2, 2, 2, 1)
     return keyboard.as_markup(resize_keyboard=True)
 
 

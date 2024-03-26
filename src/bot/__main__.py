@@ -1,7 +1,6 @@
 import asyncio
-from datetime import timedelta
 
-from arq import create_pool
+import uvloop
 from loguru import logger
 
 from src.core.config import settings
@@ -11,52 +10,71 @@ from src.bot.handlers import get_handlers_router
 from src.bot.keyboards.default_commands import remove_default_commands, set_default_commands
 from src.bot.middlewares import register_middlewares
 
+if settings.USE_WEBHOOK:
+    from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+    from src.bot.loader import app
+    from aiohttp import web
+else:
+    from arq import create_pool
 
-async def startup() -> None:
+async def on_startup() -> None:
     logger.info("bot starting...")
+
     register_middlewares(dp)
+
     dp.include_router(get_handlers_router())
 
     await set_default_commands(bot)
-    await bot.delete_webhook(drop_pending_updates=True)
 
     logger.success(f"bot started")
 
-"""    logger.info('initializing scheduler')
 
-    w = Worker(functions=WorkerSettings.functions,
-               cron_jobs=WorkerSettings.cron_jobs,
-               redis_settings=WorkerSettings.redis_settings,
-               on_startup=WorkerSettings.on_startup,
-               on_shutdown=WorkerSettings.on_shutdown,
-               max_jobs=1000)
-    w.run()
+async def setup_webhook() -> None:
+    logger.info(f"Starting web app on {settings.WEBHOOK_HOST}:{settings.WEBHOOK_PORT}")
+    await bot.set_webhook(
+        settings.webhook_uri,
+        allowed_updates=dp.resolve_used_update_types(),
+        secret_token=settings.WEBHOOK_SECRET,
+    )
 
-    logger.success('scheduler initialized')"""
+    webhook_requests_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+        secret_token=settings.WEBHOOK_SECRET,
+    )
+
+    webhook_requests_handler.register(app, path=settings.WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host=settings.WEBHOOK_HOST, port=settings.WEBHOOK_PORT)
+    await site.start()
+
+    logger.success(f"App started on {settings.WEBHOOK_HOST}:{settings.WEBHOOK_PORT}")
+
+    await asyncio.Event().wait()
 
 
-async def shutdown() -> None:
+async def on_shutdown() -> None:
 
     logger.warning("bot stopping...")
 
     await remove_default_commands(bot)
 
-    #await db.pop_bind().close()
-
     await dp.storage.close()
     await dp.fsm.storage.close()
 
+    await bot.delete_webhook()
     await bot.session.close()
-
-    # await close_orm()
+    #await close_orm()
 
     logger.warning("bot stopped")
 
 
 async def main() -> None:
-
     logger.add(
-        "logs/myweeks.log",
+        f"{settings.LOGS_DIR}/myweeks.log",
         level="DEBUG",
         format="{time} | {level} | {module}:{function}:{line} | {message}",
         rotation="00:03",
@@ -64,19 +82,15 @@ async def main() -> None:
         backtrace=True
     )
 
-    redis_pool = await create_pool(settings.redis_pool)
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
 
-    dp.startup.register(startup)
+    if settings.USE_WEBHOOK:
+        await setup_webhook()
+    else:
+        redis_pool = await create_pool(settings.redis_pool)
+        await dp.start_polling(bot, arqredis=redis_pool)
 
-    dp.shutdown.register(shutdown)
-
-    #worker = WorkerSettings()
-    #await worker.run(redis_pool)
-
-    await dp.start_polling(bot, skip_updates=True, arqredis=redis_pool)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    uvloop.run(main())

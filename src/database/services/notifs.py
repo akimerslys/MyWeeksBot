@@ -7,7 +7,7 @@ from sqlalchemy import func, select, update, asc, delete
 from src.cache.redis import build_key, cached, clear_cache
 from src.database.models import NotifModel
 
-from src.bot.services.users import inc_user_notifs, dec_user_notifs, get_user_max_notifs
+from src.database.services.users import inc_user_notifs, dec_user_notifs, get_user_max_notifs
 
 from datetime import datetime, timedelta
 
