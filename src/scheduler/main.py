@@ -1,6 +1,7 @@
 import os
 import time
 from typing import TYPE_CHECKING
+import ujson
 
 import asyncio
 from aiogram.types import BufferedInputFile, FSInputFile
@@ -16,8 +17,11 @@ if TYPE_CHECKING:
 from datetime import datetime
 from aiogram import Bot
 from arq import cron
+from hltv_async_api import Hltv
+
 from loguru import logger
 from src.core.config import settings
+from src.core.redis_loader import redis_client
 from src.image_generator.images import generate_user_schedule_day
 from src.database.services.users import get_schedule_users_by_time
 from src.database.services.schedule import get_user_schedule_by_day
@@ -29,16 +33,17 @@ async def startup(ctx):
     ctx["lock"] = asyncio.Lock()
     async with sessionmaker() as session:
         ctx["session"] = session
-    ctx["lock"] = asyncio.Lock()
+    ctx["hltv"] = Hltv(max_delay=5, use_proxy=True, proxy_list=[settings.PROXY_MAIN, ''], true_session=True, debug=True)
+    ctx["redis"] = redis_client
+    logger.success(f"Scheduler started. UTC time {datetime.utcnow()}")
 
 
 async def shutdown(ctx):
     await ctx["bot"].session.close()
-
-
-async def send_message(ctx, chat_id, text):
-    await ctx["bot"].send_message(chat_id, text)
-
+    await ctx["session"].close()
+    await ctx["hltv"].close_session()
+    await ctx["redis"].close()
+    logger.success(f"Scheduler stopped. UTC time {datetime.utcnow()}")
 
 async def send_notif(ctx, chat_id, text):
     await ctx["bot"].send_message(chat_id, f"🔔 {text}")
@@ -132,15 +137,83 @@ async def backup_tables(ctx) -> None:
     logger.success("sent logs")"""
 
 
+async def parse_matches(ctx):
+    logger.info("parsing matches")
+    hltv = ctx["hltv"]
+    redis = ctx["redis"]
+    matches = await hltv.get_upcoming_matches(1, 1)
+    if matches:
+        await redis.set("matches", ujson.dumps(matches))
+    else:
+        logger.error("error parsing matches")
+
+
+async def parse_events(ctx):
+    logger.info("parsing events")
+    hltv = ctx["hltv"]
+    redis = ctx["redis"]
+    events = await hltv.get_events()
+    if events:
+        await redis.set("events", ujson.dumps(events))
+    else:
+        logger.error("error parsing events")
+
+
+async def parse_top_teams(ctx):
+    logger.info("parsing top teams")
+    hltv = ctx["hltv"]
+    redis = ctx["redis"]
+    top_teams = await hltv.get_top_teams(30)
+    if top_teams:
+        await redis.set("top_teams", ujson.dumps(top_teams))
+    else:
+        logger.error("error parsing top teams")
+
+
+async def parse_top_players(ctx):
+    logger.info("parsing top players")
+    hltv = ctx["hltv"]
+    redis = ctx["redis"]
+    top_players = await hltv.get_best_players(30)
+    if top_players:
+        await redis.set("top_teams", ujson.dumps(top_players))
+    else:
+        logger.error("error parsing top players")
+
+
+async def parse_last_news(ctx):
+    logger.info("parsing last news")
+    hltv = ctx["hltv"]
+    redis = ctx["redis"]
+    news = await hltv.get_last_news(only_today=True, max_reg_news=4)
+    if news:
+        await redis.set("news", ujson.dumps(news))
+    else:
+        logger.error("error parsing news")
+
+
 class WorkerSettings:
     redis_settings = settings.redis_pool
     on_startup = startup
     on_shutdown = shutdown
-    functions = [send_message, fetch_and_send_notifications, generate_and_send_schedule, backup_tables]
+    functions = [fetch_and_send_notifications,
+                 generate_and_send_schedule,
+                 backup_tables,
+                 parse_matches,
+                 parse_events,
+                 parse_top_teams,
+                 parse_top_players,
+                 parse_last_news,
+                 ]
     cron_jobs = [
         cron(fetch_and_send_notifications, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second=1),
         cron(generate_and_send_schedule, minute={0, 15, 30, 45}, second=55),
         cron(backup_tables, hour=0, minute=1, second=0),
+        cron(parse_matches, minute=59),
+        cron(parse_events, hour=0, minute=0, second=0),
+        cron(parse_top_teams, weekday=0, hour=18, minute=1, second=30),
+        cron(parse_top_players, weekday=0, hour=20, minute=0, second=0),
+        cron(parse_last_news, minute=55),
     ]
 
 

@@ -5,7 +5,8 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram.utils.i18n import I18n
 from aiohttp import web
-from fastapi import FastAPI
+#from fastapi import FastAPI
+from hltv_async_api import Hltv
 
 from loguru import logger
 from src.core.redis_loader import redis_client
@@ -28,3 +29,6 @@ lock = asyncio.Lock()
 dp = Dispatcher(storage=storage)
 logger.success("storage initialized")
 
+# CONFIG TO .ENV!!!
+if settings.USE_PROXY:
+    hltv = Hltv(max_delay=5, use_proxy=settings.USE_PROXY, proxy_list=[settings.PROXY_MAIN, ''], true_session=True, debug=settings.DEBUG)

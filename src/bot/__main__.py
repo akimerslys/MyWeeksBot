@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 
 import uvloop
 from loguru import logger
@@ -17,6 +18,7 @@ if settings.USE_WEBHOOK:
 else:
     from arq import create_pool
 
+
 async def on_startup() -> None:
     logger.info("bot starting...")
 
@@ -26,7 +28,7 @@ async def on_startup() -> None:
 
     await set_default_commands(bot)
 
-    logger.success(f"bot started")
+    logger.success(f"Bot Started, UTC time {datetime.datetime.utcnow()}")
 
 
 async def setup_webhook() -> None:

@@ -12,7 +12,7 @@ def timezone_simple_keyboard(user_logged: bool = False) -> InlineKeyboardMarkup:
     if user_logged:
         tmp = 'set_timezone_'
     buttons = [
-        [InlineKeyboardButton(text="🇬🇧 London/UTC", callback_data=f"{tmp}UTC")],
+        [InlineKeyboardButton(text="🇬🇧 London", callback_data=f"{tmp}Europe/London")],
         [InlineKeyboardButton(text="🇪🇺 Europe", callback_data=f"{tmp}Europe/Berlin")],
         [InlineKeyboardButton(text="🇺🇦 Ukraine/Kyiv", callback_data=f"{tmp}Europe/Kyiv")],
         [InlineKeyboardButton(text="  ️ Moscow", callback_data=f"{tmp}Europe/Moscow")],

@@ -55,10 +55,10 @@ async def main_menu(call: CallbackQuery, session: AsyncSession):
                                  reply_markup=mkb.main_kb())
 # MAIN
 @router.callback_query(F.data == "main_kb")
-async def menu_back(call: CallbackQuery, state: FSMContext):
+async def menu_back(call: CallbackQuery, state: FSMContext, session: AsyncSession):
     if state.get_state:
         await state.clear()
-    await main_menu(call)
+    await main_menu(call, session)
 
 
 # PROFILE

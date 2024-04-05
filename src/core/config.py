@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from arq.connections import RedisSettings
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import List
 
 
 class EnvBaseSettings(BaseSettings):
@@ -23,6 +24,10 @@ class BotSettings(EnvBaseSettings):
 
 class ProBotSettings(EnvBaseSettings):
     PROBOT_TOKEN: str
+    USE_PROXY: bool = False
+    if USE_PROXY:
+        PROXY_MAIN: str
+        PROXY_LIST: list
 
 
 class WebhookSettings(EnvBaseSettings):
