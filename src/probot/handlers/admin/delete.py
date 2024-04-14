@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.bot.utils.command import find_command_argument
 from src.bot.filters.admin import IsAdmin
 from src.core.config import settings
-from src.database.services import delete_user
+from src.database.services.prousers import delete_user
 
 
 

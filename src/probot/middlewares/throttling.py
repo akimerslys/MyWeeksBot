@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Awaitable, Callable
+from loguru import logger
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
@@ -22,8 +23,8 @@ class ThrottlingMiddleware(BaseMiddleware):
     ) -> Any:
         if not isinstance(event, Message):
             return await handler(event, data)
-
         if event.chat.id in self.cache:
+            logger.warning(f"Throttling event from chat {event.chat.id}")
             return None
         self.cache[event.chat.id] = None
         return await handler(event, data)

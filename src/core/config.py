@@ -24,10 +24,17 @@ class BotSettings(EnvBaseSettings):
 
 class ProBotSettings(EnvBaseSettings):
     PROBOT_TOKEN: str
-    USE_PROXY: bool = False
-    if USE_PROXY:
-        PROXY_MAIN: str
-        PROXY_LIST: list
+    USE_PROXY: bool
+    PROXY_FILE: bool
+    PROXY_LIST: list[str]
+    
+    @property
+    def proxy_list(self) -> list[str] | None:
+        if self.PROXY_FILE:
+            with open("proxies.txt", "r") as f:
+                return f.readlines()
+        else:
+            return self.PROXY_LIST
 
 
 class WebhookSettings(EnvBaseSettings):
@@ -90,6 +97,9 @@ class Settings(BotSettings, WebhookSettings, DBSettings, KeyGenSettings, CacheSe
     I18N_DOMAIN_PRO: str = "messages_pro"
 
     WEBHOOK_PATH: str = f"/bot/"
+
+
+
 
 
 settings = Settings()

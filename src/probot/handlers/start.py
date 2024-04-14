@@ -31,12 +31,11 @@ async def check_state(state: FSMContext):
     if await state.get_state() is not NewUser.new_user:
         await state.clear()
         await state.set_state(NewUser.new_user)
-        await state.update_data(tz='UTC', lang='en', cs2=True, dota2=False)
+        await state.update_data(tz='UTC', lang='en')
 
 
 async def send_start_menu(bot: Bot, state: FSMContext, id):
     data = await state.get_data()
-    games = "CS 2"
     await bot.send_message(id,
                            _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
                            reply_markup=start_menu_kb())
@@ -45,7 +44,7 @@ async def send_start_menu(bot: Bot, state: FSMContext, id):
 async def edit_start_menu(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await call.message.edit_text(
-        _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')), cs2=data.get('cs2'), dota2=data.get('dota2'),
+        _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
         reply_markup=start_menu_kb()
     )
 

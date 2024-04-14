@@ -14,7 +14,7 @@ from timezonefinder import TimezoneFinder
 from src.bot.keyboards.inline import menu as mkb
 from src.bot.keyboards.inline.guide import start_menu_kb
 from src.bot.keyboards.inline import timezone as tzm
-from src.database.services import users as dbuc
+from src.database.services import prousers as dbuc
 from src.bot.utils.states import AskLocation, NewUser, AskCountry
 
 

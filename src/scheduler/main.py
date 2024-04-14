@@ -143,7 +143,10 @@ async def parse_matches(ctx):
     redis = ctx["redis"]
     matches = await hltv.get_upcoming_matches(1, 1)
     if matches:
-        await redis.set("matches", ujson.dumps(matches))
+        await redis.set("hltv:matches", ujson.dumps(matches))
+        for match in matches:
+            match_ = await hltv.get_match_info(match["id"], match['team1'], match['team2'], match['event'])
+            await redis.set(f"hltv:matches:{match['id']}", ujson.dumps(match_))
     else:
         logger.error("error parsing matches")
 
@@ -154,7 +157,10 @@ async def parse_events(ctx):
     redis = ctx["redis"]
     events = await hltv.get_events()
     if events:
-        await redis.set("events", ujson.dumps(events))
+        await redis.set("hltv:events", ujson.dumps(events))
+        for event in events:
+            event_ = await hltv.get_event_info(event["id"], event["name"])
+            await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_))
     else:
         logger.error("error parsing events")
 
@@ -165,7 +171,10 @@ async def parse_top_teams(ctx):
     redis = ctx["redis"]
     top_teams = await hltv.get_top_teams(30)
     if top_teams:
-        await redis.set("top_teams", ujson.dumps(top_teams))
+        await redis.set("hltv:teams", ujson.dumps(top_teams))
+        for team in top_teams:
+            team_ = await hltv.get_team_info(team["id"], team['title'])
+            await redis.set(f"hltv:teams:{team['id']}", ujson.dumps(team_))
     else:
         logger.error("error parsing top teams")
 
@@ -176,7 +185,10 @@ async def parse_top_players(ctx):
     redis = ctx["redis"]
     top_players = await hltv.get_best_players(30)
     if top_players:
-        await redis.set("top_teams", ujson.dumps(top_players))
+        await redis.set("hltv:players", ujson.dumps(top_players))
+        """for player in top_players:
+            player = hltv.get_player_info(player["id"])
+            redis.set(f"hltv:players:{player['id']}", ujson.dumps(player))"""
     else:
         logger.error("error parsing top players")
 
@@ -187,7 +199,7 @@ async def parse_last_news(ctx):
     redis = ctx["redis"]
     news = await hltv.get_last_news(only_today=True, max_reg_news=4)
     if news:
-        await redis.set("news", ujson.dumps(news))
+        await redis.set("hltv:news", ujson.dumps(news))
     else:
         logger.error("error parsing news")
 
@@ -210,7 +222,7 @@ class WorkerSettings:
         cron(generate_and_send_schedule, minute={0, 15, 30, 45}, second=55),
         cron(backup_tables, hour=0, minute=1, second=0),
         cron(parse_matches, minute=59),
-        cron(parse_events, hour=0, minute=0, second=0),
+        cron(parse_events, minute=43, second=15),
         cron(parse_top_teams, weekday=0, hour=18, minute=1, second=30),
         cron(parse_top_players, weekday=0, hour=20, minute=0, second=0),
         cron(parse_last_news, minute=55),

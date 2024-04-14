@@ -14,7 +14,7 @@ from src.core.config import settings
 
 from src.bot.filters.admin import IsAdmin
 from src.bot.utils.csv_converter import convert_to_csv
-from src.database.models import UserModel, NotifModel, ScheduleModel
+from src.database.models import ProUserModel, NotifModel, ScheduleModel
 
 
 router = Router(name="backup")
@@ -24,7 +24,7 @@ router = Router(name="backup")
 async def export_tables(message: Message, bot: Bot, session: AsyncSession) -> None:
 
     types = {
-        "users": UserModel,
+        "users": ProUserModel,
         "notifs": NotifModel,
         "schedule": ScheduleModel
     }

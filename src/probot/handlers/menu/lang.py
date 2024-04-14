@@ -5,7 +5,7 @@ from aiogram.utils.i18n import gettext as _
 from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.bot.keyboards.inline import menu as mkb
-from src.database.services import users as dbuc
+from src.database.services import prousers as dbuc
 
 router = Router(name="lang")
 

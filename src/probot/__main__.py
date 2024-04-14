@@ -4,7 +4,8 @@ import uvloop
 from loguru import logger
 
 from src.core.config import settings
-from src.probot.loader import dp, bot
+from src.core.redis_loader import redis_client
+from src.probot.loader import dp, bot, hltv
 
 from src.probot.handlers import get_handlers_router
 from src.probot.keyboards.default_commands import remove_default_commands, set_default_commands
@@ -61,6 +62,8 @@ async def on_shutdown() -> None:
 
     logger.warning("Probot stopping...")
 
+    await hltv.close_session()
+
     await remove_default_commands(bot)
 
     await dp.storage.close()
@@ -90,7 +93,7 @@ async def main() -> None:
         await setup_webhook()
     else:
         redis_pool = await create_pool(settings.redis_pool)
-        await dp.start_polling(bot, arqredis=redis_pool)
+        await dp.start_polling(bot, redis=redis_client, arqredis=redis_pool)
 
 
 if __name__ == "__main__":

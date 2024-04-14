@@ -10,29 +10,43 @@ from aiogram.utils.i18n import gettext as _
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
-# TODO REWRITE TO NEW CLASS
+# TODO REWRITE, OPTIMIZE
 
 
-def main_kb() -> InlineKeyboardMarkup:
+def main_kb(event1: str = "", match1: str = "") -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
-    keyboard.add(InlineKeyboardButton(text=_("Match1"), callback_data="match_id"))
-    keyboard.add(InlineKeyboardButton(text=_("Live"), callback_data="match_id"))
-    keyboard.add(InlineKeyboardButton(text=_("Match2"), callback_data="match_id"))
-    keyboard.add(InlineKeyboardButton(text=_("Remind"), callback_data="remind_id"))
-    keyboard.add(InlineKeyboardButton(text=_("Tournament1"), callback_data="tournament_id"))
-    keyboard.add(InlineKeyboardButton(text=_("Tournament2"), callback_data="tournament_id"))
-    keyboard.add(InlineKeyboardButton(text=_("All Tournaments"), callback_data="tournament_id"))
-    keyboard.add(InlineKeyboardButton(text=_("All matches"), callback_data="show_events_week"))
+    e_ = 1
+    if event1:
+        e_ = 2
+        keyboard.add(InlineKeyboardButton(text=event1, callback_data="event_id"))
+    keyboard.add(InlineKeyboardButton(text=_("Events"), callback_data="events_menu"))
+
+    m_ = 1
+    if match1:
+        m_ = 2
+        keyboard.add(InlineKeyboardButton(text=match1, callback_data="match_id"))
+    keyboard.add(InlineKeyboardButton(text=_("Matches"), callback_data="matches_menu"))
+
+    keyboard.add(InlineKeyboardButton(text=_("Live Matches (SOON)"), callback_data="live_matches"))
+    keyboard.add(InlineKeyboardButton(text=_("Results"), callback_data="results_menu"))
+    keyboard.add(InlineKeyboardButton(text=_("Best Players"), callback_data="best_players"))
+    keyboard.add(InlineKeyboardButton(text=_("Top Teams"), callback_data="best_teams"))
+    keyboard.add(InlineKeyboardButton(text=_("News"), callback_data="last_news"))
     keyboard.add(InlineKeyboardButton(text=_("settings"), callback_data="settings_kb"))
-    keyboard.adjust(2, 2, 1, 1, 1, 1, 1)
+    keyboard.adjust(e_, m_, 1, 3, 1)
     return keyboard.as_markup(resize_keyboard=True)
 
 
-def match_kb() -> InlineKeyboardMarkup:
+def match_kb(status: str | int) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
-    keyboard.add(InlineKeyboardButton(text=_("Watch"), callback_data="main_kb"))
-    keyboard.add(InlineKeyboardButton(text=_("Remind"), callback_data="remind_id"))
-    keyboard.add(InlineKeyboardButton(text=_("Back"), callback_data="settings_kb"))
+    if status == "LIVE":
+        keyboard.add(InlineKeyboardButton(text=_("Watch"), callback_data="main_kb"))
+        keyboard.add(InlineKeyboardButton(text=_("Watch"), callback_data="main_kb"))
+    elif status == "Upcoming":
+        keyboard.add(InlineKeyboardButton(text=_("Remind"), callback_data="remind_id"))
+    elif status == "Finished":
+        keyboard.add(InlineKeyboardButton(text=_("Stats"), callback_data="stats_id"))
+    keyboard.add(InlineKeyboardButton(text=_("Back"), callback_data="main_kb"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
 
@@ -97,5 +111,40 @@ def loading() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=_("loading"), callback_data="ignore")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def events_kb(events: list, more: bool = False) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    for i, event in enumerate(events, start=1):
+        if i > 4 and not more:
+            keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="events_menu_more"))
+            break
+        keyboard.add(InlineKeyboardButton(text=event["name"], callback_data=f"event_{event['id']}"))
+    keyboard.add(InlineKeyboardButton(text=_("back"), callback_data="main_kb"))
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def event_kb(id) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(InlineKeyboardButton(text=_("Follow (soon)"), callback_data=f"event_follow_{id}"))
+    keyboard.add(InlineKeyboardButton(text=_("Matches"), callback_data=f"event_matches_{id}"))
+    keyboard.add(InlineKeyboardButton(text=_("Teams"), callback_data=f"event_teams_{id}"))
+    keyboard.add(InlineKeyboardButton(text=_("Update"), callback_data=f"event_update_{id}"))
+    keyboard.add(InlineKeyboardButton(text=_("Back"), callback_data="events_menu"))
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def event_matches_kb(matches: list, more: bool = False) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    for i, match in enumerate(matches, start=1):
+        if i > 4 and not more:
+            keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="event_matches_more"))
+            break
+        keyboard.add(InlineKeyboardButton(text=match["name"], callback_data=f"match_{match['id']}"))
+    keyboard.add(InlineKeyboardButton(text=_("back"), callback_data="events_menu"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
