@@ -11,6 +11,9 @@ from src.bot.utils.csv_converter import convert_to_csv
 from src.database.engine import sessionmaker
 from src.database.models import UserModel, NotifModel, ScheduleModel
 
+if TYPE_CHECKING:
+    pass
+
 from datetime import datetime
 from aiogram import Bot
 from arq import cron
@@ -26,21 +29,19 @@ from src.database.services.notifs import get_notifs_by_date, update_notif_auto
 
 
 async def startup(ctx):
-    async with sessionmaker() as session:
-        ctx["session"] = session
-    proxy_path = f'{settings.PROJ_DIR}/{settings.PROXY}'
-    print(proxy_path)
-    async with Hltv(timeout=5, proxy_path=proxy_path, proxy_protocol='http', debug=True) as hltv:
-        ctx["hltv"] = hltv
-
     ctx["bot"] = Bot(token=settings.TOKEN)
     ctx["lock"] = asyncio.Lock()
+    async with sessionmaker() as session:
+        ctx["session"] = session
+    ctx["hltv"] = Hltv(timeout=5, debug=True, proxy_path=settings.PROXY, proxy_protocol='http')
     ctx["redis"] = redis_client
     logger.success(f"Scheduler started. UTC time {datetime.utcnow()}")
 
 
 async def shutdown(ctx):
+    await ctx["bot"].session.close()
     await ctx["session"].close()
+    await ctx["hltv"].close_session()
     await ctx["redis"].close()
     logger.success(f"Scheduler stopped. UTC time {datetime.utcnow()}")
 
@@ -157,7 +158,7 @@ async def parse_events(ctx):
     if events:
         await redis.set("hltv:events", ujson.dumps(events))
         for event in events:
-            event_ = await hltv.get_event_info(event["id"], event["name"])
+            event_ = await hltv.get_event_info(event["id"], event["title"])
             await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_))
     else:
         logger.error("error parsing events")
@@ -206,28 +207,23 @@ class WorkerSettings:
     redis_settings = settings.redis_pool
     on_startup = startup
     on_shutdown = shutdown
-    functions = [fetch_and_send_notifications,
-                 generate_and_send_schedule,
-                 backup_tables,
+    functions = [
                  parse_matches,
                  parse_events,
                  parse_top_teams,
                  parse_top_players,
                  parse_last_news,
                  ]
+
+    now = datetime.now()
+    min_ = now.minute
+    sec_ = now.second + 10
+    if sec_ > 59:
+        min_ += 1
+        sec_ = 10
+    logger.info(sec_)
     cron_jobs = [
-        cron(fetch_and_send_notifications, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second=1),
-        cron(generate_and_send_schedule, minute={0, 15, 30, 45}, second=55),
-        cron(backup_tables, hour=0, minute=1, second=0),
-        cron(parse_matches, minute=59),
-        cron(parse_events, minute=43, second=15),
-        cron(parse_top_teams, weekday=0, hour=18, minute=1, second=30),
-        cron(parse_top_players, weekday=0, hour=20, minute=0, second=0),
-        cron(parse_last_news, minute=55),
+        cron(parse_events, minute=min_, second=sec_),
+        cron(parse_matches, minute=min_, second=sec_),
     ]
 
-
-#if __name__ == "__main__":
-
-    #run_worker(functions=worker_settings.functions, settings_cls=worker_settings.redis_settings,
-    #          on_startup=worker_settings.on_startup, on_shutdown=worker_settings.on_shutdown, cron_jobs=worker_settings.cron_jobs)

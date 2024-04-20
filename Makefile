@@ -11,7 +11,6 @@ help:
 	@echo "  stop  		Stop docker-compose"
 	@echo "  dead  		Deleting Images"
 	@echo "  clear  	Clears cache"
-	@echo "  lint		Reformat code"
 	@echo "  requirements  Export poetry.lock to requirements.txt"
 
 
@@ -58,27 +57,27 @@ compile:
 # Docker utils
 .PHONY: rebuild
 rebuild:
-	docker-compose down --remove-orphans ${MODE}
-	docker-compose up --force-recreate --build
+	docker compose down --remove-orphans ${MODE}
+	docker compose up --force-recreate --build
 
 .PHONY: start
 startup:
-	docker-compose up
+	docker compose up
 
 .PHONY: startbot
 startbot:
-	docker-compose up --build bot
+	docker compose up --build bot
 
 .PHONY: kill
 kill:
-	docker-compose down --remove-orphans ${MODE}
+	docker compose down --remove-orphans ${MODE}
 
 .PHONY: rebuildbot
 rebuildbot:
 	docker stop $$(docker ps -qf "ancestor=myweeksbot_bot")
 	docker rm $$(docker ps -aqf "ancestor=myweeksbot_bot")
 	docker rmi myweeksbot_bot
-	docker-compose up --build bot
+	docker compose up --build bot
 
 
 .PHONY: rebuildscheduler
@@ -86,7 +85,7 @@ rebuildscheduler:
 	docker stop $$(docker ps -qf "ancestor=myweeksbot_scheduler")
 	docker rm $$(docker ps -aqf "ancestor=myweeksbot_scheduler")
 	docker rmi myweeksbot_scheduler
-	docker-compose up --build scheduler
+	docker compose up --build scheduler
 
 
 .PHONY: mem

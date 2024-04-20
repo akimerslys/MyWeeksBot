@@ -12,16 +12,15 @@ from src.database.services import prousers as dbuc
 from src.probot.utils.states import NewUser
 from src.probot.utils import error_manager as err
 
-from datetime import datetime
 from loguru import logger
 
 
 router = Router(name="start")
 
 
-async def send_menu(bot, id):
+async def send_menu(bot, id_):
     await bot.send_message(
-        id,
+        id_,
         _("please_ch_button"),
         reply_markup=main_kb()
     )

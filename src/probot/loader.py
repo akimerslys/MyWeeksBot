@@ -31,7 +31,7 @@ dp = Dispatcher(storage=storage)
 logger.success("storage initialized")
 
 # CONFIG TO .ENV!!!
-if settings.USE_PROXY:
-    hltv = Hltv(max_delay=5, use_proxy=settings.USE_PROXY, proxy_list=[settings.PROXY_MAIN, ''], true_session=True, debug=settings.DEBUG)
+if settings.PROXY:
+    hltv = Hltv(max_delay=5, proxy_path=settings.PROXY, debug=settings.DEBUG)
 else:
-    hltv = Hltv(max_delay=5, use_proxy=settings.USE_PROXY, debug=settings.DEBUG, true_session=True)
+    hltv = Hltv(max_delay=5, debug=settings.DEBUG)

@@ -20,6 +20,7 @@ async def main_menu(call: CallbackQuery):
         _("main_menu"),
         reply_markup=mkb.main_kb(event1=main_event['title'])
     )
+
 # MAIN
 @router.callback_query(F.data == "main_kb")
 async def menu_back(call: CallbackQuery, state: FSMContext):

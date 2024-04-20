@@ -41,7 +41,6 @@ def match_kb(status: str | int) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     if status == "LIVE":
         keyboard.add(InlineKeyboardButton(text=_("Watch"), callback_data="main_kb"))
-        keyboard.add(InlineKeyboardButton(text=_("Watch"), callback_data="main_kb"))
     elif status == "Upcoming":
         keyboard.add(InlineKeyboardButton(text=_("Remind"), callback_data="remind_id"))
     elif status == "Finished":

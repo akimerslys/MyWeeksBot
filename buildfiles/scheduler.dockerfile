@@ -34,7 +34,8 @@ COPY src/scheduler/ src/scheduler/
 COPY poetry.lock .
 COPY pyproject.toml .
 COPY Makefile .
-COPY README.md . 
+COPY README.md .
+COPY proxies.txt .
 RUN poetry check && \
     poetry install --no-interaction --no-cache --no-root && \
     rm -rf home/bot/.cache && \
