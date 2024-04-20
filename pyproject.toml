@@ -38,7 +38,7 @@ beautifulsoup4 = "4.12.3"
 hiredis = "^2.3.2"
 aiomcache = "^0.8.1"
 lxml = "5.2.0"
-hltv-async-api = "0.6.1"
+hltv-async-api = "0.6.2"
 
 
 [tool.poetry.group.dev.dependencies]

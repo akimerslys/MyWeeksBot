@@ -158,7 +158,7 @@ async def parse_events(ctx):
     if events:
         await redis.set("hltv:events", ujson.dumps(events))
         for event in events:
-            event_ = await hltv.get_event_info(event["id"], event["name"])
+            event_ = await hltv.get_event_info(event["id"], event["title"])
             await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_))
     else:
         logger.error("error parsing events")
@@ -217,8 +217,8 @@ class WorkerSettings:
 
     now = datetime.now()
     min_ = now.minute
-    sec_ = now.second
-    if sec_ > 50:
+    sec_ = now.second + 10
+    if sec_ > 59:
         min_ += 1
         sec_ = 5
 

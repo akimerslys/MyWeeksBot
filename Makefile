@@ -51,7 +51,6 @@ update-lang:
 
 .PHONY: compile
 compile:
-
 	pybabel compile -d src/bot/locales -D messages --statistics
 
 # Docker utils

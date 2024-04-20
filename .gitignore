@@ -250,3 +250,4 @@ alembic_copy.ini
 !/buildfiles/ngrok.yml
 !/proxies.txt
 proxies.txt
+ngrok.yml

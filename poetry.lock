@@ -944,13 +944,13 @@ files = [
 
 [[package]]
 name = "hltv-async-api"
-version = "0.6.1"
+version = "0.6.2"
 description = "Hltv-aio An unofficial asynchronous HLTV API Wrapper for Python"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "hltv_async_api-0.6.1-py3-none-any.whl", hash = "sha256:9b4c19998266f61ac7fc5357e648372c835a3dbaca3daf769d79f6acdeac1afc"},
-    {file = "hltv_async_api-0.6.1.tar.gz", hash = "sha256:a57844971ba7c514fe128308ce3b3635dc50b26566d447284b9d5e7c6eaba0ac"},
+    {file = "hltv_async_api-0.6.2-py3-none-any.whl", hash = "sha256:ca938472a769183fbf742c96bdeaa1b133b0ff9a5aae9d6b7b3d5c872706e992"},
+    {file = "hltv_async_api-0.6.2.tar.gz", hash = "sha256:2e0109cf106c21828ec7e8d336da1bbf16d8a3b95f5600873ab17774d2bc23f2"},
 ]
 
 [package.dependencies]
@@ -2666,4 +2666,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e4713e5c17d58b1f1497104b8138a9cfade4ce06f88d5be2f9bf7c486de14fa8"
+content-hash = "82891c3ba1b0a5c824df7e32a3e112098d8a1796b45feb8fba118ea469c0b6d8"

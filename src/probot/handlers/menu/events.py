@@ -25,21 +25,23 @@ async def events_menu(call: CallbackQuery):
     await call.message.edit_text("events list", reply_markup=events_kb(events), more=True)
 
 
-@router.callback_query(F.data.startswith("event_"))
-async def event_show(call: CallbackQuery):
-    event_id = call.data.split("_")[-1]
-    event = await get_hltv("events", event_id)
+@router.callback_query(F.data.startswith("event_info_"))
+async def event_info(call: CallbackQuery):
+    data_ = call.data.split("_")
+    event_id = data_[-1]
+    update = data_[-2] == "update"
+    event = await get_hltv("events", event_id, update=update)
     await call.message.edit_text("Event: <b><a href='https://www.hltv.org/events/{id}/{name}'>{name}</>{name}</b>\n"
                                  'Dates: {start} - {end}\n'
                                  'Teams: {teams}\n'
                                  'Prizepool: {prize}\n'
                                  'Location: {location}'.format(id=event[0],
-                                                       name=event[1],
-                                                       start=event[2].replace('-', '.'),
-                                                       end=event[3].replace('-', '.'),
-                                                       prize=event[4],
-                                                       location=event[6],
-                                                       teams=event[5]),
+                                                               name=event[1],
+                                                               start=event[2].replace('-', '.'),
+                                                               end=event[3].replace('-', '.'),
+                                                               prize=event[4],
+                                                               location=event[6],
+                                                               teams=event[5]),
                                  reply_markup=event_kb(event[0]))
 
 

@@ -120,7 +120,7 @@ def events_kb(events: list, more: bool = False) -> InlineKeyboardMarkup:
         if i > 4 and not more:
             keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="events_menu_more"))
             break
-        keyboard.add(InlineKeyboardButton(text=event["name"], callback_data=f"event_{event['id']}"))
+        keyboard.add(InlineKeyboardButton(text=event["name"], callback_data=f"event_info_{event['id']}"))
     keyboard.add(InlineKeyboardButton(text=_("back"), callback_data="main_kb"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
@@ -131,7 +131,7 @@ def event_kb(id) -> InlineKeyboardMarkup:
     keyboard.add(InlineKeyboardButton(text=_("Follow (soon)"), callback_data=f"event_follow_{id}"))
     keyboard.add(InlineKeyboardButton(text=_("Matches"), callback_data=f"event_matches_{id}"))
     keyboard.add(InlineKeyboardButton(text=_("Teams"), callback_data=f"event_teams_{id}"))
-    keyboard.add(InlineKeyboardButton(text=_("Update"), callback_data=f"event_update_{id}"))
+    keyboard.add(InlineKeyboardButton(text=_("Update"), callback_data=f"event_info_update_{id}"))
     keyboard.add(InlineKeyboardButton(text=_("Back"), callback_data="events_menu"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
@@ -143,7 +143,7 @@ def event_matches_kb(matches: list, more: bool = False) -> InlineKeyboardMarkup:
         if i > 4 and not more:
             keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="event_matches_more"))
             break
-        keyboard.add(InlineKeyboardButton(text=match["name"], callback_data=f"match_{match['id']}"))
+        keyboard.add(InlineKeyboardButton(text=match["name"], callback_data=f"match_info_{match['id']}"))
     keyboard.add(InlineKeyboardButton(text=_("back"), callback_data="events_menu"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
