@@ -353,8 +353,8 @@ msgstr ""
 #: handlers/start.py:76
 msgid "notif_deeplink_logged"
 msgstr ""
-"🗓 Сповіщення {date_usr} ({tz_usr})\n"
-"(<i>{date} ({tz})</i>)\n"
+"🗓 Сповіщення {date} ({tz})\n"
+"{tmp}"
 "💬{text}"
 
 #: handlers/start.py:209

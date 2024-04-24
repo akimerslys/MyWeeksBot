@@ -1,6 +1,5 @@
 import asyncio
 
-import uvloop
 from loguru import logger
 
 from src.core.config import settings
@@ -97,4 +96,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    uvloop.run(main())
+    asyncio.run(main())

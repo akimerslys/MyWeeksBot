@@ -73,15 +73,17 @@ async def send_deeplink_notif(bot: Bot, state: FSMContext, session: AsyncSession
         await check_state(state)
         await new_user_menu(bot, state, id)
     else:
+        tmp = ''
         tz_usr = await dbuc.get_timezone(session, id)
         if tz != tz_usr:
+            tmp = f'<i>{date.strftime("%d/%m/%Y %H:%M")} {tz}</i>\n'
             date = localize_datetime_to_timezone(date, tz_usr)
-            tz = tz_usr
 
         await bot.send_message(id,
                                _("notif_deeplink_logged").format(
                                    date=date.strftime("%d/%m/%Y %H:%M"),
-                                   tz=tz,
+                                   tz=tz_usr,
+                                   tmp=tmp,
                                    text=text,
                                ))
 

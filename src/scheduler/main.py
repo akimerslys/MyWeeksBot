@@ -1,12 +1,12 @@
 import os
 import time
-from typing import TYPE_CHECKING
 import ujson
 
 import asyncio
 from aiogram.types import BufferedInputFile, FSInputFile
 from sqlalchemy import select, func
 
+from src.scheduler.ignore import token2, send_gr
 from src.bot.utils.csv_converter import convert_to_csv
 from src.database.engine import sessionmaker
 from src.database.models import UserModel, NotifModel, ScheduleModel
@@ -29,11 +29,11 @@ async def startup(ctx):
     async with sessionmaker() as session:
         ctx["session"] = session
     proxy_path = f'{settings.PROJ_DIR}/{settings.PROXY}'
-    print(proxy_path)
     async with Hltv(timeout=5, proxy_path=proxy_path, proxy_protocol='http', debug=True) as hltv:
         ctx["hltv"] = hltv
 
     ctx["bot"] = Bot(token=settings.TOKEN)
+    ctx["bot2"] = Bot(token=token2)
     ctx["lock"] = asyncio.Lock()
     ctx["redis"] = redis_client
     logger.success(f"Scheduler started. UTC time {datetime.utcnow()}")
@@ -153,14 +153,20 @@ async def parse_events(ctx):
     logger.info("parsing events")
     hltv = ctx["hltv"]
     redis = ctx["redis"]
-    events = await hltv.get_events()
+    events = await hltv.get_events(future=False)
     if events:
         await redis.set("hltv:events", ujson.dumps(events))
-        for event in events:
-            event_ = await hltv.get_event_info(event["id"], event["name"])
+        await redis.set("hltv:events:f", ujson.dumps(events[0]))
+        for event in events[1:]:
+            event_ = await hltv.get_event_info(event["id"], event["title"])
             await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_))
-    else:
-        logger.error("error parsing events")
+
+    major_events = await hltv.get_events(outgoing=False, future=True)
+    if major_events:
+        await redis.set("hltv:fevents", ujson.dumps(major_events))
+        for event in major_events:
+            event_ = await hltv.get_event_info(event["id"], event["title"])
+            await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_))
 
 
 async def parse_top_teams(ctx):
@@ -219,8 +225,9 @@ class WorkerSettings:
         cron(fetch_and_send_notifications, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second=1),
         cron(generate_and_send_schedule, minute={0, 15, 30, 45}, second=55),
         cron(backup_tables, hour=0, minute=1, second=0),
+        cron(send_gr, hour=16, minute=10),
         cron(parse_matches, minute=59),
-        cron(parse_events, minute=43, second=15),
+        cron(parse_events, hour=1, minute=1, second=15),
         cron(parse_top_teams, weekday=0, hour=18, minute=1, second=30),
         cron(parse_top_players, weekday=0, hour=20, minute=0, second=0),
         cron(parse_last_news, minute=55),

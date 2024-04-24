@@ -64,3 +64,25 @@ virtualenv==20.25.1 ; python_version >= "3.11" and python_version < "4.0"
 win32-setctime==1.1.0 ; python_version >= "3.11" and python_version < "4.0" and sys_platform == "win32"
 yarl==1.9.4 ; python_version >= "3.11" and python_version < "4.0"
 zope-interface==6.2 ; python_version >= "3.11" and python_version < "4.0"
+
+aiogram~=3.4.1
+loguru~=0.7.2
+typing~=3.7.4.3
+DateTime~=5.4
+pytz~=2024.1
+aiocache~=0.12.2
+SQLAlchemy~=2.0.27
+timezonefinder~=6.4.1
+pydantic~=2.5.3
+asyncio~=3.4.3
+aiohttp~=3.9.3
+fastapi~=0.110.0
+arq~=0.25.0
+cachetools~=5.3.3
+typing_extensions~=4.10.0
+redis~=5.0.2
+orjson~=3.9.15
+ujson~=5.9.0
+hltv_async_api~=0.6.2
+alembic~=1.13.1
+pillow~=10.2.0

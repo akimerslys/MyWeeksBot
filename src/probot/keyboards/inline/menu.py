@@ -1,6 +1,7 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 
+import pytz
 from loguru import logger
 from pytz import timezone as tz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -9,8 +10,7 @@ from aiogram.utils.i18n import gettext as _
 
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-
-# TODO REWRITE, OPTIMIZE
+hltv_tz = pytz.timezone('Europe/Copenhagen')
 
 
 def main_kb(event1: str = "", match1: str = "") -> InlineKeyboardMarkup:
@@ -18,7 +18,7 @@ def main_kb(event1: str = "", match1: str = "") -> InlineKeyboardMarkup:
     e_ = 1
     if event1:
         e_ = 2
-        keyboard.add(InlineKeyboardButton(text=event1, callback_data="event_id"))
+        keyboard.add(InlineKeyboardButton(text=event1, callback_data=f"event_info_{event1['id']}"))
     keyboard.add(InlineKeyboardButton(text=_("Events"), callback_data="events_menu"))
 
     m_ = 1
@@ -116,11 +116,18 @@ def loading() -> InlineKeyboardMarkup:
 
 def events_kb(events: list, more: bool = False) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
+    current_date = datetime.now(tz=hltv_tz).replace(hour=0, minute=0, second=0, microsecond=1)
     for i, event in enumerate(events, start=1):
         if i > 4 and not more:
-            keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="events_menu_more"))
+            keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="events_menu_m"))
             break
-        keyboard.add(InlineKeyboardButton(text=event["name"], callback_data=f"event_info_{event['id']}"))
+
+        event_start_date = datetime.strptime(event["start_date"], "%d-%m").replace(tzinfo=hltv_tz, year=current_date.year)
+        status = 'LIVE ' if current_date >= event_start_date else f" ({event['start_date'].replace('-', '.')} - {event['end_date'].replace('-', '.')})"
+
+        text_ = f"{status}{event['title'][:24] + '..' if len(event['title']) > 24 else event['title']}"
+        keyboard.add(InlineKeyboardButton(text=text_, callback_data=f"event_info_{event['id']}"))
+
     keyboard.add(InlineKeyboardButton(text=_("back"), callback_data="main_kb"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
@@ -130,7 +137,7 @@ def event_kb(id) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     keyboard.add(InlineKeyboardButton(text=_("Follow (soon)"), callback_data=f"event_follow_{id}"))
     keyboard.add(InlineKeyboardButton(text=_("Matches"), callback_data=f"event_matches_{id}"))
-    keyboard.add(InlineKeyboardButton(text=_("Teams"), callback_data=f"event_teams_{id}"))
+    keyboard.add(InlineKeyboardButton(text=_("Teams (soon)"), callback_data=f"event_teams_{id}"))
     keyboard.add(InlineKeyboardButton(text=_("Update"), callback_data=f"event_info_update_{id}"))
     keyboard.add(InlineKeyboardButton(text=_("Back"), callback_data="events_menu"))
     keyboard.adjust(1)
@@ -139,11 +146,15 @@ def event_kb(id) -> InlineKeyboardMarkup:
 
 def event_matches_kb(matches: list, more: bool = False) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
-    for i, match in enumerate(matches, start=1):
-        if i > 4 and not more:
-            keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="event_matches_more"))
-            break
-        keyboard.add(InlineKeyboardButton(text=match["name"], callback_data=f"match_info_{match['id']}"))
+    if matches:
+        for i, match in enumerate(matches, start=1):
+            if i > 4 and not more:
+                keyboard.add(InlineKeyboardButton(text=_("more"), callback_data="event_matches_more"))
+                break
+            text_ = f"{match['team1']} vs {match['team2']}"
+            keyboard.add(InlineKeyboardButton(text=text_, callback_data=f"match_info_{match['id']}"))
+    else:
+        keyboard.add(InlineKeyboardButton(text=_('No Matches'), callback_data='events_menu'))
     keyboard.add(InlineKeyboardButton(text=_("back"), callback_data="events_menu"))
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)

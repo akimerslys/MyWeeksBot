@@ -1,3 +1,4 @@
+import pytz
 from aiogram import Router, F, Bot
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
 from aiogram.utils.i18n import gettext as _
@@ -8,10 +9,10 @@ from src.database.services.notifs import get_user_notifs_sorted
 from src.database.services.schedule import count_user_schedule
 from src.database.services.users import user_logged, get_timezone
 from src.bot.keyboards.inline.inline import inline_add
-from src.bot.utils.time_localizer import localize_datetime_to_timezone, is_past, is_future
+from src.bot.utils.time_localizer import localize_datetime_to_timezone, localize_datetimenow_to_timezone, is_past, is_future, round_minute
 #from src.bot.utils import error_manager as err
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from loguru import logger
 
@@ -48,6 +49,7 @@ async def invalid_text(query: InlineQuery) -> None:
     await query.answer(results, is_personal=True, cache_time=5)
     return
 
+
 async def send_sign_in(query: InlineQuery) -> None:
     await query.answer(
             results=[],
@@ -58,48 +60,17 @@ async def send_sign_in(query: InlineQuery) -> None:
         )
 
 
-@router.inline_query(F.query.regexp(r"^\d{2}/\d{2}/\d{4} \d{2}:\d{2} .+"))
-async def show_created_notif(query: InlineQuery, bot: Bot, session: AsyncSession):
-    if not await user_logged(session, query.from_user.id):
-        await send_sign_in(query)
-        return
-
-    results = []
-
-    tz = await get_timezone(session, query.from_user.id)
-
-    #25/12/2025 00:00 Merry Christmas!
-    query_ = query.query.split(" ", 2)
-
-    date_str = query_[0]
-    logger.info(f"Inline date str: <{date_str}>")
-    time_str = query_[1]
-    logger.info(f"Inline time str: <{time_str}>")
-    text_str = query_[2][:32]
-    logger.info(f"Inline text str: <{text_str}>")
-
-    try :
-        date = datetime.strptime(date_str + time_str, "%d/%m/%Y%H:%M")
-        date_str = date.strftime("%d/%m/%Y %H:%M")
-    except ValueError:
-        await invalid_date(query)
-        return
-
+async def process_date(bot, query, date, text, tz):
     if is_past(date, tz) or is_future(date):
         await invalid_date(query)
         return
+    date_str = date.strftime("%d/%m/%Y %H:%M")
 
-    tz_mod = tz
-    if '/' in tz:
-        tz_mod = tz.replace('/', '-')
+    tz_mod = tz.replace('/', '-')
 
-    text_mod = text_str
-    if ' ' in text_str:
-        text_mod = text_str.replace(' ', '_')
 
-    payload = f"_{date.strftime('%Y-%m-%d-%H-%M')}_{tz_mod}_{text_mod}"
+    payload = f"_{date.strftime('%Y-%m-%d-%H-%M')}_{tz_mod}_{text}"
     logger.info(f"payload: {payload}")
-    link: str
 
     try:
         link = await create_start_link(bot, payload=payload)
@@ -108,19 +79,74 @@ async def show_created_notif(query: InlineQuery, bot: Bot, session: AsyncSession
         await invalid_text(query)
         return
 
-    results.append(InlineQueryResultArticle(
+    results = [InlineQueryResultArticle(
         id="0",
         title=date_str,
-        description=text_str,
+        description=text,
         input_message_content=InputTextMessageContent(
-            message_text=_("inline_notif").format(date=date_str, tz=tz, text=text_str)
+            message_text=_("inline_notif").format(date=date_str, tz=tz, text=text)
         ),
         thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
         parse_mode="HTML",
         reply_markup=inline_add(link)
-    ))
+    )]
 
     await query.answer(results, is_personal=True)
+
+
+@router.inline_query(F.query.regexp(r"^\d{2}:\d{2}"))
+async def create_short_notif(query: InlineQuery, bot: Bot, session: AsyncSession):
+    if not await user_logged(session, query.from_user.id):
+        await send_sign_in(query)
+        return
+
+    query_ = query.query.split(' ', 1)
+    logger.warning(query_)
+    text = ''
+    if len(query_) > 1:
+        text = query_[1]
+    tz = await get_timezone(session, query.from_user.id)
+
+    try:
+        hour, minute = map(int, query_[0].split(':'))
+        hour, minute = round_minute(hour, minute)
+        logger.debug(f'{hour}:{minute}')
+        now = localize_datetimenow_to_timezone(tz)
+        date = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if date < now:
+            date += timedelta(days=1)
+
+    except ValueError:
+        await invalid_date(query)
+        return
+
+    await process_date(bot, query, date, text, tz)
+
+
+@router.inline_query(F.query.regexp(r"^\d{2}/\d{2}/\d{4} \d{2}:\d{2} .+"))
+async def create_notif(query: InlineQuery, bot: Bot, session: AsyncSession):
+    if not await user_logged(session, query.from_user.id):
+        await send_sign_in(query)
+        return
+
+    #25/12/2025 00:00 Merry Christmas!
+    query_ = query.query.split(" ", 2)
+
+    date_str = query_[0]
+    logger.info(f"Inline date str: <{date_str}>")
+    time_str = query_[1]
+    logger.info(f"Inline time str: <{time_str}>")
+    text = query_[2][:32]
+    logger.info(f"Inline text str: <{text}>")
+
+    try :
+        date = datetime.strptime(date_str + time_str, "%d/%m/%Y%H:%M")
+    except ValueError:
+        await invalid_date(query)
+        return
+
+    tz = await get_timezone(session, query.from_user.id)
+    await process_date(bot, query, date, text, tz)
 
 
 @router.inline_query()
@@ -130,7 +156,6 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
         return
 
     results = []
-
 
     results.append(InlineQueryResultArticle(
         id="0",

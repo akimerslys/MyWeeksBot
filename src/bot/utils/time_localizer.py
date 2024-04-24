@@ -111,3 +111,18 @@ def is_future(date: datetime) -> bool:
     """
     logger.debug(f"running if_future_time, date: {date}")
     return date > datetime.now() + timedelta(days=365)
+
+
+def round_minute(hour, minute):
+    if minute % 5 >= 2.5:
+        minute_rounded = minute + (5 - minute % 5)
+    else:
+        minute_rounded = minute - (minute % 5)
+
+    if minute_rounded == 60:
+        hour += 1
+        minute_rounded = 0
+
+    hour %= 24
+
+    return hour, minute_rounded

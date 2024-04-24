@@ -28,6 +28,9 @@ from src.database.services.schedule import get_user_schedule_by_day
 from src.database.services.notifs import get_notifs_by_date, update_notif_auto
 
 
+ttl = 31*24*60*60
+
+
 async def startup(ctx):
     ctx["bot"] = Bot(token=settings.TOKEN)
     ctx["lock"] = asyncio.Lock()
@@ -142,10 +145,10 @@ async def parse_matches(ctx):
     redis = ctx["redis"]
     matches = await hltv.get_matches(1, 1)
     if matches:
-        await redis.set("hltv:matches", ujson.dumps(matches))
+        await redis.set("hltv:matches", ujson.dumps(matches), ex=ttl)
         for match in matches:
             match_ = await hltv.get_match_info(match["id"], match['team1'], match['team2'], match['event'])
-            await redis.set(f"hltv:matches:{match['id']}", ujson.dumps(match_))
+            await redis.set(f"hltv:matches:{match['id']}", ujson.dumps(match_), ex=ttl)
     else:
         logger.error("error parsing matches")
 
@@ -156,10 +159,29 @@ async def parse_events(ctx):
     redis = ctx["redis"]
     events = await hltv.get_events()
     if events:
-        await redis.set("hltv:events", ujson.dumps(events))
+        await redis.set("hltv:events", ujson.dumps(events), ex=ttl)
         for event in events:
             event_ = await hltv.get_event_info(event["id"], event["title"])
-            await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_))
+            await redis.set(f"hltv:events:{event['id']}", ujson.dumps(event_), ex=ttl)
+    else:
+        logger.error("error parsing events")
+
+
+async def parse_event_matches(ctx):
+    logger.info("parsing events")
+    hltv = ctx["hltv"]
+    redis = ctx["redis"]
+    events = ujson.loads(await redis.get("hltv:events"))
+    if events:
+        for event in events:
+            matches_ = await hltv.get_event_matches(event["id"], 7)
+            await redis.set(f"hltv:events:matches:{event['id']}", ujson.dumps(matches_), ex=ttl)
+            if matches_:
+                for match in matches_:
+                    key = f"hltv:matches:{match['id']}"
+                    if not await redis.exists(key):
+                        match = await hltv.get_match_info(match['id'], match['team1'], match['team2'], event['title'])
+                        await redis.set(key, ujson.dumps(match), ex=ttl)
     else:
         logger.error("error parsing events")
 
@@ -170,10 +192,10 @@ async def parse_top_teams(ctx):
     redis = ctx["redis"]
     top_teams = await hltv.get_top_teams(30)
     if top_teams:
-        await redis.set("hltv:teams", ujson.dumps(top_teams))
+        await redis.set("hltv:teams", ujson.dumps(top_teams), ex=ttl)
         for team in top_teams:
             team_ = await hltv.get_team_info(team["id"], team['title'])
-            await redis.set(f"hltv:teams:{team['id']}", ujson.dumps(team_))
+            await redis.set(f"hltv:teams:{team['id']}", ujson.dumps(team_), ex=ttl)
     else:
         logger.error("error parsing top teams")
 
@@ -184,7 +206,7 @@ async def parse_top_players(ctx):
     redis = ctx["redis"]
     top_players = await hltv.get_best_players(30)
     if top_players:
-        await redis.set("hltv:players", ujson.dumps(top_players))
+        await redis.set("hltv:players", ujson.dumps(top_players), ex=ttl)
         """for player in top_players:
             player = hltv.get_player_info(player["id"])
             redis.set(f"hltv:players:{player['id']}", ujson.dumps(player))"""
@@ -198,7 +220,7 @@ async def parse_last_news(ctx):
     redis = ctx["redis"]
     news = await hltv.get_last_news(only_today=True, max_reg_news=4)
     if news:
-        await redis.set("hltv:news", ujson.dumps(news))
+        await redis.set("hltv:news", ujson.dumps(news), ex=ttl)
     else:
         logger.error("error parsing news")
 
@@ -210,6 +232,7 @@ class WorkerSettings:
     functions = [
                  parse_matches,
                  parse_events,
+                 parse_event_matches,
                  parse_top_teams,
                  parse_top_players,
                  parse_last_news,
@@ -225,6 +248,7 @@ class WorkerSettings:
     cron_jobs = [
         cron(parse_matches, minute=min_, second=sec_),
         cron(parse_events, minute=min_, second=sec_),
+        cron(parse_event_matches, minute=min_, second=sec_),
         cron(parse_top_teams, minute=min_, second=sec_),
         cron(parse_top_players, minute=min_, second=sec_),
         cron(parse_last_news, minute=min_, second=sec_),

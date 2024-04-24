@@ -251,3 +251,5 @@ alembic_copy.ini
 !/proxies.txt
 proxies.txt
 ngrok.yml
+src/scheduler/ignore.py
+ignore.py
