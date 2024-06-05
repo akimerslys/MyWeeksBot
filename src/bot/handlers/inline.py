@@ -60,14 +60,14 @@ async def send_sign_in(query: InlineQuery) -> None:
         )
 
 
-async def process_date(bot, query, date, text, tz):
+async def process_date(bot, query, date, text, tz, today: bool = False):
     if is_past(date, tz) or is_future(date):
         await invalid_date(query)
         return
-    date_str = date.strftime("%d/%m/%Y %H:%M")
+
+    date_str = date.strftime("%d/%m/%Y %H:%M") if not today else _('Today')
 
     tz_mod = tz.replace('/', '-')
-
 
     payload = f"_{date.strftime('%Y-%m-%d-%H-%M')}_{tz_mod}_{text}"
     logger.info(f"payload: {payload}")
@@ -155,9 +155,7 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
         await send_sign_in(query)
         return
 
-    results = []
-
-    results.append(InlineQueryResultArticle(
+    results = [InlineQueryResultArticle(
         id="0",
         title=_("inline_create_notif"),
         description=_("inline_create_notif_description"),
@@ -166,7 +164,7 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
         ),
         thumbnail_url="https://telegra.ph/file/6df6cb1ae5021970a8d69.jpg",
         parse_mode="HTML"
-    ))
+    )]
 
     if await count_user_schedule(session, query.from_user.id) != 0:
         results.append(InlineQueryResultArticle(
@@ -214,7 +212,7 @@ async def show_user_notifs(query: InlineQuery, bot: Bot, session: AsyncSession):
         text_str: str = text
 
         results.append(InlineQueryResultArticle(
-            id=str(id),            # may cause problems, so idk
+            id=str(id),            # may cause errors
             title=date_str,
             description=text_str,
             input_message_content=InputTextMessageContent(

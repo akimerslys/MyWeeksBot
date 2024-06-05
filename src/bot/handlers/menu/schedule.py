@@ -20,6 +20,9 @@ from src.bot.utils import time_localizer as timecom
 router = Router(name="schedule")
 
 
+# TODO SHARE SCHEDULE WITH INLINE SWITCH CHAT
+
+
 @router.callback_query(F.data == "schedule")
 async def schedule_menu(call: CallbackQuery, state: FSMContext, session: AsyncSession):
     if not await dbuc.get_schedule_time(session, call.from_user.id):
@@ -270,3 +273,8 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
         await call.message.edit_text(_("please_ch_button"), reply_markup=mkb.main_kb())
 
     await state.clear()
+
+
+@router.callback_query(F.data == 'share_schedule_menu')
+async def share_schedule_menu(call: CallbackQuery):
+    await call.message.edit_reply_markup(reply_markup=mkb.share_schedule_kb)

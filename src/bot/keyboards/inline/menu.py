@@ -56,10 +56,20 @@ def schedule_kb(is_sch: bool = False) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
     if not is_sch:
         keyboard.button(text=_("show_schedule"), callback_data="show_schedule_menu")
+    keyboard.button(text=_("share_schedule"), callback_data="share_schedule_menu")
     keyboard.button(text=_("update_schedule"), callback_data="schedule_add_day_0")
     keyboard.button(text=_("manage_schedule"), callback_data="manage_schedule")
     keyboard.button(text=_("back"), callback_data="main_kb")
 
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)
+
+
+def share_schedule_kb() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=_("share_full_schedule"), callback_data="share_schedule_full")
+    keyboard.button(text=_("share_day_schdule"), callback_data="share_schedule_day")
+    keyboard.button(text=_("back"), callback_data="schedule")
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
 
