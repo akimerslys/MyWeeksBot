@@ -57,10 +57,9 @@ def schedule_kb(is_sch: bool = False) -> InlineKeyboardMarkup:
     if not is_sch:
         keyboard.button(text=_("show_schedule"), callback_data="show_schedule_menu")
     keyboard.button(text=_("share_schedule"), callback_data="share_schedule_menu")
-    keyboard.button(text=_("update_schedule"), callback_data="schedule_add_day_0")
+    keyboard.button(text=_("update_schedule"), callback_data="schedule_add_day_9")
     keyboard.button(text=_("manage_schedule"), callback_data="manage_schedule")
     keyboard.button(text=_("back"), callback_data="main_kb")
-
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
 
@@ -76,19 +75,16 @@ def share_schedule_kb() -> InlineKeyboardMarkup:
 
 def add_schedule_days_kb(chosen_days: list) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    for day in days_of_week:
+    for i, day in enumerate(days_of_week):
         if day == "Sunday":
-            builder.button(text=_("workdays"), callback_data="schedule_add_day_workdays")
-        if day in chosen_days:
-            builder.button(
-                text="✅ " + _(day),
-                callback_data=f"schedule_add_day_{day}"
+            builder.button(text=_("workdays"), callback_data="schedule_add_day_7")
+        logger.debug(f'{i}: {i in chosen_days}, {chosen_days}')
+        builder.button(
+                text=("✅ " if i in chosen_days else '') + _(day),
+                callback_data=f"schedule_add_day_{i}"
             )
-        else:
-            builder.button(
-                text=_(day),
-                callback_data=f"schedule_add_day_{day}")
-    builder.button(text=_("weekends"), callback_data="schedule_add_day_weekends")
+
+    builder.button(text=_("weekends"), callback_data="schedule_add_day_8")
     builder.button(text=_("back"), callback_data="schedule")
     builder.button(text=_("next"), callback_data="schedule_add_go_to_hrs")
     builder.adjust(2, 2, 2, 3, 2)
@@ -134,7 +130,7 @@ def schedule_complete_kb(notify: bool = False) -> InlineKeyboardMarkup:
 def back_main_schedule() -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text=_("show_schedule"), callback_data="show_schedule_menu")],
-        [InlineKeyboardButton(text=_("add_another_schedule"), callback_data="schedule_add_day_0")],
+        [InlineKeyboardButton(text=_("add_another_schedule"), callback_data="schedule_add_day_9")],
         [InlineKeyboardButton(text=_("back_main"), callback_data="main_kb")],
     ]
     keyboard = InlineKeyboardBuilder(markup=buttons)
@@ -154,7 +150,7 @@ def manage_schedule_kb() -> InlineKeyboardMarkup:
 def manage_schedule_day_kb(user_list: list[tuple]):
     keyboard = InlineKeyboardBuilder()
     logger.debug(user_list)
-    for time, text, id_ in user_list:
+    for day, time, text, id_ in user_list:
         keyboard.button(text=f"{time} | {text[:7] if text else ''}",
                         callback_data=f"manage_schedule_id_{id_}")
     keyboard.button(text=_("back"), callback_data="manage_schedule")
@@ -173,6 +169,7 @@ def manage_schedule_info_kb(id):
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
+
 
 def notifications_kb() -> InlineKeyboardMarkup:
     buttons = [

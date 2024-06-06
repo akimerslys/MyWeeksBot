@@ -20,6 +20,7 @@ class BotSettings(EnvBaseSettings):
     LOGS_CHAT_ID: int
     MAX_NOTIFS: int = 5
     MAX_NOTIFS_PREMIUM: int = 10
+    ERRORS_CHAT_ID: int
 
 
 class ProBotSettings(EnvBaseSettings):

@@ -72,12 +72,16 @@ def ask_location_confirm() -> InlineKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def timezone_country_kb(country_code: str = "", extended: bool = False) -> InlineKeyboardMarkup:
+def timezone_country_kb(tzs: list[str] | None = None, extended: bool = False, user_logged: bool = True) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
+    if tzs is not None:
+        calldata = "set_timezone_" if user_logged else "set_new_timezone_"
 
-    if country_code != "":
-        builder.button(text=f"{country_code}", callback_data=f"timezone_country_{country_code}")
+        for tz in tzs:
+            builder.button(text=f"{tz}", callback_data=f"{calldata}{tz}")
+
+        builder.adjust(1)
     if extended:
         builder.button(text="🇺🇸 United States", callback_data="timezone_country_US")
         builder.button(text="Kazakhstan", callback_data="timezone_country_KZ")
@@ -85,17 +89,17 @@ def timezone_country_kb(country_code: str = "", extended: bool = False) -> Inlin
         builder.button(text="Brazil", callback_data="timezone_country_BR")
         builder.button(text="🇮🇳 India", callback_data="timezone_country_IN")
         builder.button(text="🇦🇺 Australia", callback_data="timezone_country_AU")
+        builder.button(text=_("Less"), callback_data="timezone_country")
+        builder.adjust(2, 2, 2, 1, 1)
     else:
         builder.button(text=_("🏳️ More"), callback_data="timezone_country_extended")
     builder.button(text=_("back"), callback_data="timezone_kb")
-    builder.adjust(2, 2, 2, 1)
+
     return builder.as_markup(resize_keyboard=True)
 
 
-def timezone_country_list_kb(tz_list: list, new_user: bool) -> InlineKeyboardMarkup:
-    calldata = "set_timezone_"
-    if new_user:
-        calldata="set_new_timezone_"
+def timezone_country_list_kb(tz_list: list, user_logged: bool) -> InlineKeyboardMarkup:
+    calldata = "set_timezone_" if user_logged else "set_new_timezone_"
     builder = InlineKeyboardBuilder()
     for tz in tz_list:
         builder.button(text=tz, callback_data=f"{calldata}{tz}")

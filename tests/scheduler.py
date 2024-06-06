@@ -22,7 +22,7 @@ from hltv_async_api import Hltv
 from loguru import logger
 from src.core.config import settings
 from src.core.redis_loader import redis_client
-from src.image_generator.images import generate_user_schedule_day
+from src.image_generator.generator import generate_user_schedule_day
 from src.database.services.users import get_schedule_users_by_time
 from src.database.services.schedule import get_user_schedule_by_day
 from src.database.services.notifs import get_notifs_by_date, update_notif_auto

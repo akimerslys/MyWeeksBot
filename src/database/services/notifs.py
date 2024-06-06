@@ -97,8 +97,9 @@ async def get_user_notifs_id(session: AsyncSession, user_id: int) -> list:
 
     return list(notif_ids)
 
+
 async def get_user_notifs_sorted(session: AsyncSession, user_id: int) -> list[tuple]:
-    query = select(NotifModel).filter_by(user_id=user_id).order_by(asc(NotifModel.date))
+    query = select(NotifModel).filter_by(user_id=user_id, active=True).order_by(asc(NotifModel.date))
 
     result = await session.execute(query)
 
@@ -194,7 +195,6 @@ async def get_next_notif(session: AsyncSession, user_id: int) -> NotifModel:
     notif = result.scalar_one_or_none()
     logger.debug(f"got next notif for user {user_id}\n{notif}")
     return notif
-
 
 async def get_all_notifs(session: AsyncSession) -> list[NotifModel]:
     query = select(NotifModel)

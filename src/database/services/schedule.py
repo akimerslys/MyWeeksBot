@@ -23,19 +23,35 @@ if TYPE_CHECKING:
 """
 
 
+def upgrade_day(s: str | int):
+    if isinstance(s, str):
+        days_of_week = {
+                    "Monday": 0,
+                    "Tuesday": 1,
+                    "Wednesday": 2,
+                    "Thursday": 3,
+                    "Friday": 4,
+                    "Saturday": 5,
+                    "Sunday": 6
+                }
+        s = days_of_week[s]
+    return s
+
+
 async def add_schedule(
     session: AsyncSession,
     user_id: int,
-    day: str,
+    day: str | int,
     time: str,
     text: str | None = "",
 ) -> None:
-    """Add a new user to the database."""
-    logger.info(f"adding schedule for user {user_id}")
+    """Add a new user schedule to the database."""
     if time[1] == ":":
         time = '0' + time
     if text == "Skip":
         text = None
+    day = upgrade_day(day)
+    logger.info(f"adding schedule for user {user_id}, [{day}, {time}, {text}]")
     new_notif = ScheduleModel(
         user_id=user_id,
         day=day,
@@ -67,15 +83,26 @@ async def get_user_schedule(session: AsyncSession, user_id: int) -> list[Schedul
 
 
 async def get_user_schedule_day_time_text(session: AsyncSession, user_id: int) -> list[tuple]:
-    query = select(ScheduleModel).filter_by(user_id=user_id)
+    query = select(ScheduleModel).filter_by(user_id=user_id).order_by(ScheduleModel.time)
 
     result = await session.execute(query)
     logger.debug(f"got user notifs {user_id}")
     schedule_list = result.scalars()
 
-    schedule_info = [(schedule.day, schedule.time, schedule.text) for schedule in schedule_list]
+    schedule = [(schedule.day, schedule.time, schedule.text) for schedule in schedule_list]
 
-    return schedule_info
+    return schedule
+
+
+async def get_user_day_schedule_day_time_text(session: AsyncSession, user_id: int, day: str | int) -> list[tuple]:
+    day = upgrade_day(day)
+    query = select(ScheduleModel).filter_by(user_id=user_id, day=day).order_by(ScheduleModel.time)
+
+    result = await session.execute(query)
+    logger.debug(f"got user schedule by day {day}")
+    notifs = result.scalars()
+    schedule_list = [(day, schedule.time, schedule.text) for schedule in notifs]
+    return schedule_list
 
 
 @cached(key_builder=lambda session, id: build_key(id))
@@ -93,16 +120,15 @@ async def count_user_schedule(session: AsyncSession, user_id: int) -> int:
 
 async def get_schedule_text(session: AsyncSession, id: int) -> str:
     query = select(ScheduleModel.text).filter_by(id=id)
-
     result = await session.execute(query)
-    logger.debug(f"got notif text {id}")
     text = result.scalar_one_or_none()
+    logger.debug(f"got notif text {id}, {text}")
     return text or ""
 
 
 async def update_schedule_text(session: AsyncSession, id: int, text: str) -> None:
     stmt = update(ScheduleModel).where(ScheduleModel.id == id).values(text=text)
-    logger.debug(f"updated schedule text {id}")
+    logger.debug(f"updated schedule text {id}, {text}")
     await session.execute(stmt)
     await session.commit()
 
@@ -115,14 +141,26 @@ async def delete_one_schedule(session: AsyncSession, id: int) -> None:
     logger.info(f"deleted schedule {id}")
 
 
-async def get_user_schedule_by_day(session: AsyncSession, user_id: int, day: str) -> list[tuple]:
+async def get_user_schedule_by_day(session: AsyncSession, user_id: int, day: str | int) -> list[tuple]:
+    day = upgrade_day(day)
+    query = select(ScheduleModel).filter_by(user_id=user_id, day=day).order_by(ScheduleModel.time)
+
+    result = await session.execute(query)
+    logger.debug(f"got user schedules by day {day}")
+    notifs = result.scalars()
+    schedule_list = [(schedule.time, schedule.text) for schedule in notifs]
+    return schedule_list
+
+
+async def get_user_schedule_by_day_with_id(session: AsyncSession, user_id: int, day: str | int) -> list[tuple]:
+    day = upgrade_day(day)
     query = select(ScheduleModel).filter_by(user_id=user_id, day=day).order_by(ScheduleModel.time)
 
     result = await session.execute(query)
     logger.debug(f"got user schedule by day {day}")
     notifs = result.scalars()
-    schedule_list = [(schedule.time, schedule.text, schedule.id) for schedule in notifs]
-    return list(schedule_list)
+    schedule_list = [(day, schedule.time, schedule.text, schedule.id) for schedule in notifs]
+    return schedule_list
 
 
 async def get_all_schedule(session: AsyncSession) -> list[ScheduleModel]:

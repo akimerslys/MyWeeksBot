@@ -9,3 +9,12 @@ def inline_add(link: str):
     keyboard = InlineKeyboardBuilder(markup=buttons)
     keyboard.adjust(1)
     return keyboard.as_markup(resize_keyboard=True)
+
+
+def inline_schedule_add(link: str):
+    buttons = [
+        [InlineKeyboardButton(text=_("add_schedule_inline"), url=link)]
+    ]
+    keyboard = InlineKeyboardBuilder(markup=buttons)
+    keyboard.adjust(1)
+    return keyboard.as_markup(resize_keyboard=True)

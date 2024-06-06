@@ -67,6 +67,14 @@ startup:
 startbot:
 	docker compose up --build bot
 
+.PHONY: pausebot
+pausebot:
+	docker pause $$(docker ps -qf "ancestor=myweeksbot_bot")
+
+.PHONY: unpausebot
+unpausebot:
+	docker unpause $$(docker ps -qf "ancestor=myweeksbot_bot")
+
 .PHONY: kill
 kill:
 	docker compose down --remove-orphans ${MODE}

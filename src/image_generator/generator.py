@@ -7,29 +7,17 @@ from datetime import datetime
 from loguru import logger
 
 import os
+
 from io import BytesIO
 
 from src.core.config import settings
+from src.bot.utils.time_localizer import weekday_to_future_date
 
 
 font_path = os.path.join(settings.FONTS_DIR, "OPENSANS-SEMIBOLD.TTF")
 media_path = settings.MEDIA_DIR
 
-
-def days_of_week(day: str, num: int) -> int | str:
-    days = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7}
-
-    if day:
-        if day in days:
-            return days[day]
-        elif num in days.values():
-            return next(key for key, value in days.items() if value == num)
-        else:
-            return 'Invalid input'
-    elif num in days.values():
-        return next(key for key, value in days.items() if value == num)
-    else:
-        return 'Invalid input'
+days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def wrap_text(text, max_len_first_line=12, max_len_second_line=20):
@@ -66,46 +54,29 @@ async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
     start_time = time.time()
     image = Image.open(os.path.join(settings.MEDIA_DIR, "week.jpeg"))
     draw = ImageDraw.Draw(image)
-    logger.debug(font_path)
     font = ImageFont.truetype(font_path, size=16, encoding="unic")
     #font = ImageFont.load_default()
 
-    user_list_sorted = (
-        [(day, times, status) for day, times, status in
-         sorted(user_list, key=lambda x: (days_of_week(x[0], 0)))])
+    user_list_sorted = sorted(user_list, key=lambda x: x[0])
 
     text_color = (255, 255, 255)
     height = 205
-    text_position = 30
-    last_day = 'Monday'
-
+    last_day = 0
+    text_positions = [25, 210, 391, 571, 752, 933, 1114]
     for day, times, text in user_list_sorted:
         if last_day != day:
             last_day = day
             height = 205
-        match day:
-            case "Monday":
-                text_position = (25, height)
-            case "Tuesday":
-                text_position = (210, height)
-            case "Wednesday":
-                text_position = (391, height)
-            case "Thursday":
-                text_position = (571, height)
-            case "Friday":
-                text_position = (752, height)
-            case "Saturday":
-                text_position = (933, height)
-            case "Sunday":
-                text_position = (1114, height)
+        text_position = (text_positions[day], height)
         height += 32
-        if not text:
-            text = ''
+
         if text:
             if len(text) > 12:
                 text = wrap_text(text, 12, 16)
                 height += 16
             text = ' - ' + text
+        else:
+            text = ''
         text = f"{times if times[0] != '0' else '  ' + times[1:]}{text}"  # 00:00 - text  ||  00:00
         draw.text(text_position, text, fill=text_color, font=font)
     #image.save("media/1280_with_text.jpg")
@@ -121,12 +92,15 @@ async def generate_user_schedule_week(user_list: list[tuple]) -> BytesIO:
     return image_buffer
 
 
-async def generate_user_schedule_day(schedule_list: list[tuple], daytime: datetime, tz: str) -> BytesIO:
-    dtime = daytime.astimezone(pytz.timezone(tz))
-    day = dtime.weekday()
-
-    logger.debug(f"Schedule list: {schedule_list}")
-
+async def generate_user_schedule_day(schedule_list: list[tuple],
+                                     day_: int = None,
+                                     daytime: datetime = None,
+                                     tz: str = None,
+                                     with_date: bool = True) -> BytesIO:
+    if day_ is None:
+        dtime = daytime.astimezone(pytz.timezone(tz))
+        day_ = dtime.weekday()
+    logger.debug(f"{day_=}, {tz=}, {schedule_list=}")
     start_time = time.time()
     image = Image.open(os.path.join(settings.MEDIA_DIR, "day.jpeg"))
     draw = ImageDraw.Draw(image)
@@ -135,28 +109,18 @@ async def generate_user_schedule_day(schedule_list: list[tuple], daytime: dateti
     # DAY
     font = ImageFont.truetype(font_path, size=44, encoding="unic"
 )
-    width = 130 if day in (2, 3, 5) else 155
-    height = 56
-    text_position = (width, height)
-    draw.text(text_position, text=days_of_week('', day+1), fill=text_color, font=font)
+    # Printing day
+    draw.text((130 if day_ in (2, 3, 5) else 155, 56), text=days_of_week[day_], fill=text_color, font=font)
     # DATE
     font = ImageFont.truetype(font_path, size=20)
-    width = 372
-    height = 105
-    text_position = (width, height)
-    text = dtime.strftime("%d.%m")
-    draw.text(text_position, text=text, fill=text_color, font=font)
+    text = weekday_to_future_date(day_, tz if tz is not None else 'UTC').strftime('%d.%m') if with_date else ' '
+    draw.text((372, 105), text=text, fill=text_color, font=font)    # Printing date
     # SCHEDULE
     text_color = (255, 255, 255)
     width = 26
     height = 192
     for time_, text in schedule_list:
-
-        if text:
-            text = str(time_) + ' - ' + text[:28]
-        else:
-
-            text = str(time_)
+        text = f"{time_}{' - ' + text[:28] if text else ' '}"
         text_position = (width, height)
         height += 40
         draw.text(text_position, text, fill=text_color, font=font)

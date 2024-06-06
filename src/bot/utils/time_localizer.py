@@ -46,21 +46,27 @@ def is_today(dtime: datetime, timezone: str) -> bool:
     return datetime.today().astimezone(pytz.timezone(timezone)).strftime("%Y %m %d") == dtime.strftime("%Y %m %d")
 
 
-def day_of_week_to_date(day, time, timezone):
+def day_of_week_to_date(day: str | int, time: time, timezone: str = 'UTC'):
     """
     Convert day of week and time to datetime with user's timezone
-    :param day:
-    :param time:
-    :param timezone:
-    :return:
+    :param day: str or int, representing the day of the week ('Monday' or 0 for Monday)
+    :param time: str, representing the time in 'HH:MM' format
+    :param timezone: str, representing the user's timezone
+    :return: datetime object
     """
     logger.debug(f"localizing day of week to datetime")
     tz = pytz.timezone(timezone)
     current_datetime = datetime.now(tz)
 
-    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    current_day_of_week = current_datetime.strftime('%A')
-    days_to_target_day = (days_of_week.index(day) - days_of_week.index(current_day_of_week)) % 7
+    if isinstance(day, str):
+        days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        current_day_of_week = current_datetime.strftime('%A')
+        days_to_target_day = (days_of_week.index(day) - days_of_week.index(current_day_of_week)) % 7
+    elif isinstance(day, int):
+        days_to_target_day = (day - current_datetime.weekday()) % 7
+    else:
+        raise ValueError("Invalid day format. It should be either a string or an integer.")
+
     target_date = current_datetime + timedelta(days=days_to_target_day)
 
     target_datetime_str = f"{target_date.strftime('%Y-%m-%d')} {time}"
@@ -91,6 +97,7 @@ def localize_time_to_utc(hrs: str, minutes: str, timezone: str) -> time:
     result = timezone.localize(config_datetime).astimezone(pytz.utc).replace(tzinfo=None)
     logger.debug(f"localize_time_to_utc: timezone={timezone}, time={time}")
     return result.time()
+
 
 def is_past(date: datetime, timezone: str = 'UTC') -> bool:
     """
@@ -126,3 +133,9 @@ def round_minute(hour, minute):
     hour %= 24
 
     return hour, minute_rounded
+
+
+def weekday_to_future_date(weekday_number, tz: str = 'UTC'):
+    now = datetime.now(pytz.timezone(tz))
+    current_weekday = now.weekday()
+    return now + timedelta(days=(weekday_number - current_weekday) % 7)

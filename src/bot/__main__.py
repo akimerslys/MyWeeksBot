@@ -1,8 +1,8 @@
 import asyncio
+import sys
 import datetime
-
-#import uvloop
 from loguru import logger
+#import uvloop
 
 from src.core.config import settings
 from src.bot.loader import dp, bot
@@ -75,15 +75,6 @@ async def on_shutdown() -> None:
 
 
 async def main() -> None:
-    logger.add(
-        f"{settings.LOGS_DIR}/myweeks.log",
-        level="DEBUG",
-        format="{time} | {level} | {module}:{function}:{line} | {message}",
-        rotation="00:03",
-        compression="zip",
-        backtrace=True
-    )
-
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
@@ -95,4 +86,36 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    logger.add(
+        f"{settings.LOGS_DIR}/myweeks.log",
+        level="DEBUG",
+        format="{time} | {level} | {module}:{function}:{line} | {message}",
+        rotation="00:03",
+        compression="zip",
+        backtrace=True
+    )
+
+    def uvloop_use() -> bool:
+        import platform
+        os_type = platform.system()
+        logger.info(f'Running on {os_type} ({platform.release()})')
+        return os_type != 'Windows'
+    try:
+        if uvloop_use():
+            try:
+                import uvloop
+            except ImportError:
+                logger.critical('UVLOOP NOT INSTALLED, RUNNING WITH ASYNCIO')
+            else:
+                if sys.version_info >= (3, 11):
+                    with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+                        runner.run(main())
+                    sys.exit(0)  # Exit after running with asyncio.Runner
+                else:
+                    uvloop.install()
+
+        asyncio.run(main())
+    except Exception as e:
+        logger.critical(f'Error: {e}')
+        sys.exit(1)
+

@@ -12,34 +12,6 @@ from src.database.services import users as dbuc, schedule as dbsc, notifs as dbn
 router = Router(name="menu")
 
 
-# DO NOT SPLIT THIS FILE TO ROUTERS! IT WILL BE IMPLEMENTED IN THE FUTURE
-
-# TODO ADD NOTIFICATIONS TO THE DATABASE                                        #DONE
-# TODO ADD TIMEZONE TO THE NOTIFICATIONS                                        #DONE
-# TODO ADD TIMEZONE SETTING FOR FIRST USER                                      #DONE (NEED MORE TESTS)
-# TODO SORT WEEKDAYS BY TODAY'S DAY (IF WEDNESDAY, WEDNESDAY IS FIRST)          #DONE (NEED MORE TESTS)
-# TODO FIX TODAY BUTTON, FIX RANGES (CALENDAR)                                  #DONE (NEED MORE TESTS)
-# TODO INTEGRATE PROFILE TO MENU                                                #NEED CHANGES
-# TODO DETERMINE SOLUTION FOR PREMIUM/EXTRA FEATURES                            # every 5$ gives you 10 notifications
-# TODO MAKE ADMIN PANEL(in tg or on the web, prefer tg)
-# TODO LOCALIZATION
-# TODO REWRITE ADD_NOTIF_REPEAT / OPTIMIZE ADD_NOTIF_COMPLETE                   # DONE (NEED MORE TESTS)
-# TODO REWRITE MANAGE_NOTIF / TO CHOOSE NOTIFS BY DATE / OR CALENDAR (idk)
-# TODO ADD FUNC DELETE ALL INFORMATION ABOUT USER IN PROFILE                    # DONE
-# TODO SHARE NOTIF BUTTON                                                       # DONE (NEED MORE TESTS)
-# TODO INLINE MOD (CREATE NOTIFICATION/SHARE SCHEDULE)
-# TODO BLOCK USER COMMAND + BLOCK MIDDLEWARE                                    # DONE
-# TODO REMAKE CHANGELOG
-# TODO MAKE INFO WHEN NOTIF WILL BE SENT (IN 5 hrs, in 2 days, etc)
-# TODO MAKE INFO HOW MANY PEOPLE ADDED YOUR NOTIFICATION
-# TODO BACKUP DATABASE TO TG CHAT
-# TODO LOGS TO TG CHAT
-# TODO ADD MORE TIMEZONES !!
-# TODO CONNECT NOTIFS TO SCHEDULE                                               # NO NEEDED
-# TODO SHARE SCHEDULE BUTTON                                                    # NO NEEDED
-# TODO ADD TOTAL SHARED TO EVERY NOTIF
-
-
 async def main_menu(call: CallbackQuery, session: AsyncSession):
     user = await dbuc.get_user(session, call.from_user.id)
     await call.message.edit_text(_("👤 <b>{name}</b>:\n"
@@ -53,6 +25,7 @@ async def main_menu(call: CallbackQuery, session: AsyncSession):
                                             status=_("🔓 Premium") if user.is_premium else _("🔒 Free")
                                             ),
                                  reply_markup=mkb.main_kb())
+
 # MAIN
 @router.callback_query(F.data == "main_kb")
 async def menu_back(call: CallbackQuery, state: FSMContext, session: AsyncSession):

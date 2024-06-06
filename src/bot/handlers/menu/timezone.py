@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Union
+
 from aiogram import Router, F, Bot
 from aiogram.utils.i18n import gettext as _
 from aiogram.fsm.context import FSMContext
@@ -16,7 +18,6 @@ from src.bot.keyboards.inline.guide import start_menu_kb
 from src.bot.keyboards.inline import timezone as tzm
 from src.database.services import users as dbuc
 from src.bot.utils.states import AskLocation, NewUser, AskCountry
-
 
 router = Router(name="timezone")
 
@@ -121,7 +122,7 @@ async def confirm_location(call: CallbackQuery, bot: Bot, state: FSMContext, ses
     if await state.get_state() == NewUser.ask_location:
         await state.update_data(tz=data.get('tz_pre'))
         delete_msgs.append(data.get('tmp_msg2'))
-        await bot.send_message(call.from_user.id, _('start_menu').format(lang=data.get('lang'), tz=data.get('tz')),
+        await bot.send_message(call.from_user.id, _('start_menu').format(lang=data.get('lang'), tz=data.get('tz_pre')),
                                reply_markup=start_menu_kb())
     else:
         await dbuc.set_timezone(session, call.from_user.id, data.get('tz_pre'))
@@ -149,73 +150,74 @@ async def show_all_timezone(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=tzm.timezone_advanced_keyboard(fp))"""
 
 
+def check_country_tz(code: str) -> bool | list:
+    a = False
+    try:
+        a = pytz.country_timezones(code)
+    except KeyError:
+        pass
+    finally:
+        return a
+
+
 @router.callback_query(F.data == "timezone_country")
 async def show_country_timezone(call: CallbackQuery, state: FSMContext, session: AsyncSession):
-    country_code = await dbuc.get_language_code(session, call.from_user.id)
-    if country_code == "uk":
-        country_code = "ua"
+    user_code = await dbuc.get_language_code(session, call.from_user.id)
+    bad_codes = {'uk': 'ua', 'en': 'gb'}
+    if user_code in bad_codes:
+        user_code = bad_codes[user_code]
+
+    tzs = check_country_tz(user_code)
+
+    user_logged = await dbuc.user_logged(session, call.from_user.id)
 
     msg = await call.message.edit_text(text=_("timezone_contry_menu"),
-                                       reply_markup=tzm.timezone_country_kb(country_code),
+                                       reply_markup=tzm.timezone_country_kb(tzs, False, user_logged),
                                        disable_web_page_preview=True)
 
-    if await dbuc.user_logged(session, call.from_user.id):
+    if user_logged:
         await state.set_state(AskCountry.ask_country)
     else:
-        data = await state.get_data()
         await state.set_state(NewUser.ask_location)
 
     await state.update_data(tmp_id=msg.message_id)
 
 
-@router.callback_query(F.data == "timezone_country_extended")
-async def show_country_timezone_extended(call: CallbackQuery):
+@router.callback_query(F.data == 'timezone_country_extended')
+async def show_country_tz_ext(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=tzm.timezone_country_kb(extended=True))
-
-# TODO DELETE DUPLICATES
-
-@router.callback_query(F.data.startswith("timezone_country_"))
-async def show_country_timezones(call: CallbackQuery, bot: Bot, state: FSMContext):
-    tz_list = []
-
-    try:
-        for tz in pytz.country_timezones(call.data.split("_")[-1]):
-            print(tz)
-            tz_list.append(tz)
-    except KeyError:
-        await bot.send_message(call.from_user.id,
-                               _("timezone_country_invalide_code"), disable_web_page_preview=True)
-        return
-
-    new_user = False
-
-    if await state.get_state() == NewUser.ask_location:
-        new_user = True
-
-    await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_country_list_kb(tz_list, new_user))
 
 
 @router.message(AskCountry.ask_country)
 @router.message(NewUser.ask_location)
-async def show_country_timezones(message: Message, bot: Bot, state: FSMContext):
-    tz_list = []
+@router.callback_query(F.data.startswith("timezone_country_"))
+async def show_country_timezones(event: Union[CallbackQuery, Message], bot: Bot, state: FSMContext):
+    if isinstance(event, CallbackQuery):
+        call_data = event.data.split('/')[-1]
+        user_id = event.from_user.id
+        message_id = event.message.message_id
+        chat_id = event.message.chat.id
+    elif isinstance(event, Message):
+        call_data = event.text
+        user_id = event.from_user.id
+        message_id = event.message_id
+        chat_id = event.chat.id
+    else:
+        return  # Invalid event type
 
-    try:
-        for tz in pytz.country_timezones(message.text):
-            tz_list.append(tz)
-    except KeyError:
-        await bot.send_message(message.from_user.id,
-                               _("timezone_country_invalide_code"), disable_web_page_preview=True)
+    tz_list = check_country_tz(call_data)
+    if not tz_list:
+        await bot.send_message(user_id, _("timezone_country_invalide_code"))
         return
 
-    new_user = False
+    state_ = await state.get_state()
+    new_user = await dbuc.user_logged()
 
-    if await state.get_state() == NewUser.ask_location:
-        new_user = True
+    if (not new_user or state_ == AskCountry.ask_country) and isinstance(event, Message):
+        data = await state.get_data()
+        await bot.delete_message(chat_id, message_id)
+        await bot.edit_message_text(_("choose_timezone"), chat_id, data.get("tmp_id"),
+                                    reply_markup=tzm.timezone_country_list_kb(tz_list, new_user))
+    else:
+        await event.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_country_list_kb(tz_list, new_user))
 
-    data = await state.get_data()
-
-    await bot.delete_message(message.from_user.id, message.message_id)
-
-    await bot.edit_message_text(_("choose_timezone"), message.from_user.id, data.get("tmp_id"),
-                                reply_markup=tzm.timezone_country_list_kb(tz_list, new_user))

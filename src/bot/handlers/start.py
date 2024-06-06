@@ -12,9 +12,10 @@ from src.bot.keyboards.inline.menu import main_kb
 from src.bot.keyboards.inline.timezone import timezone_simple_keyboard
 from src.database.services import users as dbuc
 from src.database.services.notifs import add_notif, get_notif
+from src.database.services.schedule import get_user_schedule_day_time_text, get_user_schedule_by_day
 from src.bot.utils.time_localizer import localize_datetime_to_timezone
 from src.bot.utils.states import NewUser
-from src.database.models import NotifModel
+from src.database.models import NotifModel, ScheduleModel
 from src.bot.utils import error_manager as err
 
 from datetime import datetime
@@ -25,7 +26,6 @@ router = Router(name="start")
 
 # TODO OPTIMIZE !!! !! !! !! ! !! !! OR GAY
 #  NOT GAY, EZ
-# TRAAASH CODDEEEEEEEEEEEEEEEE REWRITE IT
 
 async def send_menu(bot, id):
     await bot.send_message(
@@ -141,15 +141,23 @@ async def process_deeplink_shared(bot, state, session, args, id):
     notif_args: list = payload.split("_", 2)
     logger.debug(notif_args)
 
+    return notif_args
+
+
+async def process_deeplink_notif(bot, state, session, args, id_):
     shared_notif: NotifModel | None
     notif_date: str
 
-    shared_notif: bool | NotifModel = await err.check_notif(session, bot, id, int(notif_args[0]))
-    if not shared_notif or not await err.check_date_ranges(shared_notif.date, bot, id): return
+    shared_notif: bool | NotifModel = await err.check_notif(session, bot, id_, int(args[1]))
+    if not shared_notif or not await err.check_date_ranges(shared_notif.date, bot, id_): return
 
-    await send_deeplink_notif(bot, state, session, id, shared_notif.date, shared_notif.text, notif_args[1])
+    await send_deeplink_notif(bot, state, session, id_, shared_notif.date, shared_notif.text, args[2])
     await state.update_data(notif_id=shared_notif.id)
-    return
+
+
+async def process_deeplink_schedule(bot, state, session, args, id):
+    # TODO TOTAL REWRITE, REWRITE SCHEDULE DATABASE. // REWRITEN EZ // OHH FUCK NOT FULLY REWRIITEN....
+    await bot.send_message(id, 'In development')
 
 
 @router.message(CommandStart(deep_link=True))
@@ -166,12 +174,20 @@ async def start_message_deeplink(message: Message, bot: Bot, command: CommandObj
 
     if args[0] == '_':
         await process_deeplink_date(bot, state, session, args, id)
-    else:
-        await process_deeplink_shared(bot, state, session, args, id)
+    else:   #encoded deeplink
+        args = await process_deeplink_shared(bot, state, session, args, id)
+        if not args: return
+        if args[0] == 'schedule':
+            await process_deeplink_schedule(bot, state, session, args, id)
+        elif args[0] == 'notif':
+            await process_deeplink_notif(bot, state, session, args, id)
+        else:
+            await message.answer('Invalid link')
 
 
 @router.message(CommandStart(deep_link=False))
 async def start_message(message: Message, bot: Bot, session: AsyncSession, state: FSMContext):
+    logger.debug(f"start, newuser={await dbuc.user_logged(session, message.from_user.id)}")
     if await dbuc.user_logged(session, message.from_user.id):
         await send_menu(bot, message.from_user.id)
     else:

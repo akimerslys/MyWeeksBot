@@ -4,12 +4,13 @@ from aiogram import Router, F, Bot
 from aiogram.utils.i18n import gettext as _
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
+from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from loguru import logger
 from src.core.config import settings
 from src.bot.loader import lock
-from src.image_generator.images import generate_user_schedule_week
+from src.image_generator.generator import generate_user_schedule_week
 from src.bot.keyboards.inline import menu as mkb
 from src.bot.keyboards.reply.skip import skip_kb
 from src.database.services import users as dbuc, schedule as dbsc, notifs as dbnc
@@ -21,6 +22,9 @@ router = Router(name="schedule")
 
 
 # TODO SHARE SCHEDULE WITH INLINE SWITCH CHAT
+
+
+days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 @router.callback_query(F.data == "schedule")
@@ -43,12 +47,13 @@ async def show_schedule_menu(call: CallbackQuery, bot: Bot, session: AsyncSessio
     user_list: list[tuple] = await dbsc.get_user_schedule_day_time_text(session, call.from_user.id)
     try:
         async with lock:
+            logger.debug(user_list)
             image_bytes = await generate_user_schedule_week(user_list)
             await bot.send_photo(call.message.chat.id,
                                  BufferedInputFile(image_bytes.getvalue(),
                                                    filename=f"schedule_{call.from_user.id}.jpeg"))
     except Exception as e:
-        logger.critical("WTF????\n" + e)
+        logger.critical(f'ERROR: {e}\nUSER: {call.from_user.id}')
         await bot.send_message(settings.ADMIN_ID[0], f"ERROR IN GENERATION IMAGE\n{e}")
         await bot.send_message(call.message.chat.id, _("ERROR_MESSAGE"))
     finally:
@@ -59,28 +64,32 @@ async def show_schedule_menu(call: CallbackQuery, bot: Bot, session: AsyncSessio
 
 @router.callback_query(F.data.startswith("schedule_add_day_"))
 async def schedule_add(call: CallbackQuery, state: FSMContext):
-    calldata = call.data[17:]
+    calldata = int(call.data.split('_')[-1])
     logger.warning(f"calldata: {calldata}")
-
-    if calldata != "0":
-        if calldata == "workdays":
-            days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        elif calldata == "weekends":
-            days = ["Saturday", "Sunday"]
+    days = []
+    # 0-6 Mon-Sun, 7-workdays, 8-weekends, 9-NULL
+    if calldata != 9:
+        if calldata == 7:
+            days = [0, 1, 2, 3, 4]
+        elif calldata == 8:
+            days = [5, 6]
         else:
             data = await state.get_data()
             days = data.get('days', [])
-
-            if calldata not in days:
-                days.append(calldata)
+            d_ = int(calldata)
+            if d_ not in days:
+                days.append(d_)
             else:
-                days.remove(calldata)
+                days.remove(d_)
 
         await state.update_data(days=days)
         logger.warning(f"days: {days}")
-        await call.message.edit_reply_markup(
-            reply_markup=mkb.add_schedule_days_kb(days)
-        )
+        try:
+            await call.message.edit_reply_markup(
+                reply_markup=mkb.add_schedule_days_kb(days)
+            )
+        except TelegramBadRequest:
+            pass
     else:
         await state.set_state(AddSchedule.days)
         await call.message.edit_text(_("choose_days"), reply_markup=mkb.add_schedule_days_kb([]))
@@ -123,7 +132,7 @@ async def schedule_text_complete(message: Message, bot: Bot, state: FSMContext):
     await state.update_data(text=message.text[:31])
     await bot.send_message(
         message.from_user.id,
-        _("add_schedule_info").format(days=', '.join(map(str, data.get('days'))),
+        _("add_schedule_info").format(days=', '.join([_(days_of_week[num]) for num in data.get('days', [])]),
                                       hours=data.get('hours'),
                                       minutes=data.get('minutes'),
                                       text=message.text),
@@ -166,9 +175,13 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
                 await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
                 return
 
+            tz = await dbuc.get_timezone(session, call.from_user.id)
+
             for day in days:
-                dtime = timecom.day_of_week_to_date(day, time_, await dbuc.get_timezone(session, call.from_user.id))
-                dtime_to_utc = timecom.localize_datetime_to_utc(dtime, await dbuc.get_timezone(session, call.from_user.id))
+                logger.debug(day)
+                dtime = timecom.day_of_week_to_date(day, time_, tz)
+                logger.debug(dtime)
+                dtime_to_utc = timecom.localize_datetime_to_utc(dtime, tz)
                 await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
 
         for day in days:
@@ -196,7 +209,7 @@ async def manage_schedule(call: CallbackQuery, session: AsyncSession):
 async def manage_schedule_day(call: CallbackQuery, session: AsyncSession):
     day = call.data.split("_")[-1]
 
-    user_day_schedule = await dbsc.get_user_schedule_by_day(session, call.from_user.id, day)
+    user_day_schedule = await dbsc.get_user_schedule_by_day_with_id(session, call.from_user.id, day)
     await call.message.edit_text("📆 " + _(day) + ":",
                                  reply_markup=mkb.manage_schedule_day_kb(user_day_schedule)
                                  )
@@ -277,4 +290,4 @@ async def config_schedule_confirm(call: CallbackQuery, state: FSMContext, sessio
 
 @router.callback_query(F.data == 'share_schedule_menu')
 async def share_schedule_menu(call: CallbackQuery):
-    await call.message.edit_reply_markup(reply_markup=mkb.share_schedule_kb)
+    await call.message.edit_reply_markup(reply_markup=mkb.share_schedule_kb())
