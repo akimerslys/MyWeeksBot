@@ -7,9 +7,13 @@ help:
 	@echo "  rebuild  	Rebuilding images"
 	@echo "  kill  		Stop and delete docker-compose"
 	@echo "  rebuildbot  Rebuilding bot image"
+	@echo "  rebuildscheduler   Rebuilding Scheduler"
+	@echo "  pausebot   Pausing Bot"
+	@echo "  unpausebot Unpausing Bot"
 	@echo "  start 		Start with docker-compose"
 	@echo "  stop  		Stop docker-compose"
 	@echo "  dead  		Deleting Images"
+	@echo "  mem        Memory Usage"
 	@echo "  clear  	Clears cache"
 	@echo "  requirements  Export poetry.lock to requirements.txt"
 
@@ -69,11 +73,11 @@ startbot:
 
 .PHONY: pausebot
 pausebot:
-	docker pause $$(docker ps -qf "ancestor=myweeksbot_bot")
+	docker pause $$(docker ps -qf "ancestor=myweeksbot-bot")
 
 .PHONY: unpausebot
 unpausebot:
-	docker unpause $$(docker ps -qf "ancestor=myweeksbot_bot")
+	docker unpause $$(docker ps -qf "ancestor=myweeksbot-bot")
 
 .PHONY: kill
 kill:
@@ -81,17 +85,17 @@ kill:
 
 .PHONY: rebuildbot
 rebuildbot:
-	docker stop $$(docker ps -qf "ancestor=myweeksbot_bot")
-	docker rm $$(docker ps -aqf "ancestor=myweeksbot_bot")
-	docker rmi myweeksbot_bot
+	docker stop $$(docker ps -qf "ancestor=myweeksbot-bot")
+	docker rm $$(docker ps -aqf "ancestor=myweeksbot-bot")
+	docker rmi myweeksbot-bot
 	docker compose up --build bot
 
 
 .PHONY: rebuildscheduler
 rebuildscheduler:
-	docker stop $$(docker ps -qf "ancestor=myweeksbot_scheduler")
-	docker rm $$(docker ps -aqf "ancestor=myweeksbot_scheduler")
-	docker rmi myweeksbot_scheduler
+	docker stop $$(docker ps -qf "ancestor=myweeksbot-scheduler")
+	docker rm $$(docker ps -aqf "ancestor=myweeksbot-scheduler")
+	docker rmi myweeksbot-scheduler
 	docker compose up --build scheduler
 
 
