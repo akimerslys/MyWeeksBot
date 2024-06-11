@@ -24,29 +24,30 @@ router = Router(name="timezone")
 
 @router.callback_query(F.data == "timezone_kb")
 async def choose_timezone_kb(call: CallbackQuery, session: AsyncSession, state: FSMContext):
-    new_user: bool = await dbuc.user_logged(session, call.from_user.id)
-    if new_user:
+    user_logged: bool = await dbuc.user_logged(session, call.from_user.id)
+    if user_logged:
         await state.clear()
 
-    await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_simple_keyboard(new_user))
+    await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_simple_keyboard(user_logged))
 
 
 @router.callback_query(F.data.startswith("set_timezone_"))
 async def set_timezone_kb(call: CallbackQuery, session: AsyncSession, state: FSMContext):
     await state.clear()
+    tz = call.data.split('_')[-1]
     try:
-        pytz.timezone(call.data[13:])
+        pytz.timezone(tz)
     except pytz.exceptions.UnknownTimeZoneError:
         await call.answer(_("ERROR_MESSAGE"), show_alert=True)
-        logger.critical(f"User {call.from_user.id} tried to set invalid timezone: {call.data[13:]}")
+        logger.error(f"User {call.from_user.id} tried to set invalid timezone: {tz}")
         await call.message.edit_text(_("choose_timezone"), reply_markup=tzm.timezone_simple_keyboard(True))
         return
-    await call.message.edit_text(_("timezone_changed").format(call.data[13:]), reply_markup=mkb.setting_kb())
+    await call.message.edit_text(_("timezone_changed").format(tz), reply_markup=mkb.setting_kb())
     if await dbuc.user_exists(session, call.from_user.id):
-        await dbuc.set_timezone(session, call.from_user.id, call.data[13:])
+        await dbuc.set_timezone(session, call.from_user.id, tz)
     else:
         await dbuc.add_user(session, call.from_user.id, call.from_user.first_name, call.from_user.language_code,
-                            call.data[13:])
+                            tz)
 
 
 @router.callback_query(F.data.startswith("timezone_send_geo_"))

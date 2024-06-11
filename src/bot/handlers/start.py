@@ -12,7 +12,6 @@ from src.bot.keyboards.inline.menu import main_kb
 from src.bot.keyboards.inline.timezone import timezone_simple_keyboard
 from src.database.services import users as dbuc
 from src.database.services.notifs import add_notif, get_notif
-from src.database.services.schedule import get_user_schedule_day_time_text, get_user_schedule_by_day
 from src.bot.utils.time_localizer import localize_datetime_to_timezone
 from src.bot.utils.states import NewUser
 from src.database.models import NotifModel, ScheduleModel

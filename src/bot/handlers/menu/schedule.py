@@ -168,21 +168,18 @@ async def schedule_complete(call: CallbackQuery, state: FSMContext, session: Asy
             logger.debug(f"type - {type(days)}")
             user_notifs = user_notifs + len(days)
             logger.debug(f"got: {user_notifs})")
-            #logger.debug(f"should be {user_notifs}/{max_user_notifs} ({max_user_notifs}<={user_notifs} + {len(days)}")
-            #logger.debug(f"{}({type(user_notifs + len(days))} and {max_user_notifs}({type(max_user_notifs)}"
+
             if max_user_notifs <= user_notifs:
                 await call.answer(_("limit_notifs"), show_alert=True)
                 await call.message.edit_reply_markup(reply_markup=mkb.schedule_complete_kb(False))
-                return
-
-            tz = await dbuc.get_timezone(session, call.from_user.id)
-
-            for day in days:
-                logger.debug(day)
-                dtime = timecom.day_of_week_to_date(day, time_, tz)
-                logger.debug(dtime)
-                dtime_to_utc = timecom.localize_datetime_to_utc(dtime, tz)
-                await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
+            else:
+                tz = await dbuc.get_timezone(session, call.from_user.id)
+                for day in days:
+                    logger.debug(day)
+                    dtime = timecom.day_of_week_to_date(day, time_, tz)
+                    logger.debug(dtime)
+                    dtime_to_utc = timecom.localize_datetime_to_utc(dtime, tz)
+                    await dbnc.add_notif(session, dtime_to_utc, call.from_user.id, data.get('text'), False, True)
 
         for day in days:
             await dbsc.add_schedule(session, call.from_user.id, day, time_, data.get('text'))

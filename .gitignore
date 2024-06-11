@@ -253,3 +253,5 @@ proxies.txt
 ngrok.yml
 src/scheduler/ignore.py
 ignore.py
+myweeks.*.log.zip
+!/backup/
