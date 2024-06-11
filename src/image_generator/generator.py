@@ -11,13 +11,18 @@ import os
 from io import BytesIO
 
 from src.core.config import settings
-from src.bot.utils.time_localizer import weekday_to_future_date
 
 
 font_path = os.path.join(settings.FONTS_DIR, "OPENSANS-SEMIBOLD.TTF")
 media_path = settings.MEDIA_DIR
 
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+def weekday_to_future_date(weekday_number, tz: str = 'UTC'):
+    now = datetime.now(pytz.timezone(tz))
+    current_weekday = now.weekday()
+    return now + timedelta(days=(weekday_number - current_weekday) % 7)
 
 
 def wrap_text(text, max_len_first_line=12, max_len_second_line=20):

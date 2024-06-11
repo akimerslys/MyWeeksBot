@@ -225,12 +225,11 @@ class WorkerSettings:
         cron(fetch_and_send_notifications, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second=1),
         cron(generate_and_send_schedule, minute={0, 15, 30, 45}, second=55),
         cron(backup_tables, hour=0, minute=1, second=0),
-        cron(send_gr, hour=16, minute=30),
-        cron(parse_matches, minute=59),
-        cron(parse_events, hour=1, minute=1, second=15),
-        cron(parse_top_teams, weekday=0, hour=18, minute=1, second=30),
-        cron(parse_top_players, weekday=0, hour=20, minute=0, second=0),
-        cron(parse_last_news, minute=55),
+        #cron(parse_matches, minute=59),
+        #cron(parse_events, hour=1, minute=1, second=15),
+        #cron(parse_top_teams, weekday=0, hour=18, minute=1, second=30),
+        #cron(parse_top_players, weekday=0, hour=20, minute=0, second=0),
+        #cron(parse_last_news, minute=55),
     ]
 
 
