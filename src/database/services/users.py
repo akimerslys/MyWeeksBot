@@ -55,6 +55,7 @@ async def add_user(
     session.add(new_user)
     await session.commit()
     await clear_cache(user_exists, user_id)
+    await clear_cache(user_logged, user_id)
 
 
 @cached(key_builder=lambda session, user_id: build_key(user_id))
