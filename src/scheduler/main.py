@@ -6,7 +6,7 @@ import asyncio
 from aiogram.types import BufferedInputFile, FSInputFile
 from sqlalchemy import select, func
 
-//from src.scheduler.ignore import token2, send_gr
+#from src.scheduler.ignore import token2, send_gr
 from src.bot.utils.csv_converter import convert_to_csv
 from src.database.engine import sessionmaker
 from src.database.models import UserModel, NotifModel, ScheduleModel
@@ -33,7 +33,7 @@ async def startup(ctx):
         ctx["hltv"] = hltv
 
     ctx["bot"] = Bot(token=settings.TOKEN)
-    //ctx["bot2"] = Bot(token=token2)
+    #ctx["bot2"] = Bot(token=token2)
     ctx["lock"] = asyncio.Lock()
     ctx["redis"] = redis_client
     logger.success(f"Scheduler started. UTC time {datetime.utcnow()}")
